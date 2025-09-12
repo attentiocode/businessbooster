@@ -20,18 +20,18 @@ cdnScripts.reduce((promise, script) => {
     return promise.then(() => loadScript(script));
 }, Promise.resolve()).then(() => {
     console.log("All scripts loaded via. attentiocode");
+    /*
     MemberStack.onReady.then(function(member) {
         
         if (member.loggedIn){
             console.log("Member is logged in");
 
-
         }else{
       
-
         }
 
     });
+    */
 
 }).catch(error => {
     console.error(error);
