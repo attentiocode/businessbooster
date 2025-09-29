@@ -27,7 +27,7 @@ cdnScripts.reduce((promise, script) => {
             console.log("Member is logged in");
 
         }else{
-      
+            console.log("Member is NOT logged in");
         }
 
     });
