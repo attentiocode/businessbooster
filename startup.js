@@ -1,54 +1,69 @@
+const fmt = d => d.toISOString().slice(0, 10);
 
+const startOfISOWeek = (date = new Date()) => {
+  const d = new Date(date);
+  const day = (d.getDay() + 6) % 7; // 0 = mandag
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - day);
+  return d;
+};
 
-async function hentNystartedeBedrifter({ fra, til, size = 100 }) {
-    const base = 'https://data.brreg.no/enhetsregisteret/api/enheter';
-    let page = 0;
-    const alle = [];
-  
-    while (true) {
-      const url = new URL(base);
-      url.searchParams.set('fraRegistreringsdatoEnhetsregisteret', fra); // YYYY-MM-DD
-      url.searchParams.set('tilRegistreringsdatoEnhetsregisteret', til); // YYYY-MM-DD
-      url.searchParams.set('size', String(size));
-      url.searchParams.set('page', String(page));
-      url.searchParams.set('sort', 'registreringsdatoEnhetsregisteret,DESC');
-  
-      const res = await fetch(url.href, {
-        headers: {
-          // Versjonert content-type er ikke påkrevd, men greit om du vil pinne V2:
-          'Accept': 'application/vnd.brreg.enhetsregisteret.enhet.v2+json;charset=UTF-8'
-        }
-      });
-      if (!res.ok) throw new Error(`Feil fra BRREG: ${res.status}`);
-  
-      const data = await res.json();
-  
-      // HAL: enhetene ligger vanligvis her:
-      const batch = data?._embedded?.enheter ?? [];
-      alle.push(...batch);
-  
-      // Sjekk om vi er ferdige (ingen flere sider)
-      const totalPages = data?.page?.totalPages ?? (batch.length < size ? page + 1 : page + 2);
-      page += 1;
-      if (page >= totalPages || batch.length === 0) break;
-  
-      // Sikkerhetsbrems: API-et begrenser til ~10k per spørring
-      if (alle.length >= 10000) break;
-    }
-  
-    return alle;
+const endOfISOWeek = (date = new Date()) => {
+  const start = startOfISOWeek(date);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+};
+
+async function hentNystartedeIPeriode({ fra, til, size = 200 }) {
+  const base = 'https://data.brreg.no/enhetsregisteret/api/enheter';
+  const alle = [];
+  let page = 0;
+
+  while (true) {
+    const url = new URL(base);
+    url.searchParams.set('fraRegistreringsdatoEnhetsregisteret', fra);
+    url.searchParams.set('tilRegistreringsdatoEnhetsregisteret', til);
+    url.searchParams.set('size', String(size));
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('sort', 'registreringsdatoEnhetsregisteret,DESC');
+
+    const res = await fetch(url.href, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) throw new Error(`Feil fra BRREG: ${res.status}`);
+
+    const data = await res.json();
+    const batch = data?._embedded?.enheter ?? [];
+    alle.push(...batch);
+
+    const hasNext = Boolean(data?._links?.next?.href);
+    const totalPages = data?.page?.totalPages;
+
+    if (batch.length === 0) break;
+    if (totalPages != null && page + 1 >= totalPages) break;
+    if (!hasNext) break;
+
+    page++;
+    if (alle.length >= 9500 || page > 2000) break; // failsafes
   }
-  
-  // Bruk:
 
-  function loadDataBrreg(){
-  hentNystartedeBedrifter({ fra: '2025-09-01', til: '2025-09-29' })
-    .then(enheter => {
-      console.log(`Fikk ${enheter.length} enheter`);
-      // eksempel: skriv ut navn og orgnr
-      enheter.slice(0, 5).forEach(e =>
-        console.log(`${e.navn} (${e.organisasjonsnummer}) – registrert: ${e.registreringsdatoEnhetsregisteret}`)
-      );
-    })
-    .catch(console.error);
+  return alle;
 }
+
+/**
+ * Henter nystartede i valgt intervall.
+ * - Uten argumenter ⇒ denne uken (mandag → i dag).
+ * - Med { fra, til } ⇒ spesifisert datointervall (YYYY-MM-DD).
+ */
+async function hentNystartede({ fra, til, size = 200 } = {}) {
+  if (!fra || !til) {
+    const idag = new Date();
+    fra = fmt(startOfISOWeek(idag));
+    til = fmt(idag); // frem til i dag
+  }
+  return hentNystartedeIPeriode({ fra, til, size });
+}
+
+

@@ -39,3 +39,17 @@ cdnScripts.reduce((promise, script) => {
 }).catch(error => {
     console.error(error);
 });
+
+
+
+function loadDataBrreg(){
+// Eksempler:
+// 1) Denne uken (mandag → i dag)
+hentNystartede().then(data => console.log('Denne uken:', data.length));
+/*
+// 2) Fra–til spesifikt
+hentNystartede({ fra: '2025-09-01', til: '2025-09-15' })
+  .then(data => console.log('1.–15. sept:', data.length));
+*/
+
+}
