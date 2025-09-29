@@ -40,6 +40,8 @@ async function hentNystartedeBedrifter({ fra, til, size = 100 }) {
   }
   
   // Bruk:
+
+  function loadDataBrreg(){
   hentNystartedeBedrifter({ fra: '2025-09-01', til: '2025-09-29' })
     .then(enheter => {
       console.log(`Fikk ${enheter.length} enheter`);
@@ -49,4 +51,4 @@ async function hentNystartedeBedrifter({ fra, til, size = 100 }) {
       );
     })
     .catch(console.error);
-  
+}
