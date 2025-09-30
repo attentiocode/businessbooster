@@ -71,7 +71,8 @@ function loadDataBrreg(){
         bedrifter = data;
         //laste selectorer
         loadSelectors(data);
-        loadBedrifterForValgtPeriode(); // perioder
+          // Kjør når siden lastes
+        loadPeriodsIntoSelector("periodeSelector");
         //starte listevisning
         startBrregList(data);
 
@@ -192,42 +193,51 @@ function startBrregList(data){
 
 }
 
-// --- Hjelpere for perioder ---
-const startOfMonth = (date = new Date()) => new Date(date.getFullYear(), date.getMonth(), 1);
-const endOfMonth   = (date = new Date()) => new Date(date.getFullYear(), date.getMonth() + 1, 0);
-
-function getPeriodeInterval(type) {
-  const idag = new Date();
-
-  if (type === "uke") {
-    const fra = fmt(startOfISOWeek(idag));
-    const til = fmt(idag);
-    return { fra, til };
+function formatDate(d) {
+    return d.toLocaleDateString("no-NO"); // DD.MM.YYYY
   }
-  if (type === "maaned") {
-    const fra = fmt(startOfMonth(idag));
-    const til = fmt(idag);
-    return { fra, til };
+  
+  function getPeriods() {
+    const today = new Date();
+  
+    // Denne uken (mandag → søndag)
+    const day = (today.getDay() + 6) % 7; // 0 = mandag
+    const monday = new Date(today);
+    monday.setDate(monday.getDate() - day);
+    monday.setHours(0, 0, 0, 0);
+  
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+  
+    const ukeValue = `${formatDate(monday)}-${formatDate(sunday)}`;
+  
+    // Denne måneden (1. → siste dag)
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
+    const mndValue = `${formatDate(firstDay)}-${formatDate(lastDay)}`;
+  
+    return [
+      { title: "Denne uken", value: ukeValue },
+      { title: "Denne måneden", value: mndValue },
+    ];
   }
-  if (type === "forrigeMaaned") {
-    const forrige = new Date(idag.getFullYear(), idag.getMonth() - 1, 1);
-    const fra = fmt(startOfMonth(forrige));
-    const til = fmt(endOfMonth(forrige));
-    return { fra, til };
+  
+  // Funksjon som fyller inn <select>
+  function loadPeriodsIntoSelector(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+  
+    const periods = getPeriods();
+    select.innerHTML = ""; // tøm eksisterende
+  
+    periods.forEach(p => {
+      const option = document.createElement("option");
+      option.value = p.value;
+      option.textContent = p.title;
+      select.appendChild(option);
+    });
   }
-  return { fra: fmt(startOfISOWeek(idag)), til: fmt(idag) };
-}
+  
 
-// --- Koble select til henting ---
-const periodeSelector = document.getElementById('select-field-date');
-periodeSelector.value = "uke"; // default
-
-async function loadBedrifterForValgtPeriode() {
-  const { fra, til } = getPeriodeInterval(periodeSelector.value);
-  console.log("Henter fra:", fra, "til:", til);
-  const enheter = await hentNystartede({ fra, til });
-  console.log("Antall bedrifter:", enheter.length);
-}
-
-
-periodeSelector.addEventListener("change", loadBedrifterForValgtPeriode);
