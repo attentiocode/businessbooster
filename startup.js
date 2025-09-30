@@ -136,7 +136,12 @@ function startBrregList(data){
 
 
     //filter
-
+    const selectorActivity = document.getElementById('select-field-activity');
+    const selectedActivity = selectorActivity.value;
+    if (selectedActivity) {
+        data = data.filter(item => item.naeringskode1 && item.naeringskode1.beskrivelse === selectedActivity);
+    }
+    
 
     //sorter på dato deretter på navn
     data.sort((a, b) => {
