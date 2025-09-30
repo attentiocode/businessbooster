@@ -71,6 +71,7 @@ function loadDataBrreg(){
         bedrifter = data;
         //laste selectorer
         loadSelectors(data);
+        loadBedrifterForValgtPeriode(); // perioder
         //starte listevisning
         startBrregList(data);
 
@@ -123,9 +124,6 @@ function loadSelectors(data){
 
 
 }
-
-
-
 
 function startBrregList(data){
 
@@ -193,3 +191,43 @@ function startBrregList(data){
 
 
 }
+
+// --- Hjelpere for perioder ---
+const startOfMonth = (date = new Date()) => new Date(date.getFullYear(), date.getMonth(), 1);
+const endOfMonth   = (date = new Date()) => new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+function getPeriodeInterval(type) {
+  const idag = new Date();
+
+  if (type === "uke") {
+    const fra = fmt(startOfISOWeek(idag));
+    const til = fmt(idag);
+    return { fra, til };
+  }
+  if (type === "maaned") {
+    const fra = fmt(startOfMonth(idag));
+    const til = fmt(idag);
+    return { fra, til };
+  }
+  if (type === "forrigeMaaned") {
+    const forrige = new Date(idag.getFullYear(), idag.getMonth() - 1, 1);
+    const fra = fmt(startOfMonth(forrige));
+    const til = fmt(endOfMonth(forrige));
+    return { fra, til };
+  }
+  return { fra: fmt(startOfISOWeek(idag)), til: fmt(idag) };
+}
+
+// --- Koble select til henting ---
+const periodeSelector = document.getElementById('select-field-date');
+periodeSelector.value = "uke"; // default
+
+async function loadBedrifterForValgtPeriode() {
+  const { fra, til } = getPeriodeInterval(periodeSelector.value);
+  console.log("Henter fra:", fra, "til:", til);
+  const enheter = await hentNystartede({ fra, til });
+  console.log("Antall bedrifter:", enheter.length);
+}
+
+
+periodeSelector.addEventListener("change", loadBedrifterForValgtPeriode);
