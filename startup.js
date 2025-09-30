@@ -52,11 +52,6 @@ async function hentNystartedeIPeriode({ fra, til, size = 200 }) {
   return alle;
 }
 
-/**
- * Henter nystartede i valgt intervall.
- * - Uten argumenter ⇒ denne uken (mandag → i dag).
- * - Med { fra, til } ⇒ spesifisert datointervall (YYYY-MM-DD).
- */
 async function hentNystartede({ fra, til, size = 200 } = {}) {
   if (!fra || !til) {
     const idag = new Date();
@@ -74,7 +69,12 @@ function loadDataBrreg(){
     hentNystartede()
       .then(data => {
         bedrifter = data;
+        //starte listevisning
+        startBrregList(data);
+
+
       })
+
       .catch(console.error);
     
     
@@ -88,4 +88,52 @@ function loadDataBrreg(){
         })
         .catch(console.error);
 */
+}
+
+
+function startBrregList(data){
+
+    const list = document.getElementById('rowlist');
+    const library = document.getElementById('elementlibrary');
+    const nodeRow = library.querySelector('.default-row');
+
+    //filter
+
+
+    //sorter på dato
+    data.sort((a,b) => (a.registreringsdatoEnhetsregisteret > b.registreringsdatoEnhetsregisteret) ? -1 : ((b.registreringsdatoEnhetsregisteret > a.registreringsdatoEnhetsregisteret) ? 1 : 0));
+
+
+    data.forEach(item => {
+        const node = nodeRow.cloneNode(true);
+        
+        node.querySelector('.company-name').textContent = item.navn || 'Ukjent navn';
+        node.querySelector('.org-nr').textContent = item.organisasjonsnummer || 'Ukjent org.nr';
+        node.querySelector('.start-date').textContent = item.registreringsdatoEnhetsregisteret || 'Ukjent dato';
+
+        if (item.hjemmeside) {
+            const link = document.createElement('a');
+            link.href = item.hjemmeside;
+            link.textContent = item.hjemmeside;
+            link.target = '_blank';
+            node.querySelector('.e-mail').innerHTML = ''; // Clear existing content
+            node.querySelector('.e-mail').appendChild(link);
+        } else {
+            node.querySelector('.e-mail').textContent = 'Ingen epost';
+        }
+
+        list.appendChild(node);
+    });
+
+
+
+
+
+
+
+
+
+
+
+
 }
