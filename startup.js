@@ -100,16 +100,32 @@ function startBrregList(data){
     //filter
 
 
-    //sorter på dato
-    data.sort((a,b) => (a.registreringsdatoEnhetsregisteret > b.registreringsdatoEnhetsregisteret) ? -1 : ((b.registreringsdatoEnhetsregisteret > a.registreringsdatoEnhetsregisteret) ? 1 : 0));
+    //sorter på dato deretter på navn
+    data.sort((a, b) => {
+        const dateA = new Date(a.registreringsdatoEnhetsregisteret);
+        const dateB = new Date(b.registreringsdatoEnhetsregisteret);
+        if (dateA < dateB) return 1;
+        if (dateA > dateB) return -1;
+        // Hvis datoene er like, sorter på navn
+        const nameA = a.navn.toUpperCase();
+        const nameB = b.navn.toUpperCase();
+        if (nameA < nameB) return -1;
+        if (nameA > nameB) return 1;
+        return 0;
+    });
+    //tøm liste
+    list.innerHTML = '';
 
-
+    //fyll liste
     data.forEach(item => {
         const node = nodeRow.cloneNode(true);
         
         node.querySelector('.company-name').textContent = item.navn || 'Ukjent navn';
         node.querySelector('.org-nr').textContent = item.organisasjonsnummer || 'Ukjent org.nr';
         node.querySelector('.start-date').textContent = item.registreringsdatoEnhetsregisteret || 'Ukjent dato';
+
+
+
 
         if (item.hjemmeside) {
             const link = document.createElement('a');
