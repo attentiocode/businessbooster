@@ -130,21 +130,10 @@ function startBrregList(data){
         node.querySelector('.address').textContent = item.forretningsadresse ?
             `${item.forretningsadresse?.adresse || ''}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`.trim() :
             'Ukjent adresse';
-        node.status = item.status || 'Ukjent status';
+        node.querySelector('.status').textContent = "Brreg";
+        
 
 
-
-
-        if (item.hjemmeside) {
-            const link = document.createElement('a');
-            link.href = item.hjemmeside;
-            link.textContent = item.hjemmeside;
-            link.target = '_blank';
-            node.querySelector('.e-mail').innerHTML = ''; // Clear existing content
-            node.querySelector('.e-mail').appendChild(link);
-        } else {
-            node.querySelector('.e-mail').textContent = 'Ingen epost';
-        }
 
         list.appendChild(node);
     });
