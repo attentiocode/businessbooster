@@ -69,6 +69,8 @@ function loadDataBrreg(){
     hentNystartede()
       .then(data => {
         bedrifter = data;
+        //laste selectorer
+        loadSelectors(data);
         //starte listevisning
         startBrregList(data);
 
@@ -90,12 +92,48 @@ function loadDataBrreg(){
 */
 }
 
+function loadSelectors(data){
+
+
+    const selectorActivity = document.getElementById('select-field-activity');
+
+    //Finne alle typer næringer
+    const allActivities = new Set();
+    data.forEach(item => {
+        if (item.naeringskode1 && item.naeringskode1.beskrivelse) {
+            allActivities.add(item.naeringskode1.beskrivelse);
+        }
+    });
+    //Sorter alfabetisk
+    const sortedActivities = Array.from(allActivities).sort((a, b) => a.localeCompare(b));
+    //Fyll select
+    sortedActivities.forEach(activity => {
+        const option = document.createElement('option');
+        option.value = activity;
+        option.textContent = activity;
+        selectorActivity.appendChild(option);
+    }
+    );
+
+    //Når selector endres skal funksjonen startBrregList kalles med filtrert data
+    selectorActivity.addEventListener('change', (e) => {
+        const selected = e.target.value;
+            startBrregList(data);
+    });
+
+
+}
+
+
+
 
 function startBrregList(data){
 
     const list = document.getElementById('rowlist');
     const library = document.getElementById('elementlibrary');
     const nodeRow = library.querySelector('.default-row');
+
+
 
     //filter
 
