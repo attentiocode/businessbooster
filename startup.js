@@ -116,13 +116,21 @@ function startBrregList(data){
     //tøm liste
     list.innerHTML = '';
 
+    const counterlistbrreg = document.getElementById('counterlistbrreg');
+    let count = data.length || '0';
+    counterlistbrreg.textContent = count + " stk. nyregistrerte bedrifter";
+
     //fyll liste
     data.forEach(item => {
         const node = nodeRow.cloneNode(true);
         
-        node.querySelector('.company-name').textContent = item.navn || 'Ukjent navn';
         node.querySelector('.org-nr').textContent = item.organisasjonsnummer || 'Ukjent org.nr';
+        node.querySelector('.company-name').textContent = item.navn || 'Ukjent navn';
         node.querySelector('.start-date').textContent = item.registreringsdatoEnhetsregisteret || 'Ukjent dato';
+        node.querySelector('.address').textContent = item.forretningsadresse ?
+            `${item.forretningsadresse?.adresse || ''}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`.trim() :
+            'Ukjent adresse';
+        node.status = item.status || 'Ukjent status';
 
 
 
