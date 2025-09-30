@@ -67,3 +67,25 @@ async function hentNystartede({ fra, til, size = 200 } = {}) {
 }
 
 
+function loadDataBrreg(){
+    // Fyll en array med resultatene
+    let bedrifter = [];
+    /*
+    hentNystartede()
+      .then(data => {
+        bedrifter = data;
+      })
+      .catch(console.error);
+    */
+    
+    
+    
+    
+    //Fra–til spesifikt
+    hentNystartede({ fra: '2025-09-01', til: '2025-09-15' })
+        .then(data => {
+            bedrifter = data;
+        })
+        .catch(console.error);
+
+}

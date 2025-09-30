@@ -42,30 +42,3 @@ cdnScripts.reduce((promise, script) => {
 
 
 
-function loadDataBrreg(){
-// Eksempler:
-// Fyll en array med resultatene
-let bedrifter = [];
-
-hentNystartede()
-  .then(data => {
-    bedrifter = data; // nå ligger alle objektene i arrayen "bedrifter"
-    console.log('Antall bedrifter denne uken:', bedrifter.length);
-
-    // Eksempel: logg de første 3
-    bedrifter.slice(0, 3).forEach(e =>
-      console.log(`${e.navn} (${e.organisasjonsnummer})`)
-    );
-  })
-  .catch(console.error);
-
-
-
-
-/*
-// 2) Fra–til spesifikt
-hentNystartede({ fra: '2025-09-01', til: '2025-09-15' })
-  .then(data => console.log('1.–15. sept:', data.length));
-*/
-
-}
