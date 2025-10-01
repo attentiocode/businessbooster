@@ -238,9 +238,10 @@ function formatDate(d) {
   }
   
 
-  document.getElementById("brregmastercheckbox").addEventListener("change", function() {
-    const checkboxes = document.querySelectorAll(".selectcheckbox");
+document.getElementById("brregmastercheckbox").addEventListener("change", function() {
+    const container = document.getElementById("rowlist");
+    const checkboxes = container.querySelectorAll(".selectcheckbox");
     checkboxes.forEach(cb => {
-      cb.checked = this.checked; // sett lik master-status
+      cb.checked = this.checked;
     });
-  });
+});
