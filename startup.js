@@ -81,9 +81,6 @@ function loadDataBrreg(){
 
       .catch(console.error);
     
-    
-    
-    
     /*
     //Fra–til spesifikt
     hentNystartede({ fra: '2025-09-01', til: '2025-09-15' })
@@ -241,3 +238,9 @@ function formatDate(d) {
   }
   
 
+  document.getElementById("brregmastercheckbox").addEventListener("change", function() {
+    const checkboxes = document.querySelectorAll(".selectcheckbox");
+    checkboxes.forEach(cb => {
+      cb.checked = this.checked; // sett lik master-status
+    });
+  });
