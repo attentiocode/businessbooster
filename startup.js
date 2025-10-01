@@ -157,7 +157,7 @@ function startBrregList(data){
 
     const counterlistbrreg = document.getElementById('counterlistbrreg');
     let count = data.length || '0';
-    counterlistbrreg.textContent = count + " stk. nyregistrerte bedrifter";
+    counterlistbrreg.textContent = count + " stk. nyregistrerte bedrifter denne uken";
 
     //fyll liste
     data.forEach(item => {
