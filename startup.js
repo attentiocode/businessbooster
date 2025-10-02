@@ -242,4 +242,5 @@ document.getElementById("brregmastercheckbox").addEventListener("change", functi
     checkboxes.forEach(cb => {
       cb.checked = this.checked;
     });
+    
 });
