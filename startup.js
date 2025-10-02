@@ -192,9 +192,9 @@ function startBrregList(data){
 
 function formatDate(d) {
     return d.toLocaleDateString("no-NO"); // DD.MM.YYYY
-  }
+}
   
-  function getPeriods() {
+function getPeriods() {
     const today = new Date();
   
     // Denne uken (mandag → søndag)
@@ -219,10 +219,9 @@ function formatDate(d) {
       { title: "Denne uken", value: ukeValue },
       { title: "Denne måneden", value: mndValue },
     ];
-  }
+}
   
-  // Funksjon som fyller inn <select>
-  function loadPeriodsIntoSelector(selectId) {
+function loadPeriodsIntoSelector(selectId) {
     const select = document.getElementById(selectId);
     if (!select) return;
   
@@ -235,9 +234,8 @@ function formatDate(d) {
       option.textContent = p.title;
       select.appendChild(option);
     });
-  }
+}
   
-
 document.getElementById("brregmastercheckbox").addEventListener("change", function() {
     const container = document.getElementById("rowlist");
     const checkboxes = container.querySelectorAll(".selectcheckbox");
