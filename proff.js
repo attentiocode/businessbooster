@@ -1,89 +1,46 @@
-const API_BASE = 'https://boosterapi.vercel.app'; // flytt til .env ved behov
-
-export async function fetchCompanyEnriched(orgnr, { signal } = {}) {
-  if (!ORGNR_RE.test(orgnr)) throw new Error(`Ugyldig orgnr: ${orgnr}`);
-  const res = await fetch(`${API_BASE}/api/proff/company/enrich/${orgnr}`, {
-    headers: { accept: 'application/json' },
-    signal,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok || !json?.ok) throw new Error(json?.error || `HTTP ${res.status}`);
-  return json.shaped;
-}
-const ORGNR_RE = /^\d{9}$/;
+// Justér til ditt domene hvis frontenden kjører et annet sted:
+const API_BASE = 'https://boosterapi.vercel.app';
 
 /**
- * Hent flere orgnr i parallell, med begrenset samtidighet.
- * @param {string[]|string} input  Liste med orgnr eller kommaseparert streng
- * @param {{concurrency?:number, signal?:AbortSignal}} opts
- * @returns {Promise<Array<{orgnr:string, ok:boolean, data?:any, error?:string}>>}
+ * Logger ett selskap fra Proff-API via din boosterapi-backend.
+ * Bruk: logCompanyOnce('830068872')
  */
-export async function fetchCompanyEnrichedMany(input, { concurrency = 4, signal } = {}) {
-  // Støtt både array og "830...,974...,9..." som streng
-  const arr = Array.isArray(input)
-    ? input
-    : String(input)
-        .split(/[,\s]+/)
-        .filter(Boolean);
+async function logCompanyOnce(orgnr) {
+  try {
+    const clean = String(orgnr).replace(/\D/g, '');
+    if (!/^\d{9}$/.test(clean)) throw new Error('Ugyldig orgnr (må være 9 siffer)');
 
-  // Rens, valider og dedupliser
-  const wanted = [...new Set(arr.map(s => (s || '').replace(/\D/g, '')))]
-    .filter(s => s.length) // behold tom-filtering
-    .slice(0); // kopi
+    console.time(`[proff] ${clean}`);
+    const res = await fetch(`${API_BASE}/api/proff/company/enrich/${encodeURIComponent(clean)}`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
 
-  // Enkel kø med N samtidige jobber
-  const results = [];
-  let index = 0;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json().catch(() => ({}));
+    if (!json?.ok) throw new Error(json?.error || 'Ukjent API-feil');
 
-  async function worker() {
-    while (index < wanted.length) {
-      const i = index++;
-      const orgnr = wanted[i];
-      if (!ORGNR_RE.test(orgnr)) {
-        results[i] = { orgnr, ok: false, error: 'Ugyldig orgnr (må være 9 siffer)' };
-        continue;
-      }
-      try {
-        const data = await fetchCompanyEnriched(orgnr, { signal });
-        results[i] = { orgnr, ok: true, data };
-      } catch (err) {
-        results[i] = { orgnr, ok: false, error: err?.message || String(err) };
-      }
-    }
+    // Endepunktet ditt returnerer { ok, source, data, shaped }
+    const data = json.shaped ?? json.data ?? json;
+
+    console.groupCollapsed(`[proff] ${clean} – ${data?.name ?? 'Ukjent'}`);
+    console.log('Full response:', data);
+    (console.table ?? console.log)([
+      { key: 'orgnr', value: data?.orgnr },
+      { key: 'name', value: data?.name },
+      { key: 'status', value: data?.status },
+      { key: 'employees', value: data?.employees },
+      { key: 'homepage', value: data?.contact?.homepage ?? null },
+      { key: 'email', value: data?.contact?.email ?? null },
+      { key: 'phone', value: data?.contact?.phone ?? null },
+      { key: 'dagligLeder', value: data?.contact?.dagligLeder?.name ?? null },
+    ]);
+    console.groupEnd();
+    console.timeEnd(`[proff] ${clean}`);
+
+    return data; // nyttig hvis du vil bruke resultatet videre
+  } catch (err) {
+    console.error(`[proff] ${orgnr} – FEIL:`, err?.message || err);
+    throw err;
   }
-
-  // Start workere
-  const workers = Array.from({ length: Math.min(concurrency, Math.max(1, wanted.length)) }, worker);
-  await Promise.all(workers);
-
-  return results;
 }
-
-
-// Forutsetter at du allerede har fetchCompanyEnriched(orgnr)
-// fra tidligere forslag. Hvis ikke: bytt ut kallet i funksjonen
-// med en direkte fetch til /api/proff/company/enrich/:orgnr.
-
-export async function logCompanyOnce(orgnr) {
-    try {
-      console.time(`[proff] ${orgnr}`);
-      const data = await fetchCompanyEnriched(orgnr);
-      console.groupCollapsed(`[proff] ${orgnr} – ${data?.name ?? 'Ukjent'}`);
-      console.log('Full response:', data);
-      console.table?.([
-        { key: 'orgnr', value: data?.orgnr },
-        { key: 'name', value: data?.name },
-        { key: 'status', value: data?.status },
-        { key: 'employees', value: data?.employees },
-        { key: 'homepage', value: data?.contact?.homepage ?? null },
-        { key: 'email', value: data?.contact?.email ?? null },
-        { key: 'phone', value: data?.contact?.phone ?? null },
-        { key: 'dagligLeder', value: data?.contact?.dagligLeder?.name ?? null },
-      ]);
-      console.groupEnd();
-      console.timeEnd(`[proff] ${orgnr}`);
-    } catch (err) {
-      console.error(`[proff] ${orgnr} – FEIL:`, err?.message || err);
-    }
-  }
-  
