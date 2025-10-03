@@ -247,5 +247,5 @@ document.getElementById("brregmastercheckbox").addEventListener("change", functi
 
 
 document.getElementById("testbutton").addEventListener("click", function() {
-  logCompanyOnce('830068872');
+  logCompanyOnce('925315044');
 });
