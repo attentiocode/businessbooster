@@ -1,75 +1,75 @@
-// Industry Multi-Select + Date Filter + Presets + Chips (vanilla JS)
 (function () {
     const ROOT_ID = "industrySelector";
     const STORAGE_KEY = "industryPresets";
   
-    // Hjelpere
     const qs = (id) => document.getElementById(id);
-    const readPresets = () => {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
-      catch { return {}; }
-    };
+    const readPresets = () => JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
     const writePresets = (obj) => localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
   
-    const getSelectedValues = (selectEl) =>
-      Array.from(selectEl.selectedOptions).map(o => o.value);
+    function getSelectedValues(selectEl) {
+      return Array.from(selectEl.selectedOptions).map(o => o.value);
+    }
   
-    const applyValues = (selectEl, values) => {
+    function applyValues(selectEl, values) {
       const set = new Set(values);
-      Array.from(selectEl.options).forEach(o => { o.selected = set.has(o.value); });
-      selectEl.dispatchEvent(new Event("change", { bubbles: true })); // re-render chips
-    };
+      Array.from(selectEl.options).forEach(o => (o.selected = set.has(o.value)));
+      selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+    }
   
-    const renderSelected = (selectEl, listEl, countEl) => {
+    function renderSelected(selectEl, listEl, countEl) {
       const values = getSelectedValues(selectEl);
       countEl.textContent = values.length;
       listEl.innerHTML = "";
       values.forEach(v => {
         const li = document.createElement("li");
         li.className = "chip";
-        li.dataset.value = v;
         li.innerHTML = `<span>${v}</span><button type="button" class="chip-remove" aria-label="Fjern ${v}">&times;</button>`;
         li.querySelector(".chip-remove").addEventListener("click", () => {
           for (const o of selectEl.options) if (o.value === v) o.selected = false;
-          selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+          selectEl.dispatchEvent(new Event("change"));
         });
         listEl.appendChild(li);
       });
-    };
+    }
   
-    const setQuickDateRange = (range) => {
+    function setQuickDateRange(range) {
       const fromEl = qs("dateFrom");
       const toEl = qs("dateTo");
       const today = new Date();
       let start, end = new Date();
   
-      switch (range) {
-        case "week": {
-          // Mandag som ukestart
-          const d = new Date(today);
-          const weekday = (d.getDay() + 6) % 7; // 0=mandag
-          start = new Date(d); start.setDate(d.getDate() - weekday);
-          break;
-        }
-        case "month": {
-          start = new Date(today.getFullYear(), today.getMonth(), 1);
-          break;
-        }
-        case "30days": {
-          start = new Date(today); start.setDate(today.getDate() - 30);
-          break;
-        }
-        default: { fromEl.value = ""; toEl.value = ""; return; }
+      if (range === "week") {
+        const weekday = (today.getDay() + 6) % 7;
+        start = new Date(today);
+        start.setDate(today.getDate() - weekday);
+      } else if (range === "month") {
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+      } else if (range === "30days") {
+        start = new Date(today);
+        start.setDate(today.getDate() - 30);
+      } else {
+        fromEl.value = "";
+        toEl.value = "";
+        return;
       }
+  
       fromEl.value = start.toISOString().split("T")[0];
       toEl.value = end.toISOString().split("T")[0];
-    };
+      updateDateFilterState();
+    }
   
-    const init = () => {
-      const root = qs(ROOT_ID);
-      if (!root) return;
+    function updateDateFilterState() {
+      const fromEl = qs("dateFrom");
+      const toEl = qs("dateTo");
+      const filterBox = qs("dateFilter");
   
-      // Elementer
+      const active = !!(fromEl.value || toEl.value);
+      filterBox.classList.toggle("active", active);
+      filterBox.classList.toggle("inactive", !active);
+      return active;
+    }
+  
+    function init() {
       const selectEl = qs("industries");
       const selectedList = qs("selectedList");
       const selectedCount = qs("selectedCount");
@@ -81,47 +81,45 @@
       const applyBtn = qs("applyPreset");
       const deleteBtn = qs("deletePreset");
       const clearBtn = qs("clearSelection");
-      const quickButtons = root.querySelectorAll(".quick-range button");
+      const quickButtons = document.querySelectorAll(".quick-range button");
   
-      // Fallback-eksempler om listen er tom (kan fjernes i produksjon)
       if (!selectEl.options.length) {
-        ["Arkitektvirksomhet","Reklamebyråvirksomhet","Treningssentre","IT-konsulent","Helsevesen"]
-          .forEach(v => {
-            const opt = document.createElement("option");
-            opt.value = v; opt.textContent = v;
-            selectEl.appendChild(opt);
-          });
+        ["Arkitekt", "Reklamebyrå", "Treningssenter", "IT-konsulent", "Helsevesen"].forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          selectEl.appendChild(opt);
+        });
       }
   
-      // Presets
       let presets = readPresets();
       const refreshPicker = () => {
-        picker.length = 1; // behold placeholder
+        picker.length = 1;
         Object.keys(presets).sort().forEach(name => {
           const opt = document.createElement("option");
-          opt.value = name; opt.textContent = name;
+          opt.value = name;
+          opt.textContent = name;
           picker.appendChild(opt);
         });
       };
       refreshPicker();
   
-      // Chips render
       selectEl.addEventListener("change", () => renderSelected(selectEl, selectedList, selectedCount));
       renderSelected(selectEl, selectedList, selectedCount);
   
-      // Hurtigvalg dato
-      quickButtons.forEach(btn =>
-        btn.addEventListener("click", () => setQuickDateRange(btn.dataset.range))
-      );
+      [dateFrom, dateTo].forEach(el => el.addEventListener("input", updateDateFilterState));
+      quickButtons.forEach(btn => btn.addEventListener("click", () => setQuickDateRange(btn.dataset.range)));
+      updateDateFilterState();
   
-      // Lagre preset (bransjer + dato)
+      // Lagre preset
       saveBtn.addEventListener("click", () => {
         const name = (presetNameEl.value || "").trim();
         if (!name) return alert("Skriv navn på preset.");
+        const dateActive = updateDateFilterState();
         const data = {
           industries: getSelectedValues(selectEl),
-          dateFrom: dateFrom.value || null,
-          dateTo: dateTo.value || null
+          dateFrom: dateActive ? dateFrom.value || null : null,
+          dateTo: dateActive ? dateTo.value || null : null
         };
         presets[name] = data;
         writePresets(presets);
@@ -138,6 +136,7 @@
         applyValues(selectEl, industries);
         dateFrom.value = df || "";
         dateTo.value = dt || "";
+        updateDateFilterState();
       });
   
       // Slett preset
@@ -155,14 +154,12 @@
         applyValues(selectEl, []);
         dateFrom.value = "";
         dateTo.value = "";
+        updateDateFilterState();
       });
-    };
-  
-    // Start
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", init);
-    } else {
-      init();
     }
+  
+    document.readyState === "loading"
+      ? document.addEventListener("DOMContentLoaded", init)
+      : init();
   })();
   
