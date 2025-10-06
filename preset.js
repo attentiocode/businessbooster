@@ -4,7 +4,11 @@
   
     const qs = (id) => document.getElementById(id);
     const readPresets = () => JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    const writePresets = (obj) => localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    const writePresets = (obj) => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+      // 🔔 Send ut signal når presets endres
+      window.dispatchEvent(new Event("presetsUpdated"));
+    };
   
     function getSelectedValues(selectEl) {
       return Array.from(selectEl.selectedOptions).map(o => o.value);
@@ -69,6 +73,25 @@
       return active;
     }
   
+    // 🆕 Hjelpefunksjon for å oppdatere ALLE preset-selects globalt
+    function updateAllPresetDropdowns() {
+      const presets = readPresets();
+      const allDropdowns = document.querySelectorAll("#presetPicker, #select-field-preset");
+  
+      allDropdowns.forEach(drop => {
+        const currentValue = drop.value;
+        drop.length = 1; // behold første placeholder
+        Object.keys(presets).sort().forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          drop.appendChild(opt);
+        });
+        // behold valgt hvis fortsatt finnes
+        if (presets[currentValue]) drop.value = currentValue;
+      });
+    }
+  
     function init() {
       const selectEl = qs("industries");
       const selectedList = qs("selectedList");
@@ -92,17 +115,7 @@
         });
       }
   
-      let presets = readPresets();
-      const refreshPicker = () => {
-        picker.length = 1;
-        Object.keys(presets).sort().forEach(name => {
-          const opt = document.createElement("option");
-          opt.value = name;
-          opt.textContent = name;
-          picker.appendChild(opt);
-        });
-      };
-      refreshPicker();
+      updateAllPresetDropdowns(); // initial load
   
       selectEl.addEventListener("change", () => renderSelected(selectEl, selectedList, selectedCount));
       renderSelected(selectEl, selectedList, selectedCount);
@@ -121,15 +134,18 @@
           dateFrom: dateActive ? dateFrom.value || null : null,
           dateTo: dateActive ? dateTo.value || null : null
         };
+        const presets = readPresets();
         presets[name] = data;
-        writePresets(presets);
-        refreshPicker();
+        writePresets(presets); // trigger også event
+        updateAllPresetDropdowns();
         picker.value = name;
+        alert(`Preset "${name}" lagret.`);
       });
   
       // Hent preset
       applyBtn.addEventListener("click", () => {
         const name = picker.value;
+        const presets = readPresets();
         if (!name || !presets[name]) return alert("Velg et preset først.");
         const { industries = [], dateFrom: df = "", dateTo: dt = "" } = presets[name];
         applyValues(selectEl, industries);
@@ -142,9 +158,10 @@
       deleteBtn.addEventListener("click", () => {
         const name = picker.value;
         if (!name) return;
+        const presets = readPresets();
         delete presets[name];
-        writePresets(presets);
-        refreshPicker();
+        writePresets(presets); // trigger event
+        updateAllPresetDropdowns();
         picker.value = "";
       });
   
@@ -155,6 +172,9 @@
         dateTo.value = "";
         updateDateFilterState();
       });
+  
+      // 🔔 Lytt på endringer fra andre steder
+      window.addEventListener("presetsUpdated", updateAllPresetDropdowns);
     }
   
     document.readyState === "loading"
