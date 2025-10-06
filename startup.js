@@ -1,5 +1,14 @@
 let gBrregbedrifter = [];
 
+document.getElementById('select-field-activity').addEventListener('change', (e) => {
+  startBrregList(gBrregbedrifter);
+}
+);
+
+document.getElementById("select-field-preset").addEventListener('change', (e) => {
+      startBrregList(gBrregbedrifter);
+});
+
 const fmt = d => d.toISOString().slice(0, 10);
 
 const startOfISOWeek = (date = new Date()) => {
@@ -273,11 +282,3 @@ function ruteresponse(data,responseid){
     }
 }
 
-document.getElementById('select-field-activity').addEventListener('change', (e) => {
-    startBrregList(gBrregbedrifter);
-}
-);
-
-document.getElementById("select-field-preset").addEventListener('change', (e) => {
-        startBrregList(gBrregbedrifter);
-});
