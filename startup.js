@@ -134,17 +134,7 @@ function loadSelectors(data){
     }
     );
 
-    //Når selector endres skal funksjonen startBrregList kalles med filtrert data
-    selectorActivity.addEventListener('change', (e) => {
-        const selected = e.target.value;
-            startBrregList(data);
-    });
-
-
 }
-
-
-
 
 
 function startBrregList(data){
@@ -281,3 +271,11 @@ function ruteresponse(data,responseid){
     }
 }
 
+document.getElementById('select-field-activity').addEventListener('change', (e) => {
+    startBrregList(data);
+}
+);
+
+document.getElementById("select-field-preset").addEventListener('change', (e) => {
+        startBrregList(data);
+});
