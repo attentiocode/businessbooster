@@ -125,7 +125,6 @@
         writePresets(presets);
         refreshPicker();
         picker.value = name;
-        alert(`Preset "${name}" lagret.`);
       });
   
       // Hent preset
