@@ -1,179 +1,168 @@
-// Industry Multi-Select + Preset Manager (vanilla JS)
-// med "chips"-liste over valgte bransjer
+// Industry Multi-Select + Date Filter + Presets + Chips (vanilla JS)
 (function () {
     const ROOT_ID = "industrySelector";
     const STORAGE_KEY = "industryPresets";
   
-    function qs(id) { return document.getElementById(id); }
-  
-    function getRootedIds(root) {
-      return {
-        selectEl: root.querySelector("#industries"),
-        // NYTT: elementer for visning av valgte
-        selectedListEl: root.querySelector("#selectedList"),
-        selectedCountEl: root.querySelector("#selectedCount"),
-  
-        presetNameEl: root.querySelector("#presetName"),
-        saveBtn: root.querySelector("#savePreset"),
-        presetPicker: root.querySelector("#presetPicker"),
-        applyBtn: root.querySelector("#applyPreset"),
-        deleteBtn: root.querySelector("#deletePreset"),
-        clearBtn: root.querySelector("#clearSelection"),
-        statusEl: root.querySelector("#industryStatus"),
-      };
-    }
-  
-    function readPresets() {
+    // Hjelpere
+    const qs = (id) => document.getElementById(id);
+    const readPresets = () => {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
       catch { return {}; }
-    }
-    function writePresets(presets) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
-    }
+    };
+    const writePresets = (obj) => localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
   
-    function setStatus(el, msg) {
-      if (!el) return;
-      el.textContent = msg;
-      window.clearTimeout(el._statusTimer);
-      el._statusTimer = window.setTimeout(() => { el.textContent = ""; }, 2200);
-    }
+    const getSelectedValues = (selectEl) =>
+      Array.from(selectEl.selectedOptions).map(o => o.value);
   
-    function getSelectedValues(selectEl) {
-      return Array.from(selectEl.selectedOptions).map(o => o.value);
-    }
-  
-    function applyValues(selectEl, values) {
+    const applyValues = (selectEl, values) => {
       const set = new Set(values);
       Array.from(selectEl.options).forEach(o => { o.selected = set.has(o.value); });
-      selectEl.dispatchEvent(new Event("change", { bubbles: true })); // trigger render
-    }
+      selectEl.dispatchEvent(new Event("change", { bubbles: true })); // re-render chips
+    };
   
-    function populatePresetPicker(picker, presets) {
-      picker.length = 1; // behold «— Velg preset —»
-      Object.keys(presets).sort().forEach(name => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        picker.appendChild(opt);
-      });
-    }
-  
-    // === NYTT: render liste/chips av valgte bransjer ===
-    function renderSelected(selectEl, listEl, countEl) {
-      if (!listEl || !countEl) return;
+    const renderSelected = (selectEl, listEl, countEl) => {
       const values = getSelectedValues(selectEl);
       countEl.textContent = values.length;
       listEl.innerHTML = "";
-  
       values.forEach(v => {
         const li = document.createElement("li");
         li.className = "chip";
-        li.setAttribute("data-value", v);
-  
-        const label = document.createElement("span");
-        label.textContent = v;
-  
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "chip-remove";
-        btn.setAttribute("aria-label", `Fjern ${v}`);
-        btn.innerHTML = "&times;";
-  
-        btn.addEventListener("click", () => {
-          // Avmerk i <select> og re-render
-          for (const o of selectEl.options) {
-            if (o.value === v) { o.selected = false; break; }
-          }
+        li.dataset.value = v;
+        li.innerHTML = `<span>${v}</span><button type="button" class="chip-remove" aria-label="Fjern ${v}">&times;</button>`;
+        li.querySelector(".chip-remove").addEventListener("click", () => {
+          for (const o of selectEl.options) if (o.value === v) o.selected = false;
           selectEl.dispatchEvent(new Event("change", { bubbles: true }));
         });
-  
-        li.appendChild(label);
-        li.appendChild(btn);
         listEl.appendChild(li);
       });
-    }
+    };
   
-    function init(root) {
-      const {
-        selectEl, selectedListEl, selectedCountEl,
-        presetNameEl, saveBtn,
-        presetPicker, applyBtn, deleteBtn, clearBtn, statusEl
-      } = getRootedIds(root);
+    const setQuickDateRange = (range) => {
+      const fromEl = qs("dateFrom");
+      const toEl = qs("dateTo");
+      const today = new Date();
+      let start, end = new Date();
   
-      if (!selectEl) return;
+      switch (range) {
+        case "week": {
+          // Mandag som ukestart
+          const d = new Date(today);
+          const weekday = (d.getDay() + 6) % 7; // 0=mandag
+          start = new Date(d); start.setDate(d.getDate() - weekday);
+          break;
+        }
+        case "month": {
+          start = new Date(today.getFullYear(), today.getMonth(), 1);
+          break;
+        }
+        case "30days": {
+          start = new Date(today); start.setDate(today.getDate() - 30);
+          break;
+        }
+        default: { fromEl.value = ""; toEl.value = ""; return; }
+      }
+      fromEl.value = start.toISOString().split("T")[0];
+      toEl.value = end.toISOString().split("T")[0];
+    };
   
-      // Fyll inn noen eksempel-opsjoner hvis tom (valgfritt)
+    const init = () => {
+      const root = qs(ROOT_ID);
+      if (!root) return;
+  
+      // Elementer
+      const selectEl = qs("industries");
+      const selectedList = qs("selectedList");
+      const selectedCount = qs("selectedCount");
+      const dateFrom = qs("dateFrom");
+      const dateTo = qs("dateTo");
+      const presetNameEl = qs("presetName");
+      const saveBtn = qs("savePreset");
+      const picker = qs("presetPicker");
+      const applyBtn = qs("applyPreset");
+      const deleteBtn = qs("deletePreset");
+      const clearBtn = qs("clearSelection");
+      const quickButtons = root.querySelectorAll(".quick-range button");
+  
+      // Fallback-eksempler om listen er tom (kan fjernes i produksjon)
       if (!selectEl.options.length) {
-        [
-          "Alle bransjer","Arkitektvirksomhet","Byggeteknisk konsulentvirksomhet",
-          "Detaljhandel med bøker","Fysioterapi- og ergoterapitjenester",
-          "Reklamebyråvirksomhet","Rengjøring av bygninger","Treningssentre"
-        ].forEach(v => {
-          const opt = document.createElement("option");
-          opt.value = v; opt.textContent = v;
-          selectEl.appendChild(opt);
-        });
+        ["Arkitektvirksomhet","Reklamebyråvirksomhet","Treningssentre","IT-konsulent","Helsevesen"]
+          .forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v; opt.textContent = v;
+            selectEl.appendChild(opt);
+          });
       }
   
-      // Last inn presets
+      // Presets
       let presets = readPresets();
-      populatePresetPicker(presetPicker, presets);
+      const refreshPicker = () => {
+        picker.length = 1; // behold placeholder
+        Object.keys(presets).sort().forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name; opt.textContent = name;
+          picker.appendChild(opt);
+        });
+      };
+      refreshPicker();
   
-      // Hold chip-listen i sync ved endringer i selecten
-      selectEl.addEventListener("change", () => {
-        renderSelected(selectEl, selectedListEl, selectedCountEl);
-      });
-      // Første render
-      renderSelected(selectEl, selectedListEl, selectedCountEl);
+      // Chips render
+      selectEl.addEventListener("change", () => renderSelected(selectEl, selectedList, selectedCount));
+      renderSelected(selectEl, selectedList, selectedCount);
   
-      // Lagre preset
-      saveBtn?.addEventListener("click", () => {
-        const name = (presetNameEl?.value || "").trim();
-        if (!name) return setStatus(statusEl, "Skriv inn et navn på presetet.");
-        const values = getSelectedValues(selectEl);
-        if (!values.length) return setStatus(statusEl, "Velg minst én bransje før du lagrer.");
-        presets[name] = values;
+      // Hurtigvalg dato
+      quickButtons.forEach(btn =>
+        btn.addEventListener("click", () => setQuickDateRange(btn.dataset.range))
+      );
+  
+      // Lagre preset (bransjer + dato)
+      saveBtn.addEventListener("click", () => {
+        const name = (presetNameEl.value || "").trim();
+        if (!name) return alert("Skriv navn på preset.");
+        const data = {
+          industries: getSelectedValues(selectEl),
+          dateFrom: dateFrom.value || null,
+          dateTo: dateTo.value || null
+        };
+        presets[name] = data;
         writePresets(presets);
-        populatePresetPicker(presetPicker, presets);
-        presetPicker.value = name;
-        setStatus(statusEl, `Preset «${name}» lagret.`);
+        refreshPicker();
+        picker.value = name;
+        alert(`Preset "${name}" lagret.`);
       });
   
       // Hent preset
-      applyBtn?.addEventListener("click", () => {
-        const name = presetPicker?.value;
-        if (!name || !presets[name]) return setStatus(statusEl, "Velg et preset å hente.");
-        applyValues(selectEl, presets[name]); // vil trigge renderSelected via change
-        setStatus(statusEl, `Preset «${name}» hentet.`);
+      applyBtn.addEventListener("click", () => {
+        const name = picker.value;
+        if (!name || !presets[name]) return alert("Velg et preset først.");
+        const { industries = [], dateFrom: df = "", dateTo: dt = "" } = presets[name];
+        applyValues(selectEl, industries);
+        dateFrom.value = df || "";
+        dateTo.value = dt || "";
       });
   
       // Slett preset
-      deleteBtn?.addEventListener("click", () => {
-        const name = presetPicker?.value;
-        if (!name || !presets[name]) return setStatus(statusEl, "Velg et preset å slette.");
+      deleteBtn.addEventListener("click", () => {
+        const name = picker.value;
+        if (!name) return;
         delete presets[name];
         writePresets(presets);
-        populatePresetPicker(presetPicker, presets);
-        presetPicker.value = "";
-        setStatus(statusEl, `Preset «${name}» slettet.`);
+        refreshPicker();
+        picker.value = "";
       });
   
-      // Tøm valg
-      clearBtn?.addEventListener("click", () => {
-        applyValues(selectEl, []); // triggere renderSelected
-        setStatus(statusEl, "Valg tømt.");
+      // Tøm alt
+      clearBtn.addEventListener("click", () => {
+        applyValues(selectEl, []);
+        dateFrom.value = "";
+        dateTo.value = "";
       });
-    }
-  
-    // Init når DOM er klar (fungerer fint i Webflow)
-    const start = () => {
-      const root = qs(ROOT_ID);
-      if (root) init(root);
     };
+  
+    // Start
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", start);
+      document.addEventListener("DOMContentLoaded", init);
     } else {
-      start();
+      init();
     }
   })();
   
