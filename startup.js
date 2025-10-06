@@ -7,7 +7,7 @@ document.getElementById('select-field-activity').addEventListener('change', (e) 
 );
 
 document.getElementById("select-field-preset").addEventListener('change', (e) => {
-      startBrregList(gBrregbedrifter);
+    startBrregList(gBrregbedrifter);
 });
 
 
