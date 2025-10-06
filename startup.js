@@ -94,7 +94,7 @@ function loadDataBrreg(){
 function loadSelectors(data){
 
 
-    const selectorActivity = document.getElementById('select-field-activity');
+   
 
     //Finne alle typer næringer
     const allActivities = new Set();
@@ -105,7 +105,27 @@ function loadSelectors(data){
     });
     //Sorter alfabetisk
     const sortedActivities = Array.from(allActivities).sort((a, b) => a.localeCompare(b));
-    //Fyll select
+
+    //fyll presetfilter
+    const industrieselect = document.getElementById('industries');
+    //tømm selector
+    industrieselect.innerHTML = ''; // 
+
+    //legg til options
+    sortedActivities.forEach(activity => {
+        const option = document.createElement('option');
+        option.value = activity;
+        option.textContent = activity;
+        industrieselect.appendChild(option);
+    }
+    );
+
+    
+    //Fyll select filter
+    const selectorActivity = document.getElementById('select-field-activity');
+    //tømm selector
+    selectorActivity.innerHTML = '<option value="">— Velg næring —</option>'; // Bevar første option
+    //legg til options
     sortedActivities.forEach(activity => {
         const option = document.createElement('option');
         option.value = activity;
@@ -122,6 +142,10 @@ function loadSelectors(data){
 
 
 }
+
+
+
+
 
 function startBrregList(data){
 
