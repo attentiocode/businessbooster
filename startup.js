@@ -155,14 +155,6 @@ function startBrregList(data){
     const nodeRow = library.querySelector('.default-row');
 
 
-
-    //filter
-    const selectorActivity = document.getElementById('select-field-activity');
-    const selectedActivity = selectorActivity.value;
-    if (selectedActivity) {
-        data = data.filter(item => item.naeringskode1 && item.naeringskode1.beskrivelse === selectedActivity);
-    }
-
     //her skal valgt presetfilter gjelde
     const presetName = document.getElementById('select-field-preset').value;
     if (presetName) {
