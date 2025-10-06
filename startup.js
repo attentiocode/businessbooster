@@ -1,3 +1,5 @@
+let gBrregbedrifter = [];
+
 const fmt = d => d.toISOString().slice(0, 10);
 
 const startOfISOWeek = (date = new Date()) => {
@@ -64,17 +66,17 @@ async function hentNystartede({ fra, til, size = 200 } = {}) {
 
 function loadDataBrreg(){
     // Fyll en array med resultatene
-    let bedrifter = [];
+    gBrregbedrifter = [];
     
     hentNystartede()
       .then(data => {
-        bedrifter = data;
+        gBrregbedrifter = data;
         //laste selectorer
-        loadSelectors(data);
+        loadSelectors(gBrregbedrifter);
           // Kjør når siden lastes
         loadPeriodsIntoSelector("periodeSelector");
         //starte listevisning
-        startBrregList(data);
+        startBrregList(gBrregbedrifter);
 
 
       })
@@ -272,10 +274,10 @@ function ruteresponse(data,responseid){
 }
 
 document.getElementById('select-field-activity').addEventListener('change', (e) => {
-    startBrregList(data);
+    startBrregList(gBrregbedrifter);
 }
 );
 
 document.getElementById("select-field-preset").addEventListener('change', (e) => {
-        startBrregList(data);
+        startBrregList(gBrregbedrifter);
 });
