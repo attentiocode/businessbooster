@@ -10,6 +10,11 @@ document.getElementById("select-field-preset").addEventListener('change', (e) =>
       startBrregList(gBrregbedrifter);
 });
 
+
+document.getElementById("sentToSelect").addEventListener("click", function() {
+    dataFromBrregToSelect();
+});
+
 const fmt = d => d.toISOString().slice(0, 10);
 
 const startOfISOWeek = (date = new Date()) => {
