@@ -1,4 +1,5 @@
 let gBrregbedrifter = [];
+let gSelectbedrifter = [];
 
 document.getElementById('select-field-activity').addEventListener('change', (e) => {
   startBrregList(gBrregbedrifter);
@@ -232,7 +233,24 @@ function startBrregList(data) {
           item.forretningsadresse?.postnummer || ''
         } ${item.forretningsadresse?.poststed || ''}`.trim()
       : 'Ukjent adresse';
-    node.querySelector('.status').textContent = 'Brreg';
+
+    //hvis dette selskaper alt er i gSelectbedrifter så skal den være disabled
+    const alreadySelected = gSelectbedrifter.some(
+      (b) => b.organisasjonsnummer === item.organisasjonsnummer
+    );
+ 
+    let statusText = "brreg";
+    if(alreadySelected){
+        statusText = "Valgt";
+    }
+
+    node.querySelector('.status').textContent = statusText;
+
+    const checkbox = node.querySelector('.selectcheckbox');
+    checkbox.dataset.orgnr = item.organisasjonsnummer || '';
+    if (alreadySelected) {
+      checkbox.disabled = true;
+    }
 
     list.appendChild(node);
   });
@@ -306,3 +324,26 @@ function ruteresponse(data,responseid){
     }
 }
 
+function dataFromBrregToSelect(){
+
+//finne alle checkboxer som er huket av
+    const container = document.getElementById("rowlist");
+    const checkboxes = container.querySelectorAll(".selectcheckbox:checked");
+    const orgnrs = Array.from(checkboxes).map(cb => cb.dataset.orgnr).filter(Boolean);
+    if(orgnrs.length===0){
+        alert("Ingen bedrifter valgt");
+        return;
+    }
+
+    //finne alle aktuelle selskaper i gBrregbedrifter
+    const selectedCompanies = gBrregbedrifter.filter(b => orgnrs.includes(b.organisasjonsnummer));
+
+    //sjekke at det ikke er noen som er alt i gSelectbedrifter da skal de ikke legges til
+    const existingOrgnrs = new Set(gSelectbedrifter.map(b => b.organisasjonsnummer));
+    const newCompanies = selectedCompanies.filter(b => !existingOrgnrs.has(b.organisasjonsnummer));
+    gSelectbedrifter = gSelectbedrifter.concat(newCompanies);
+    console.log(gSelectbedrifter);
+   
+
+
+}
