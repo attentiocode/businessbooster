@@ -148,82 +148,96 @@ function loadSelectors(data){
 }
 
 
-function startBrregList(data){
+function startBrregList(data) {
+  const list = document.getElementById('rowlist');
+  const library = document.getElementById('elementlibrary');
+  const nodeRow = library.querySelector('.default-row');
+  const presetName = document.getElementById('select-field-preset')?.value;
 
-    const list = document.getElementById('rowlist');
-    const library = document.getElementById('elementlibrary');
-    const nodeRow = library.querySelector('.default-row');
+  // ------------------------------------------------------------
+  // 📦 1. Hent valgt preset (hvis det finnes)
+  // ------------------------------------------------------------
+  const presets = JSON.parse(localStorage.getItem('industryPresets') || '{}');
+  const preset = presets[presetName] || null;
 
+  // ------------------------------------------------------------
+  // 🎯 2. Filtrer data basert på valgt preset
+  // ------------------------------------------------------------
+  let filteredData = data;
 
-    //her skal valgt presetfilter gjelde
-    const presetName = document.getElementById('select-field-preset').value;
-    if (presetName) {
-        const presets = readPresets();
-        const preset = presets[presetName];
-        if (preset) {
-            if (preset.industries && preset.industries.length > 0) {
-                data = data.filter(item => item.naeringskode1 && preset.industries.includes(item.naeringskode1.beskrivelse));
-            }
-            if (preset.dateFrom) {
-                data = data.filter(item => item.registreringsdatoEnhetsregisteret >= preset.dateFrom);
-            }
-            if (preset.dateTo) {
-                data = data.filter(item => item.registreringsdatoEnhetsregisteret <= preset.dateTo);
-            }
-        }
-    }
-    
+  if (preset) {
+    const { industries = [], dateFrom, dateTo } = preset;
 
-    //sorter på dato deretter på navn
-    data.sort((a, b) => {
-        const dateA = new Date(a.registreringsdatoEnhetsregisteret);
-        const dateB = new Date(b.registreringsdatoEnhetsregisteret);
-        if (dateA < dateB) return 1;
-        if (dateA > dateB) return -1;
-        // Hvis datoene er like, sorter på navn
-        const nameA = a.navn.toUpperCase();
-        const nameB = b.navn.toUpperCase();
-        if (nameA < nameB) return -1;
-        if (nameA > nameB) return 1;
-        return 0;
+    filteredData = data.filter((item) => {
+      let include = true;
+
+      // --- Bransjefilter ---
+      if (industries.length > 0) {
+        const itemIndustry =
+          (item.naeringskode1?.beskrivelse || '').toLowerCase() ||
+          (item.bransje || '').toLowerCase();
+        include =
+          industries.some((ind) =>
+            itemIndustry.includes(ind.toLowerCase())
+          ) || false;
+      }
+
+      // --- Datofilter ---
+      if (include && (dateFrom || dateTo)) {
+        const regDate = new Date(item.registreringsdatoEnhetsregisteret);
+        if (dateFrom) include = regDate >= new Date(dateFrom);
+        if (dateTo) include = include && regDate <= new Date(dateTo);
+      }
+
+      return include;
     });
-    //tøm liste
-    list.innerHTML = '';
+  }
 
-    const counterlistbrreg = document.getElementById('counterlistbrreg');
-    let count = data.length || '0';
-    counterlistbrreg.textContent = count + " stk. nyregistrerte bedrifter denne uken";
+  // ------------------------------------------------------------
+  // 🔢 3. Sorter og vis listen
+  // ------------------------------------------------------------
+  filteredData.sort((a, b) => {
+    const dateA = new Date(a.registreringsdatoEnhetsregisteret);
+    const dateB = new Date(b.registreringsdatoEnhetsregisteret);
+    if (dateA < dateB) return 1;
+    if (dateA > dateB) return -1;
 
-    //fyll liste
-    data.forEach(item => {
-        const node = nodeRow.cloneNode(true);
-        
-        node.querySelector('.org-nr').textContent = item.organisasjonsnummer || 'Ukjent org.nr';
-        node.querySelector('.company-name').textContent = item.navn || 'Ukjent navn';
-        node.querySelector('.start-date').textContent = item.registreringsdatoEnhetsregisteret || 'Ukjent dato';
-        node.querySelector('.address').textContent = item.forretningsadresse ?
-            `${item.forretningsadresse?.adresse || ''}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`.trim() :
-            'Ukjent adresse';
-        node.querySelector('.status').textContent = "Brreg";
-        
+    const nameA = a.navn.toUpperCase();
+    const nameB = b.navn.toUpperCase();
+    if (nameA < nameB) return -1;
+    if (nameA > nameB) return 1;
+    return 0;
+  });
 
+  // ------------------------------------------------------------
+  // 🧹 4. Tøm liste og fyll med resultat
+  // ------------------------------------------------------------
+  list.innerHTML = '';
+  const counterlistbrreg = document.getElementById('counterlistbrreg');
+  const count = filteredData.length || 0;
+  counterlistbrreg.textContent =
+    `${count} stk. nyregistrerte bedrifter${preset ? ' (filtrert)' : ''}`;
 
+  filteredData.forEach((item) => {
+    const node = nodeRow.cloneNode(true);
 
-        list.appendChild(node);
-    });
+    node.querySelector('.org-nr').textContent =
+      item.organisasjonsnummer || 'Ukjent org.nr';
+    node.querySelector('.company-name').textContent =
+      item.navn || 'Ukjent navn';
+    node.querySelector('.start-date').textContent =
+      item.registreringsdatoEnhetsregisteret || 'Ukjent dato';
+    node.querySelector('.address').textContent = item.forretningsadresse
+      ? `${item.forretningsadresse?.adresse || ''}, ${
+          item.forretningsadresse?.postnummer || ''
+        } ${item.forretningsadresse?.poststed || ''}`.trim()
+      : 'Ukjent adresse';
+    node.querySelector('.status').textContent = 'Brreg';
 
-
-
-
-
-
-
-
-
-
-
-
+    list.appendChild(node);
+  });
 }
+
 
 function formatDate(d) {
     return d.toLocaleDateString("no-NO"); // DD.MM.YYYY
