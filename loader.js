@@ -27,8 +27,13 @@ cdnScripts.reduce((promise, script) => {
         if (member.loggedIn){
             console.log("Member is logged in");
 
+            //trykk på knappen mainpagetabbutton
+            document.getElementById("mainpagetabbutton").click();
+
         }else{
             console.log("Member is NOT logged in");
+            //trykk på knappen logintabbutton
+            document.getElementById("logintabbutton").click();
         }
 
     });
@@ -40,6 +45,4 @@ cdnScripts.reduce((promise, script) => {
 }).catch(error => {
     console.error(error);
 });
-
-
 

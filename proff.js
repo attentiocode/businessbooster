@@ -32,4 +32,6 @@ async function logCompanyOnce(orgnr,returnid) {
 
 function dataFromProff(data){
     console.log(data);
+
+    //supplere med data fra proff
 }
