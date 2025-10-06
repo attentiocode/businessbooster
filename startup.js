@@ -162,6 +162,24 @@ function startBrregList(data){
     if (selectedActivity) {
         data = data.filter(item => item.naeringskode1 && item.naeringskode1.beskrivelse === selectedActivity);
     }
+
+    //her skal valgt presetfilter gjelde
+    const presetName = document.getElementById('select-field-preset').value;
+    if (presetName) {
+        const presets = readPresets();
+        const preset = presets[presetName];
+        if (preset) {
+            if (preset.industries && preset.industries.length > 0) {
+                data = data.filter(item => item.naeringskode1 && preset.industries.includes(item.naeringskode1.beskrivelse));
+            }
+            if (preset.dateFrom) {
+                data = data.filter(item => item.registreringsdatoEnhetsregisteret >= preset.dateFrom);
+            }
+            if (preset.dateTo) {
+                data = data.filter(item => item.registreringsdatoEnhetsregisteret <= preset.dateTo);
+            }
+        }
+    }
     
 
     //sorter på dato deretter på navn
