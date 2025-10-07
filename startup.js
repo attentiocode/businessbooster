@@ -257,6 +257,7 @@ function startBrregList(data) {
     checkbox.dataset.orgnr = item.organisasjonsnummer || '';
     if (alreadySelected) {
       checkbox.disabled = true;
+      checkbox.checked = true;
     }
     //når checkbox endres så skal counter oppdateres
     checkbox.addEventListener('change', () => {
