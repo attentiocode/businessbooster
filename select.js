@@ -1,8 +1,35 @@
 //når knappen med id tabSelectButton trykkes skal funksjonen starteSelection kjøres med gSelectbedrifter som inndata
 document.getElementById("tabSelectButton").addEventListener("click", () => {
     startSelection(gSelectbedrifter);
-  });
-  
+});
+
+document.getElementById("getInfoFromProff").addEventListener("click", async () => {
+    const list = document.getElementById('rowlistSelect');
+    const checkboxes = list.querySelectorAll(".selectcheckbox:checked");
+    const orgnrs = Array.from(checkboxes).map(cb => cb.dataset.orgnr).filter(Boolean);
+    if (orgnrs.length === 0) {
+        alert("Ingen selskaper valgt.");
+        return;
+    }
+    // Disable button to prevent multiple clicks
+    const button = document.getElementById("getInfoFromProff");
+    button.disabled = true;
+    button.textContent = "Henter info...";
+    try {
+        for (const orgnr of orgnrs) {
+            await logCompanyOnce(orgnr, "selectToReady");
+        }
+        // Etter alle kall er fullført, oppdater listen
+        startSelection(gSelectbedrifter);
+    } catch (error) {
+        console.error("Feil ved henting av data fra Proff:", error);
+        alert("Det oppstod en feil under henting av data fra Proff. Se konsollen for detaljer.");
+    }
+    finally {
+        button.disabled = false;
+        button.textContent = "Hent info fra Proff";
+    }
+});
 
 function startSelection(data) {
     

@@ -33,5 +33,9 @@ async function logCompanyOnce(orgnr,returnid) {
 function dataFromProff(data){
     console.log(data);
 
-    //supplere med data fra proff
+    //merge data into gReadybedrifter med et parameter som heter proffData
+    const index = gReadybedrifter.findIndex(b => b.organisasjonsnummer === data.organisasjonsnummer);
+    if(index !== -1){
+        gReadybedrifter[index] = {...gReadybedrifter[index], proffData: data};
+    }
 }
