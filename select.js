@@ -76,18 +76,6 @@ function startSelection(data) {
       
           list.appendChild(node);
         });
-      }
+}
       
 
-
-
-
-
-
-
-
-
-
-
-
-}
