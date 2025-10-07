@@ -75,7 +75,6 @@ async function hentNystartede({ fra, til, size = 200 } = {}) {
   return hentNystartedeIPeriode({ fra, til, size });
 }
 
-
 function loadDataBrreg(){
     // Fyll en array med resultatene
     gBrregbedrifter = [];
@@ -151,7 +150,6 @@ function loadSelectors(data){
     */
 
 }
-
 
 function startBrregList(data) {
   const list = document.getElementById('rowlist');
@@ -346,6 +344,24 @@ function dataFromBrregToSelect(){
     const existingOrgnrs = new Set(gSelectbedrifter.map(b => b.organisasjonsnummer));
     const newCompanies = selectedCompanies.filter(b => !existingOrgnrs.has(b.organisasjonsnummer));
     gSelectbedrifter = gSelectbedrifter.concat(newCompanies);
+
+    //markere disablende de som er lagt til
+    checkboxes.forEach(cb => {
+        cb.disabled = true;
+        const row = cb.closest(".default-row");
+        if(row){
+            const statusEl = row.querySelector(".status");
+            if(statusEl){
+                statusEl.textContent = "Valgt";
+            }
+        }
+    }
+    );
+   
+    //oppdatere listevisning
+    startBrregList(gBrregbedrifter);
+    //logge gSelectbedrifter  
+
     console.log(gSelectbedrifter);
    
 
