@@ -17,6 +17,11 @@ function startSelection(data) {
         // 🧹 4. Tøm liste og fyll med resultat
         // ------------------------------------------------------------
         list.innerHTML = '';
+
+        //opdatert counter
+        const counterlistutvalg = document.getElementById("counterlistutvalg");
+        counterlistutvalg.textContent = `Totalt: ${data.length}`;
+        
         
       
         data.forEach((item) => {
