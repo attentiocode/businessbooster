@@ -134,7 +134,7 @@ function loadSelectors(data){
     }
     );
 
-    
+    /*
     //Fyll select filter
     const selectorActivity = document.getElementById('select-field-activity');
     //tømm selector
@@ -147,6 +147,8 @@ function loadSelectors(data){
         selectorActivity.appendChild(option);
     }
     );
+
+    */
 
 }
 
