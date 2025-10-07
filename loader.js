@@ -13,7 +13,9 @@ const cdnScripts = [
     "https://attentiocode.github.io/businessbooster/startup.js",
     "https://attentiocode.github.io/businessbooster/apicom.js",
     "https://attentiocode.github.io/businessbooster/proff.js",
-    "https://attentiocode.github.io/businessbooster/preset.js"
+    "https://attentiocode.github.io/businessbooster/preset.js",
+    "https://attentiocode.github.io/businessbooster/select.js"
+    
     
 
 ];

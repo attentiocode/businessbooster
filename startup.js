@@ -1,5 +1,6 @@
 let gBrregbedrifter = [];
 let gSelectbedrifter = [];
+let gReadybedrifter = []; 
 
 
 
