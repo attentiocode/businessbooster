@@ -278,7 +278,6 @@ function startBrregList(data) {
   });
 }
 
-
 function formatDate(d) {
     return d.toLocaleDateString("no-NO"); // DD.MM.YYYY
 }
@@ -334,6 +333,14 @@ document.getElementById("brregmastercheckbox").addEventListener("change", functi
     
 });
 
+document.getElementById("utvalgmastercheckbox").addEventListener("change", function() {
+    const container = document.getElementById("rowlistSelect");
+    const checkboxes = container.querySelectorAll(".selectcheckbox:not(:disabled)");
+    checkboxes.forEach(cb => {
+      cb.checked = this.checked;
+    });
+    
+});
 
 document.getElementById("testbutton").addEventListener("click", function() {
   logCompanyOnce('998766834',"dataFromProff");
