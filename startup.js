@@ -258,6 +258,7 @@ function startBrregList(data) {
       const container = document.getElementById("rowlist");
       const checkboxes = container.querySelectorAll(".selectcheckbox:checked");
       const counterlistbrregselected = document.getElementById("counterlistbrregselect");
+      counterlistbrregselected.style.display = checkboxes.length > 0 ? "inline" : "none";
       const selectedCount = checkboxes.length || 0;
       counterlistbrregselected.textContent = `${selectedCount} valgt`;
 
