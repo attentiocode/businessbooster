@@ -12,7 +12,7 @@ document.getElementById("getInfoFromProff").addEventListener("click", () => {
         return;
     }
     
-    logCompanyOnce("830068872","dataFromProff");
+    logCompanyOnce("998766834","dataFromProff");
 });
 
 function startSelection(data) {
