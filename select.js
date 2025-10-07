@@ -18,7 +18,7 @@ function startSelection(data) {
         // ------------------------------------------------------------
         list.innerHTML = '';
         const counterlistbrreg = document.getElementById('counterlistutvalg');
-        const count = filteredData.length || 0;
+        const count = data.length || 0;
         counterlistbrreg.textContent =
           `${count} stk. nyregistrerte bedrifter${preset ? ' (filtrert)' : ''}`;
       
