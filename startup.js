@@ -243,10 +243,15 @@ function startBrregList(data) {
  
     let statusText = "brreg";
     if(alreadySelected){
-        statusText = "Valgt";
+        statusText = "Utvalg";
     }
-
     node.querySelector('.status').textContent = statusText;
+
+
+    //marker raden node som valgt hvis alreadySelected
+    if (alreadySelected) {
+      node.classList.add('selected');
+    }
 
     const checkbox = node.querySelector('.selectcheckbox');
     checkbox.dataset.orgnr = item.organisasjonsnummer || '';
@@ -261,6 +266,9 @@ function startBrregList(data) {
       counterlistbrregselected.style.display = checkboxes.length > 0 ? "inline" : "none";
       const selectedCount = checkboxes.length || 0;
       counterlistbrregselected.textContent = `${selectedCount} valgt`;
+
+      const sendtoSelect = document.getElementById("sentToSelect");
+      sendtoSelect.style.display = checkboxes.length > 0 ? "inline-block" : "none";
 
     });
 
