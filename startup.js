@@ -253,6 +253,15 @@ function startBrregList(data) {
     if (alreadySelected) {
       checkbox.disabled = true;
     }
+    //når checkbox endres så skal counter oppdateres
+    checkbox.addEventListener('change', () => {
+      const container = document.getElementById("rowlist");
+      const checkboxes = container.querySelectorAll(".selectcheckbox:checked");
+      const counterlistbrregselected = document.getElementById("counterlistbrregselect");
+      const selectedCount = checkboxes.length || 0;
+      counterlistbrregselected.textContent = `${selectedCount} valgt`;
+
+    });
 
     list.appendChild(node);
   });
