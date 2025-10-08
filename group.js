@@ -21,7 +21,7 @@ function renderGroups(filter='') {
   localStorage.setItem('gGroupbedrifter', JSON.stringify(gGroupbedrifter));
 
   //oppdater selector
-    const groupSelect = document.getElementById('filterGroup');
+    const groupSelect = document.getElementById('filterGroupSelect');
     if (groupSelect) {
       const currentValue = groupSelect.value;
       groupSelect.innerHTML = '<option value="ALL">Alle grupper</option><option value="__none__">Ingen gruppe</option>';
@@ -33,7 +33,7 @@ function renderGroups(filter='') {
       });
       groupSelect.value = currentValue || 'ALL';
     }
-    
+
 }
 
 function openGroupDialog() {
