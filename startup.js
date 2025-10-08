@@ -476,6 +476,7 @@ function pickGroupViaDialog() {
         if (!name || !user) { alert('Fyll inn Gruppnavn og Brukernavn.'); return; }
         const id = newGroupId();
         gGroupbedrifter.push({ id, name, user, desc });
+        renderGroups(); // hvis du har en slik funksjon
         persistAll();
         dlg.close();
         resolve(id);
