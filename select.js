@@ -54,9 +54,9 @@ function renderSelect(data){
     //  - ellers: eksakt group-id (som string)
     if (filterGroup && filterGroup !== 'ALL') {
       if (filterGroup === '__none__') {
-        filteredData = filteredData.filter(b => getGroupId(b) === '');
+        filteredData = filteredData.filter(b => getGroupId(b) == '');
       } else {
-        filteredData = filteredData.filter(b => getGroupId(b) === filterGroup);
+        filteredData = filteredData.filter(b => getGroupId(b) == filterGroup);
       }
     }
   
