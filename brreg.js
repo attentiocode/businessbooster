@@ -24,7 +24,6 @@ function rangeFor(period){
   return { fra: d2str(from), til: d2str(to) };
 }
 
-/* ---------- UI wiring ---------- */
 const elPeriod = document.getElementById('brregPeriod');
 const elFrom   = document.getElementById('brregFrom');
 const elTo     = document.getElementById('brregTo');
@@ -33,23 +32,78 @@ const elSearch = document.getElementById('brregSearch');
 const elReset  = document.getElementById('brregReset');
 const elStatus = document.getElementById('brregStatus');
 
-// Sett default til "Denne uken"
+// Default: Denne uken
 (function initDefaults(){
   const r = rangeFor('this_week');
   elPeriod.value = 'this_week';
-  elFrom.value = r.fra;
-  elTo.value   = r.til;
+  elFrom.value = r.fra; elTo.value = r.til;
+  elFrom.disabled = false; elTo.disabled = false;
 })();
 
-// Når periode endres, fyll datoer (unntatt custom)
+function setDatesDisabled(disabled) {
+  elFrom.disabled = disabled;
+  elTo.disabled   = disabled;
+  if (disabled) { elFrom.value = ''; elTo.value = ''; }
+}
+
 elPeriod.addEventListener('change', () => {
+  if (elPeriod.value === 'none') { // Ingen dato
+    setDatesDisabled(true);
+    return;
+  }
+  setDatesDisabled(false);
   if (elPeriod.value === 'custom') return;
   const r = rangeFor(elPeriod.value);
-  elFrom.value = r.fra;
-  elTo.value   = r.til;
+  elFrom.value = r.fra; elTo.value = r.til;
 });
 
 /* ---------- Henter fra Brønnøysund (med paginering) ---------- */
+
+// Hent på orgnr direkte (eksakt treff)
+async function hentPåOrgnr(orgnr) {
+    const url = `https://data.brreg.no/enhetsregisteret/api/enheter/${orgnr}`;
+    const res = await fetch(url, { headers: {Accept:'application/json'} });
+    if (res.status === 404) return [];
+    if (!res.ok) throw new Error(`Feil fra BRREG: ${res.status}`);
+    const enhet = await res.json();
+    return enhet && enhet.organisasjonsnummer ? [enhet] : [];
+}
+
+// Hent på navn (paginert)
+async function hentPåNavn(navn, { size = 200 } = {}) {
+    const base = 'https://data.brreg.no/enhetsregisteret/api/enheter';
+    const alle = [];
+    let page = 0;
+  
+    while (true) {
+      const url = new URL(base);
+      url.searchParams.set('navn', navn);              // <-- navn-søk
+      url.searchParams.set('size', String(size));
+      url.searchParams.set('page', String(page));
+      url.searchParams.set('sort', 'navn,ASC');
+  
+      const res = await fetch(url.href, { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) throw new Error(`Feil fra BRREG: ${res.status}`);
+  
+      const data = await res.json();
+      const batch = data?._embedded?.enheter ?? [];
+      alle.push(...batch);
+  
+      const hasNext = Boolean(data?._links?.next?.href);
+      const totalPages = data?.page?.totalPages;
+  
+      if (batch.length === 0) break;
+      if (totalPages != null && page + 1 >= totalPages) break;
+      if (!hasNext) break;
+  
+      page++;
+      if (alle.length >= 9500 || page > 2000) break;
+    }
+    return alle;
+  }
+
+
+
 async function hentNystartedeIPeriode({ fra, til, size = 200 }) {
   const base = 'https://data.brreg.no/enhetsregisteret/api/enheter';
   const alle = [];
@@ -86,55 +140,63 @@ async function hentNystartedeIPeriode({ fra, til, size = 200 }) {
 
 /* ---------- Søkekommando ---------- */
 async function runBrregSearch() {
-  try {
-    const fra = elFrom.value;
-    const til = elTo.value;
-    if (!fra || !til) { alert('Velg fra- og tildato.'); return; }
-
-    const q  = (elQuery.value || '').trim();
-    const isOrgnr = /^\d{6,}$/.test(q); // enkel test
-
-    elStatus.textContent = 'Henter fra Brønnøysund …';
-    elSearch.disabled = true;
-
-    // 1) Hent etter dato
-    let data = await hentNystartedeIPeriode({ fra, til });
-
-    // 2) Tekstfilter lokalt (robust mot API-oppførsel)
-    if (q) {
-      const ql = q.toLowerCase();
-      data = data.filter(b => {
-        const org = String(b.organisasjonsnummer || '');
-        const navn = String(b.navn || '').toLowerCase();
-        const adrObj = b.forretningsadresse || b.postadresse || {};
-        const adr = Array.isArray(adrObj.adresse) ? adrObj.adresse.join(', ') : (adrObj.adresse || '');
-        const postnr = String(adrObj.postnummer || '');
-        const poststed = String(adrObj.poststed || '').toLowerCase();
-
-        if (isOrgnr) return org.includes(q);
-        return (
-          navn.includes(ql) ||
-          org.includes(q) ||
-          String(adr).toLowerCase().includes(ql) ||
-          postnr.includes(q) ||
-          poststed.includes(ql)
-        );
-      });
+    try {
+      const period = elPeriod.value;
+      const qRaw   = (elQuery.value || '').trim();
+      const qLower = qRaw.toLowerCase();
+      const isOrgnr = /^\d{6,}$/.test(qRaw); // enkel deteksjon
+  
+      elStatus.textContent = 'Søker…';
+      elSearch.disabled = true;
+  
+      let data = [];
+  
+      if (period === 'none') {
+        // Ingen dato → må ha noe å søke på
+        if (!qRaw) { alert('Skriv navn eller org.nr. når du velger «Ingen dato».'); elStatus.textContent = 'Klar.'; return; }
+        data = isOrgnr ? await hentPåOrgnr(qRaw) : await hentPåNavn(qRaw);
+      } else {
+        // Dato-søk (som før)
+        const fra = elFrom.value;
+        const til = elTo.value;
+        if (!fra || !til) { alert('Velg fra- og tildato.'); elStatus.textContent = 'Klar.'; return; }
+  
+        data = await hentNystartedeIPeriode({ fra, til });
+  
+        // Valgfri ekstra lokal filtrering på tekst (for å snevre inn)
+        if (qRaw) {
+          data = data.filter(b => {
+            const org = String(b.organisasjonsnummer || '');
+            const navn = String(b.navn || '').toLowerCase();
+            const adrObj = b.forretningsadresse || b.postadresse || {};
+            const adr = Array.isArray(adrObj.adresse) ? adrObj.adresse.join(', ') : (adrObj.adresse || '');
+            const postnr = String(adrObj.postnummer || '');
+            const poststed = String(adrObj.poststed || '').toLowerCase();
+  
+            if (isOrgnr) return org.includes(qRaw);
+            return (
+              navn.includes(qLower) ||
+              org.includes(qRaw) ||
+              String(adr).toLowerCase().includes(qLower) ||
+              postnr.includes(qRaw) ||
+              poststed.includes(qLower)
+            );
+          });
+        }
+      }
+  
+      // Lagre og vis
+      window.gBrregbedrifter = data;
+      if (typeof startBrregList === 'function') startBrregList(data);
+      elStatus.textContent = `Ferdig: ${data.length} treff.`;
+    } catch (err) {
+      console.error(err);
+      elStatus.textContent = `Feil: ${err.message || err}`;
+      alert(elStatus.textContent);
+    } finally {
+      elSearch.disabled = false;
     }
-
-    // 3) Lagre globalt + kall din visningsfunksjon
-    gBrregbedrifter = data;
-    startBrregList(gBrregbedrifter);
-
-    elStatus.textContent = `Ferdig: ${data.length} treff.`;
-  } catch (err) {
-    console.error(err);
-    elStatus.textContent = `Feil: ${err.message || err}`;
-    alert(elStatus.textContent);
-  } finally {
-    elSearch.disabled = false;
   }
-}
 
 /* ---------- Nullstill ---------- */
 function resetFilters() {
@@ -153,3 +215,11 @@ elReset .addEventListener('click', resetFilters);
 // (valgfritt) Enter i søk feltet
 elQuery.addEventListener('keydown', (e) => { if (e.key === 'Enter') runBrregSearch(); });
 
+function resetFilters() {
+    elQuery.value = '';
+    elPeriod.value = 'this_week';
+    const r = rangeFor('this_week');
+    elFrom.value = r.fra; elTo.value = r.til;
+    setDatesDisabled(false);
+    elStatus.textContent = 'Klar.';
+  }
