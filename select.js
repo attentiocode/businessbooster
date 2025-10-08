@@ -94,17 +94,42 @@ function startSelection(data) {
 }
       
 
-// Forventet globalt:
-// gSelectbedrifter: [{organisasjonsnummer, navn, forretningsadresse, registreringsdatoEnhetsregisteret, group, ...}]
-// gGroupbedrifter:  [{id, name, user, desc}]
+//når søkefeltet med id searchSelect endres skal renderSelect kjøres med gSelectbedrifter som inndata
+document.getElementById("searchSelect").addEventListener("input", () => {
+    renderSelect(gSelectbedrifter);
+});
+//når select-feltet med id filterGroupSelect endres skal renderSelect kjøres med gSelectbedrifter som inndata
+document.getElementById("filterGroupSelect").addEventListener("change", () => {
+    renderSelect(gSelectbedrifter);
+});
 
 
-  function renderSelect(data){
+
+function renderSelect(data){
 
     const tbody = document.getElementById('rowlistSelect');
     if (!tbody) return;
-  
     tbody.innerHTML = '';
+
+    //filter fra selector med id filterGroupSelect og søkeinputfeltet med id searchSelect
+    const filterGroup = document.getElementById('filterGroupSelect').value;
+    const searchTerm = document.getElementById('searchSelect').value.toLowerCase();
+    let filteredData = data;
+    if (filterGroup) {
+      filteredData = filteredData.filter(b => b.group == filterGroup);
+    }
+    if (searchTerm) {
+      filteredData = filteredData.filter(b =>
+        (b.navn && b.navn.toLowerCase().includes(searchTerm)) ||
+        (b.organisasjonsnummer && b.organisasjonsnummer.includes(searchTerm)) ||
+        (b.forretningsadresse && (
+          b.forretningsadresse.adresse && b.forretningsadresse.adresse.toLowerCase().includes(searchTerm) ||
+          b.forretningsadresse.postnummer && b.forretningsadresse.postnummer.includes(searchTerm) ||
+          b.forretningsadresse.poststed && b.forretningsadresse.poststed.toLowerCase().includes(searchTerm)
+        ))
+      );
+    }
+
   
 
     (data || []).forEach((b, i) => {
