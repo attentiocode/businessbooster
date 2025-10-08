@@ -37,37 +37,33 @@ function renderSelect(data){
     if (!tbody) return;
     tbody.innerHTML = '';
   
-    // -------- OPPDATERT FILTER-DEL --------
+    // Hjelpere for trygg tekst
     const val = v => (v == null ? '' : String(v));
     const low = v => val(v).toLowerCase();
-   
   
-    // filter fra selector med id filterGroupSelect og søkeinputfeltet med id searchSelect
-    const filterGroup = val(document.getElementById('filterGroupSelect')?.value || 'ALL').trim();
-    const searchTerm  = low(document.getElementById('searchSelect')?.value || '');
+    // Les filtre
+    const filterEl = document.getElementById('filterGroupSelect');
+    const searchEl = document.getElementById('searchSelect');
+    const filterGroup = val(filterEl ? filterEl.value : '');          // "" = alle
+    const searchTerm  = low(searchEl ? searchEl.value : '');
   
     let filteredData = Array.isArray(data) ? data.slice() : [];
   
     // 1) Gruppefilter
-    //  - "ALL" (eller tom verdi) = alle
-    //  - "__none__" = uten gruppe
-    //  - ellers: eksakt group-id (som string)
-    if (filterGroup !== 'ALL') {
-      if (filterGroup === '__none__') {
-        filteredData = filteredData.filter(b => getGroupId(b) == '');
-      } else {
-        //filtrer filteredData (item.group == filterGroup)
-        filteredData = filteredData.filter(b => b.group == filterGroup);
-      }
+    // ""  -> alle
+    // "id"-> match på b.group
+    if (filterGroup !== '') {
+      filteredData = filteredData.filter(b => String(b.group ?? '') === filterGroup);
     }
   
-    // 2) Tekstsøk (navn, orgnr, adresse, postnr, poststed, gruppenavn/ansvarlig)
+    // 2) Tekstsøk (navn, orgnr, adresse, postnr, poststed, + evt gruppenavn/ansvarlig)
     if (searchTerm) {
       filteredData = filteredData.filter(b => {
         const a   = b?.forretningsadresse || b?.postadresse || {};
         const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
-        // bruk samme enkle gruppeoppslag som i rendringen
-        const grp = (window.gGroupbedrifter || []).find(gr => String(gr.id) === getGroupId(b));
+  
+        // enkel gruppeoppslag for å kunne søke på gruppenavn/ansvarlig
+        const grp = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
   
         return (
           low(b?.navn).includes(searchTerm) ||
@@ -79,30 +75,28 @@ function renderSelect(data){
         );
       });
     }
-    // -------- SLUTT FILTER-DEL --------
   
-
-    //oppdater counterlistutvalg
-    const counterlistutvalg = document.getElementById("counterlistutvalg");
-    counterlistutvalg.textContent = filteredData.length+"Stk."
-
-
+    // Oppdater teller om den finnes
+    const counter = document.getElementById("counterlistutvalg");
+    if (counter) counter.textContent = `${filteredData.length} Stk.`;
+  
+    // Render rader
     (filteredData || []).forEach((b, i) => {
       const tr = document.createElement('tr');
       tr.classList.add('default-row');
   
-      // beholdt: ditt opprinnelige gruppeoppslag
-      const g = gGroupbedrifter.find(gr => gr.id == b.group);
+      // gruppe for visning
+      const g = (window.gGroupbedrifter || []).find(gr => gr.id == b.group);
   
       const fmtDate = (d) => {
         if (!d) return '—';
         const dt = new Date(d);
-        if (isNaN(dt)) return d;
-        return dt.toLocaleDateString('no-NO');
+        return isNaN(dt) ? d : dt.toLocaleDateString('no-NO');
       };
   
       const adresse = b.forretningsadresse
-        ? `${Array.isArray(b.forretningsadresse.adresse) ? b.forretningsadresse.adresse.join(', ') : (b.forretningsadresse.adresse || '')}, ${b.forretningsadresse?.postnummer || ''} ${b.forretningsadresse?.poststed || ''}`.replace(/^,\s*|\s*,\s*$/g,'').trim() || '—'
+        ? `${Array.isArray(b.forretningsadresse.adresse) ? b.forretningsadresse.adresse.join(', ') : (b.forretningsadresse.adresse || '')}, ${b.forretningsadresse?.postnummer || ''} ${b.forretningsadresse?.poststed || ''}`
+            .replace(/^,\s*|\s*,\s*$/g,'').trim() || '—'
         : '—';
   
       tr.innerHTML = `
@@ -126,5 +120,6 @@ function renderSelect(data){
       tbody.appendChild(tr);
     });
   }
+  
   
   
