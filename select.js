@@ -42,18 +42,27 @@ function renderSelect(data){
     const low = v => val(v).toLowerCase();
   
     // Les filtre
-    const filterEl = document.getElementById('filterGroupSelect');
     const searchEl = document.getElementById('searchSelect');
-    const filterGroup = val(filterEl ? filterEl.value : '');          // "" = alle
     const searchTerm  = low(searchEl ? searchEl.value : '');
   
+    // ---- robust gruppefilter ----
+    const sel = document.getElementById('filterGroupSelect');
+    const rawFilter = sel ? sel.value : '';            // "" = alle, ellers en id
+    const filterGroup = String(rawFilter || '').trim(); // normaliser
+
     let filteredData = Array.isArray(data) ? data.slice() : [];
-  
-    // 1) Gruppefilter
-    // ""  -> alle
-    // "id"-> match på b.group
-    if (filterGroup !== '') {
-      filteredData = filteredData.filter(b => String(b.group ?? '') === filterGroup);
+
+    // ""  -> vis alle
+    // "__none__" (hvis du bruker det) -> vis uten gruppe
+    // ellers -> eksakt match (trimmet streng) mot b.group
+    if (filterGroup === '') {
+    // ingen filtrering
+    } else if (filterGroup === '__none__') {
+    filteredData = filteredData.filter(b => String(b.group ?? '').trim() === '');
+    } else {
+    filteredData = filteredData.filter(
+        b => String(b.group ?? '').trim() === filterGroup
+    );
     }
   
     // 2) Tekstsøk (navn, orgnr, adresse, postnr, poststed, + evt gruppenavn/ansvarlig)
