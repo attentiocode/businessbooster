@@ -112,7 +112,7 @@ function startSelection(data) {
         const tr = document.createElement('tr');
         tr.classList.add('default-row');
 
-        const g = gGroupbedrifter.find(gr => gr.id === b.group);
+        const g = gGroupbedrifter.find(gr => gr.id == b.group);
         const fmtDate = (d) => {
           if (!d) return '—';
           const dt = new Date(d);
