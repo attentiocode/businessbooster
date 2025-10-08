@@ -13,6 +13,23 @@ document.getElementById("sentToSelect").addEventListener("click", function() {
     dataFromBrregToSelect();
 });
 
+//når knappen med id dashboardSideButton trykkes så skal den trykke videre på dashboardTabButton
+document.getElementById("dashboardSideButton").addEventListener("click", function() {
+    document.getElementById("dashboardTabButton").click();
+});
+
+document.getElementById("groupSideButton").addEventListener("click", function() {
+    document.getElementById("groupTabButton").click();
+});
+
+document.getElementById("presetSideButton").addEventListener("click", function() {
+    document.getElementById("presetTabButton").click();
+});
+
+
+
+
+
 const fmt = d => d.toISOString().slice(0, 10);
 
 const startOfISOWeek = (date = new Date()) => {
