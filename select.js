@@ -106,7 +106,7 @@ function renderSelect(data){
             .replace(/^,\s*|\s*,\s*$/g,'').trim() || '—'
         : '—';
   
-      tr.innerHTML = `
+        tr.innerHTML = `
         <td style="width:40px;">
           <input
             type="checkbox"
@@ -115,15 +115,14 @@ function renderSelect(data){
             id="sel${i}"
           />
         </td>
-        <td class="mono">${b.organisasjonsnummer ?? '—'}</td>
-        <td>${b.navn ?? '—'}</td>
-        <td>${adresse}</td>
-        <td>${g ? g.name : '—'}</td>
-        <td>${g ? (g.user || '—') : '—'}</td>
-        <td>${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
-        <td class="status">${b.status || 'Valgt'}</td>
+        <td class="mono" style="font-size:10px;">${b.organisasjonsnummer ?? '—'}</td>
+        <td style="font-weight:700;font-size:12px;">${b.navn ?? '—'}</td>
+        <td style="font-size:10px;">${adresse}</td>
+        <td style="font-size:10px;">${g ? g.name : '—'}</td>
+        <td style="font-size:10px;">${g ? (g.user || '—') : '—'}</td>
+        <td style="font-size:10px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
+        <td class="status" style="font-size:10px;">${b.status || 'Valgt'}</td>
       `;
-  
       tbody.appendChild(tr);
     });
   }
