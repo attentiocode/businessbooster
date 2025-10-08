@@ -533,7 +533,6 @@ async function dataFromBrregToSelect() {
 
   // oppdatere listevisning (din funksjon)
   if (typeof startBrregList === 'function') startBrregList(gBrregbedrifter);
-
   persistAll();
   console.log('Valgt groupId:', groupId);
   console.log('gSelectbedrifter:', gSelectbedrifter);

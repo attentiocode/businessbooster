@@ -100,8 +100,7 @@ async function hentPåNavn(navn, { size = 200 } = {}) {
       if (alle.length >= 9500 || page > 2000) break;
     }
     return alle;
-  }
-
+}
 
 
 async function hentNystartedeIPeriode({ fra, til, size = 200 }) {
@@ -186,7 +185,7 @@ async function runBrregSearch() {
       }
   
       // Lagre og vis
-      window.gBrregbedrifter = data;
+      gBrregbedrifter = data;
       if (typeof startBrregList === 'function') startBrregList(data);
       elStatus.textContent = `Ferdig: ${data.length} treff.`;
     } catch (err) {
@@ -196,7 +195,7 @@ async function runBrregSearch() {
     } finally {
       elSearch.disabled = false;
     }
-  }
+}
 
 /* ---------- Nullstill ---------- */
 function resetFilters() {
