@@ -129,7 +129,7 @@ function startSelection(data) {
           <td style="width:40px;">
             <input
               type="checkbox"
-              class="selectcheckboxSelect"
+              class="selectcheckbox"
               data-orgnr="${b.organisasjonsnummer || ''}"
               id="sel${i}"
             />
