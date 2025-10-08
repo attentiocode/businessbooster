@@ -55,10 +55,8 @@ function renderSelect(data){
     // ""  -> vis alle
     // "__none__" (hvis du bruker det) -> vis uten gruppe
     // ellers -> eksakt match (trimmet streng) mot b.group
-    if (filterGroup === '') {
+    if (filterGroup === ''|| filterGroup.toLowerCase() === 'all') {
     // ingen filtrering
-    } else if (filterGroup === '__none__') {
-    filteredData = filteredData.filter(b => String(b.group ?? '').trim() === '');
     } else {
     filteredData = filteredData.filter(
         b => String(b.group ?? '').trim() === filterGroup
