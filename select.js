@@ -94,69 +94,102 @@ function startSelection(data) {
 }
       
 
-function renderSelect(data, filter = '') {
+// Forventet globalt:
+// gSelectbedrifter: [{organisasjonsnummer, navn, forretningsadresse, registreringsdatoEnhetsregisteret, group, ...}]
+// gGroupbedrifter:  [{id, name, user, desc}]
+
+function buildGroupIndex() {
+    // Bruk alltid streng som nøkkel for å unngå number/string-mismatch
+    return (window.gGroupbedrifter || []).reduce((acc, g) => {
+      acc[String(g.id)] = g;
+      return acc;
+    }, {});
+  }
+  
+  function fmtAddr(b) {
+    const adr = b.forretningsadresse || b.postadresse || {};
+    const del = [
+      Array.isArray(adr.adresse) ? adr.adresse.join(', ') : adr.adresse,
+      adr.postnummer,
+      adr.poststed
+    ].filter(Boolean);
+    return del.join(', ') || '—';
+  }
+  
+  function fmtDate(d) {
+    if (!d) return '—';
+    const date = new Date(d);
+    return isNaN(date) ? d : date.toLocaleDateString('no-NO');
+  }
+  
+  function populateGroupDropdown() {
+    const sel = document.getElementById('filterGroupSelect');
+    if (!sel) return;
+  
+    sel.innerHTML = '';
+    sel.insertAdjacentHTML('beforeend', `<option value="ALL">Alle grupper</option>`);
+    sel.insertAdjacentHTML('beforeend', `<option value="__none__">Uten gruppe</option>`);
+  
+    (window.gGroupbedrifter || []).forEach(g => {
+      sel.insertAdjacentHTML('beforeend', `<option value="${String(g.id)}">${g.name}</option>`);
+    });
+  }
+  
+  function renderSelect(
+    data,
+    { search = '', groupId = 'ALL' } = {}
+  ) {
     const tbody = document.getElementById('rowlistSelect');
     if (!tbody) return;
   
-    // slå opp grupper
-    const groupById = (window.gGroupbedrifter || []).reduce((acc, g) => {
-      acc[g.id] = g;
-      return acc;
-    }, {});
+    const groups = buildGroupIndex();
+    const norm = v => (v == null ? '' : String(v)).toLowerCase();
+    const getGroup = b => groups[String(b.group)] || null;
   
-    // hjelpefunksjoner
-    const fmtAddr = (b) => {
-      const adr = b.forretningsadresse || b.postadresse || {};
-      const del = [
-        Array.isArray(adr.adresse) ? adr.adresse.join(', ') : adr.adresse,
-        adr.postnummer,
-        adr.poststed
-      ].filter(Boolean);
-      return del.join(', ') || '—';
-    };
-  
-    const fmtDate = (d) => {
-      if (!d) return '—';
-      const date = new Date(d);
-      return isNaN(date) ? d : date.toLocaleDateString('no-NO');
-    };
-  
-    const matchesFilter = (b) => {
-      if (!filter) return true;
-      const f = filter.toLowerCase();
-      const group = groupById[b.group];
+    function matches(b) {
+      // 1) Gruppefilter fra dropdown
+      if (groupId && groupId !== 'ALL') {
+        if (groupId === '__none__') {
+          if (String(b.group || '') !== '') return false; // bare uten gruppe
+        } else {
+          if (String(b.group) !== String(groupId)) return false; // spesifikk gruppe
+        }
+      }
+      // 2) Tekstsøk
+      if (!search) return true;
+      const g = getGroup(b);
       return [
         b.organisasjonsnummer,
         b.navn,
         fmtAddr(b),
-        group?.name,
-        group?.user
-      ].filter(Boolean).some(v => String(v).toLowerCase().includes(f));
-    };
+        g?.name,
+        g?.user
+      ].some(val => norm(val).includes(norm(search)));
+    }
   
     tbody.innerHTML = '';
   
     (data || [])
-      .filter(matchesFilter)
+      .filter(matches)
       .forEach((b, i) => {
-        const group = groupById[b.group] || null;
+        const g = getGroup(b);
         const tr = document.createElement('tr');
         tr.classList.add('default-row');
   
         tr.innerHTML = `
           <td style="width:40px;">
-            <input 
-              type="checkbox" 
-              class="selectcheckboxSelect" 
-              data-orgnr="${b.organisasjonsnummer || ''}" 
+            <input
+              type="checkbox"
+              class="selectcheckboxSelect"
+              data-orgnr="${b.organisasjonsnummer || ''}"
               id="sel${i}"
             />
           </td>
           <td class="mono">${b.organisasjonsnummer ?? '—'}</td>
           <td>${b.navn ?? '—'}</td>
           <td>${fmtAddr(b)}</td>
-          <td>${group ? group.name : '—'}</td>
-          <td>${group ? (group.user || '—') : '—'}</td>
+          <td>${g ? g.name : '—'}</td>
+          <td>${g ? (g.user || '—') : '—'}</td>
           <td>${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
           <td class="status">${b.status || 'Valgt'}</td>
         `;
@@ -164,4 +197,24 @@ function renderSelect(data, filter = '') {
         tbody.appendChild(tr);
       });
   }
+  
+  /* Wire up */
+  populateGroupDropdown();
+  
+  document.getElementById('filterGroupSelect')?.addEventListener('change', e => {
+    renderSelect(
+      window.gSelectbedrifter,
+      { search: document.getElementById('searchSelect')?.value || '', groupId: e.target.value }
+    );
+  });
+  
+  document.getElementById('searchSelect')?.addEventListener('input', e => {
+    renderSelect(
+      window.gSelectbedrifter,
+      { search: e.target.value, groupId: document.getElementById('filterGroupSelect')?.value || 'ALL' }
+    );
+  });
+  
+  /* Første render */
+  renderSelect(window.gSelectbedrifter, { search: '', groupId: 'ALL' });
   
