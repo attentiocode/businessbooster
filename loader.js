@@ -42,7 +42,7 @@ cdnScripts.reduce((promise, script) => {
     });
 
 
-    loadDataBrreg();
+    
     
 
 }).catch(error => {

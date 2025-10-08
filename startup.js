@@ -166,6 +166,7 @@ function loadSelectors(data){
 
 }
 
+/*
 function startBrregList(data) {
   const list = document.getElementById('rowlist');
   const library = document.getElementById('elementlibrary');
@@ -291,7 +292,7 @@ function startBrregList(data) {
     list.appendChild(node);
   });
 }
-
+*/
 function formatDate(d) {
     return d.toLocaleDateString("no-NO"); // DD.MM.YYYY
 }
@@ -489,11 +490,9 @@ function pickGroupViaDialog() {
   });
 }
 
-// *** OPPDATERT FUNKSJON ***
-// - krever at bruker velger (eller lager) gruppe
-// - legger groupId inn i hvert nytt selskap (felt 'group')
+
 async function dataFromBrregToSelect() {
-  // finne alle checkboxer som er huket av
+ 
   const container = document.getElementById("rowlist");
   const checkboxes = container ? container.querySelectorAll(".selectcheckbox:checked") : [];
   const orgnrs = Array.from(checkboxes).map(cb => cb.dataset.orgnr).filter(Boolean);
