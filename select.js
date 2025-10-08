@@ -153,6 +153,12 @@ function renderSelect(data){
     }
     // -------- SLUTT FILTER-DEL --------
   
+
+    //oppdater counterlistutvalg
+    const counterlistutvalg = document.getElementById("counterlistutvalg");
+    counterlistutvalg.textContent = filteredData.length+"Stk."
+
+
     (filteredData || []).forEach((b, i) => {
       const tr = document.createElement('tr');
       tr.classList.add('default-row');
