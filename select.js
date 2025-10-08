@@ -40,7 +40,7 @@ function renderSelect(data){
     // -------- OPPDATERT FILTER-DEL --------
     const val = v => (v == null ? '' : String(v));
     const low = v => val(v).toLowerCase();
-    const getGroupId = b => val(b?.group ?? b?.groupId ?? b?.gruppeId).trim();
+   
   
     // filter fra selector med id filterGroupSelect og søkeinputfeltet med id searchSelect
     const filterGroup = val(document.getElementById('filterGroupSelect')?.value || 'ALL').trim();
@@ -52,11 +52,12 @@ function renderSelect(data){
     //  - "ALL" (eller tom verdi) = alle
     //  - "__none__" = uten gruppe
     //  - ellers: eksakt group-id (som string)
-    if (filterGroup && filterGroup !== 'ALL') {
+    if (filterGroup !== 'ALL') {
       if (filterGroup === '__none__') {
         filteredData = filteredData.filter(b => getGroupId(b) == '');
       } else {
-        filteredData = filteredData.filter(b => getGroupId(b) == filterGroup);
+        //filtrer filteredData (item.group == filterGroup)
+        filteredData = filteredData.filter(b => b.group == filterGroup);
       }
     }
   
