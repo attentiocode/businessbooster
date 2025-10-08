@@ -98,83 +98,32 @@ function startSelection(data) {
 // gSelectbedrifter: [{organisasjonsnummer, navn, forretningsadresse, registreringsdatoEnhetsregisteret, group, ...}]
 // gGroupbedrifter:  [{id, name, user, desc}]
 
-function buildGroupIndex() {
-    // Bruk alltid streng som nøkkel for å unngå number/string-mismatch
-    return (window.gGroupbedrifter || []).reduce((acc, g) => {
-      acc[String(g.id)] = g;
-      return acc;
-    }, {});
-  }
-  
-  function fmtAddr(b) {
-    const adr = b.forretningsadresse || b.postadresse || {};
-    const del = [
-      Array.isArray(adr.adresse) ? adr.adresse.join(', ') : adr.adresse,
-      adr.postnummer,
-      adr.poststed
-    ].filter(Boolean);
-    return del.join(', ') || '—';
-  }
-  
-  function fmtDate(d) {
-    if (!d) return '—';
-    const date = new Date(d);
-    return isNaN(date) ? d : date.toLocaleDateString('no-NO');
-  }
-  
-  function populateGroupDropdown() {
-    const sel = document.getElementById('filterGroupSelect');
-    if (!sel) return;
-  
-    sel.innerHTML = '';
-    sel.insertAdjacentHTML('beforeend', `<option value="ALL">Alle grupper</option>`);
-    sel.insertAdjacentHTML('beforeend', `<option value="__none__">Uten gruppe</option>`);
-  
-    (window.gGroupbedrifter || []).forEach(g => {
-      sel.insertAdjacentHTML('beforeend', `<option value="${String(g.id)}">${g.name}</option>`);
-    });
-  }
-  
-  function renderSelect(
-    data,
-    { search = '', groupId = 'ALL' } = {}
-  ) {
+
+  function renderSelect(data){
+
     const tbody = document.getElementById('rowlistSelect');
     if (!tbody) return;
   
-    const groups = buildGroupIndex();
-    const norm = v => (v == null ? '' : String(v)).toLowerCase();
-    const getGroup = b => groups[String(b.group)] || null;
-  
-    function matches(b) {
-      // 1) Gruppefilter fra dropdown
-      if (groupId && groupId !== 'ALL') {
-        if (groupId === '__none__') {
-          if (String(b.group || '') !== '') return false; // bare uten gruppe
-        } else {
-          if (String(b.group) !== String(groupId)) return false; // spesifikk gruppe
-        }
-      }
-      // 2) Tekstsøk
-      if (!search) return true;
-      const g = getGroup(b);
-      return [
-        b.organisasjonsnummer,
-        b.navn,
-        fmtAddr(b),
-        g?.name,
-        g?.user
-      ].some(val => norm(val).includes(norm(search)));
-    }
-  
     tbody.innerHTML = '';
   
-    (data || [])
-      .filter(matches)
-      .forEach((b, i) => {
-        const g = getGroup(b);
+
+    (data || []).forEach((b, i) => {
+  
         const tr = document.createElement('tr');
         tr.classList.add('default-row');
+
+        const g = gGroupbedrifter.find(gr => gr.id === b.group);
+        const fmtDate = (d) => {
+          if (!d) return '—';
+          const dt = new Date(d);
+          if (isNaN(dt)) return d;
+          return dt.toISOString().split('T')[0];
+        }
+        const adresse = b.forretningsadresse
+          ? `${b.forretningsadresse?.adresse || ''}, ${
+              b.forretningsadresse?.postnummer || ''
+            } ${b.forretningsadresse?.poststed || ''}`.trim()
+          : '—';
   
         tr.innerHTML = `
           <td style="width:40px;">
@@ -187,7 +136,7 @@ function buildGroupIndex() {
           </td>
           <td class="mono">${b.organisasjonsnummer ?? '—'}</td>
           <td>${b.navn ?? '—'}</td>
-          <td>${fmtAddr(b)}</td>
+          <td>${adresse}</td>
           <td>${g ? g.name : '—'}</td>
           <td>${g ? (g.user || '—') : '—'}</td>
           <td>${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
@@ -197,24 +146,4 @@ function buildGroupIndex() {
         tbody.appendChild(tr);
       });
   }
-  
-  /* Wire up */
-  populateGroupDropdown();
-  
-  document.getElementById('filterGroupSelect')?.addEventListener('change', e => {
-    renderSelect(
-      window.gSelectbedrifter,
-      { search: document.getElementById('searchSelect')?.value || '', groupId: e.target.value }
-    );
-  });
-  
-  document.getElementById('searchSelect')?.addEventListener('input', e => {
-    renderSelect(
-      window.gSelectbedrifter,
-      { search: e.target.value, groupId: document.getElementById('filterGroupSelect')?.value || 'ALL' }
-    );
-  });
-  
-  /* Første render */
-  renderSelect(window.gSelectbedrifter, { search: '', groupId: 'ALL' });
   
