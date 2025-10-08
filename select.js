@@ -132,7 +132,7 @@ function renderSelect(data){
 
   
 
-    (data || []).forEach((b, i) => {
+    (filteredData || []).forEach((b, i) => {
   
         const tr = document.createElement('tr');
         tr.classList.add('default-row');
