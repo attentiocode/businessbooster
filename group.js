@@ -24,7 +24,7 @@ function renderGroups(filter='') {
     const groupSelect = document.getElementById('filterGroupSelect');
     if (groupSelect) {
       const currentValue = groupSelect.value;
-      groupSelect.innerHTML = '<option value="ALL">Alle grupper</option><option value="__none__">Ingen gruppe</option>';
+      groupSelect.innerHTML = '<option value="ALL">Alle grupper</option>';
       gGroupbedrifter.forEach(g => {
         const option = document.createElement('option');
         option.value = g.id;
