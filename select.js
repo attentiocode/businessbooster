@@ -93,7 +93,7 @@ function renderSelect(data){
       tr.classList.add('default-row');
   
       // gruppe for visning
-      const g = (window.gGroupbedrifter || []).find(gr => gr.id == b.group);
+      const g = (gGroupbedrifter || []).find(gr => gr.id == b.group);
   
       const fmtDate = (d) => {
         if (!d) return '—';
