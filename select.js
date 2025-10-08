@@ -17,7 +17,7 @@ document.getElementById("getInfoFromProff").addEventListener("click", () => {
 
 function startSelection(data) {
     
-   
+   /*
         const list = document.getElementById('rowlistSelect');
         const library = document.getElementById('elementlibrary');
         const nodeRow = library.querySelector('.default-row');
@@ -89,6 +89,79 @@ function startSelection(data) {
       
           list.appendChild(node);
         });
+        */
+    renderSelect(data);
 }
       
 
+function renderSelect(data, filter = '') {
+    const tbody = document.getElementById('rowlistSelect');
+    if (!tbody) return;
+  
+    // slå opp grupper
+    const groupById = (window.gGroupbedrifter || []).reduce((acc, g) => {
+      acc[g.id] = g;
+      return acc;
+    }, {});
+  
+    // hjelpefunksjoner
+    const fmtAddr = (b) => {
+      const adr = b.forretningsadresse || b.postadresse || {};
+      const del = [
+        Array.isArray(adr.adresse) ? adr.adresse.join(', ') : adr.adresse,
+        adr.postnummer,
+        adr.poststed
+      ].filter(Boolean);
+      return del.join(', ') || '—';
+    };
+  
+    const fmtDate = (d) => {
+      if (!d) return '—';
+      const date = new Date(d);
+      return isNaN(date) ? d : date.toLocaleDateString('no-NO');
+    };
+  
+    const matchesFilter = (b) => {
+      if (!filter) return true;
+      const f = filter.toLowerCase();
+      const group = groupById[b.group];
+      return [
+        b.organisasjonsnummer,
+        b.navn,
+        fmtAddr(b),
+        group?.name,
+        group?.user
+      ].filter(Boolean).some(v => String(v).toLowerCase().includes(f));
+    };
+  
+    tbody.innerHTML = '';
+  
+    (data || [])
+      .filter(matchesFilter)
+      .forEach((b, i) => {
+        const group = groupById[b.group] || null;
+        const tr = document.createElement('tr');
+        tr.classList.add('default-row');
+  
+        tr.innerHTML = `
+          <td style="width:40px;">
+            <input 
+              type="checkbox" 
+              class="selectcheckboxSelect" 
+              data-orgnr="${b.organisasjonsnummer || ''}" 
+              id="sel${i}"
+            />
+          </td>
+          <td class="mono">${b.organisasjonsnummer ?? '—'}</td>
+          <td>${b.navn ?? '—'}</td>
+          <td>${fmtAddr(b)}</td>
+          <td>${group ? group.name : '—'}</td>
+          <td>${group ? (group.user || '—') : '—'}</td>
+          <td>${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
+          <td class="status">${b.status || 'Valgt'}</td>
+        `;
+  
+        tbody.appendChild(tr);
+      });
+  }
+  
