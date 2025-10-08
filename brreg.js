@@ -124,7 +124,7 @@ async function runBrregSearch() {
 
     // 3) Lagre globalt + kall din visningsfunksjon
     gBrregbedrifter = data;
-    if (typeof startBrregList === 'function') startBrregList(data);
+    startBrregList(gBrregbedrifter);
 
     elStatus.textContent = `Ferdig: ${data.length} treff.`;
   } catch (err) {
