@@ -105,53 +105,26 @@ document.getElementById("filterGroupSelect").addEventListener("change", () => {
 
 
 
-function renderSelect(data) {
+function renderSelect(data){
     const tbody = document.getElementById('rowlistSelect');
     if (!tbody) return;
     tbody.innerHTML = '';
   
-    // ---- Hjelpere ----
+    // -------- OPPDATERT FILTER-DEL --------
     const val = v => (v == null ? '' : String(v));
     const low = v => val(v).toLowerCase();
     const getGroupId = b => val(b?.group ?? b?.groupId ?? b?.gruppeId).trim();
   
-    const fmtDate = (d) => {
-      if (!d) return '—';
-      const dt = new Date(d);
-      if (isNaN(dt)) return d;
-      // vis som dd.mm.yyyy
-      return dt.toLocaleDateString('no-NO');
-    };
-  
-    const fmtAddr = (b) => {
-      const a = b?.forretningsadresse || b?.postadresse || {};
-      const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
-      const parts = [adr, a.postnummer, a.poststed].filter(Boolean);
-      return parts.length ? parts.join(', ') : '—';
-    };
-  
-    // Bygg gruppe-index (tåler ulike id-felt)
-    const groupIdx = (window.gGroupbedrifter || []).reduce((m, g) => {
-      const keys = [
-        g?.id, g?.airtableid, g?.groupId, g?.gruppeId
-      ].map(x => val(x).trim()).filter(Boolean);
-      keys.forEach(k => { m[k] = g; });
-      return m;
-    }, {});
-  
-    const resolveGroup = (b) => {
-      const gid = getGroupId(b);
-      if (!gid) return null;
-      return groupIdx[gid] || null;
-    };
-  
-    // ---- Filtre fra UI ----
+    // filter fra selector med id filterGroupSelect og søkeinputfeltet med id searchSelect
     const filterGroup = val(document.getElementById('filterGroupSelect')?.value || 'ALL').trim();
-    const searchTerm = low(document.getElementById('searchSelect')?.value || '');
+    const searchTerm  = low(document.getElementById('searchSelect')?.value || '');
   
     let filteredData = Array.isArray(data) ? data.slice() : [];
   
-    // 1) Gruppefilter (ALL = alle, __none__ = uten gruppe)
+    // 1) Gruppefilter
+    //  - "ALL" (eller tom verdi) = alle
+    //  - "__none__" = uten gruppe
+    //  - ellers: eksakt group-id (som string)
     if (filterGroup && filterGroup !== 'ALL') {
       if (filterGroup === '__none__') {
         filteredData = filteredData.filter(b => getGroupId(b) === '');
@@ -163,9 +136,10 @@ function renderSelect(data) {
     // 2) Tekstsøk (navn, orgnr, adresse, postnr, poststed, gruppenavn/ansvarlig)
     if (searchTerm) {
       filteredData = filteredData.filter(b => {
-        const g = resolveGroup(b);
-        const a = b?.forretningsadresse || b?.postadresse || {};
+        const a   = b?.forretningsadresse || b?.postadresse || {};
         const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
+        // bruk samme enkle gruppeoppslag som i rendringen
+        const grp = (window.gGroupbedrifter || []).find(gr => String(gr.id) === getGroupId(b));
   
         return (
           low(b?.navn).includes(searchTerm) ||
@@ -173,16 +147,29 @@ function renderSelect(data) {
           low(adr).includes(searchTerm) ||
           val(a?.postnummer).includes(searchTerm) ||
           low(a?.poststed).includes(searchTerm) ||
-          (g && (low(g.name).includes(searchTerm) || low(g.user).includes(searchTerm)))
+          (grp && (low(grp.name).includes(searchTerm) || low(grp.user).includes(searchTerm)))
         );
       });
     }
+    // -------- SLUTT FILTER-DEL --------
   
-    // ---- Render rader ----
     (filteredData || []).forEach((b, i) => {
-      const g = resolveGroup(b);
       const tr = document.createElement('tr');
       tr.classList.add('default-row');
+  
+      // beholdt: ditt opprinnelige gruppeoppslag
+      const g = gGroupbedrifter.find(gr => gr.id == b.group);
+  
+      const fmtDate = (d) => {
+        if (!d) return '—';
+        const dt = new Date(d);
+        if (isNaN(dt)) return d;
+        return dt.toLocaleDateString('no-NO');
+      };
+  
+      const adresse = b.forretningsadresse
+        ? `${Array.isArray(b.forretningsadresse.adresse) ? b.forretningsadresse.adresse.join(', ') : (b.forretningsadresse.adresse || '')}, ${b.forretningsadresse?.postnummer || ''} ${b.forretningsadresse?.poststed || ''}`.replace(/^,\s*|\s*,\s*$/g,'').trim() || '—'
+        : '—';
   
       tr.innerHTML = `
         <td style="width:40px;">
@@ -195,13 +182,15 @@ function renderSelect(data) {
         </td>
         <td class="mono">${b.organisasjonsnummer ?? '—'}</td>
         <td>${b.navn ?? '—'}</td>
-        <td>${fmtAddr(b)}</td>
+        <td>${adresse}</td>
         <td>${g ? g.name : '—'}</td>
         <td>${g ? (g.user || '—') : '—'}</td>
         <td>${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
         <td class="status">${b.status || 'Valgt'}</td>
       `;
+  
       tbody.appendChild(tr);
     });
   }
+  
   
