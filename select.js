@@ -118,17 +118,32 @@ function renderSelect(data){
     if (filterGroup) {
       filteredData = filteredData.filter(b => b.group == filterGroup);
     }
+
+
+    // 2) Tekstsøk (navn, orgnr, adresse, postnr, poststed + valgfritt gruppenavn/ansvarlig)
     if (searchTerm) {
-        //søk i navn,organisasjonsnummer,adresse,postnummer,poststed
-        filteredData = filteredData.filter(b => 
-            (b.navn && b.navn.toLowerCase().includes(searchTerm)) ||
-            (b.organisasjonsnummer && b.organisasjonsnummer.includes(searchTerm)) ||
-            (b.forretningsadresse && (
-                (b.forretningsadresse.adresse && b.forretningsadresse.adresse.toLowerCase().includes(searchTerm)) ||
-                (b.forretningsadresse.postnummer && b.forretningsadresse.postnummer.includes(searchTerm)) ||
-                (b.forretningsadresse.poststed && b.forretningsadresse.poststed.toLowerCase().includes(searchTerm))
-            ))
+        // valgfritt: slå opp gruppenavn/ansvarlig hvis du har gGroupbedrifter
+        const groupIdx = (window.gGroupbedrifter || []).reduce((m, g) => {
+        const k = val(g.id ?? g.airtableid ?? g.groupId ?? g.gruppeId).trim();
+        if (k) m[k] = g;
+        return m;
+        }, {});
+    
+        filteredData = filteredData.filter(b => {
+        const a = b?.forretningsadresse || b?.postadresse || {};
+        const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
+        const gid = getGroupId(b);
+        const grp = groupIdx[gid];
+    
+        return (
+            low(b?.navn).includes(searchTerm) ||
+            val(b?.organisasjonsnummer).includes(searchTerm) ||
+            low(adr).includes(searchTerm) ||
+            val(a?.postnummer).includes(searchTerm) ||
+            low(a?.poststed).includes(searchTerm) ||
+            (grp && (low(grp.name).includes(searchTerm) || low(grp.user).includes(searchTerm)))
         );
+        });
     }
 
   
