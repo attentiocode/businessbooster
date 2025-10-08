@@ -17,7 +17,6 @@ const cdnScripts = [
     "https://attentiocode.github.io/businessbooster/select.js",
     "https://attentiocode.github.io/businessbooster/group.js"
     
-
 ];
 
 // Laste inn alle skriptene sekvensielt
