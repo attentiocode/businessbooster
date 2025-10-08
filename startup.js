@@ -367,6 +367,7 @@ function ruteresponse(data,responseid){
     }
 }
 
+/*
 function dataFromBrregToSelect(){
 
 //finne alle checkboxer som er huket av
@@ -405,3 +406,144 @@ function dataFromBrregToSelect(){
 
     console.log(gSelectbedrifter);
 }
+*/
+
+// Globale datastrukturer (bruker dine eksisterende hvis de finnes)
+window.gGroupbedrifter = window.gGroupbedrifter || [];          // [{id, name, user, desc}]
+window.gSelectbedrifter = window.gSelectbedrifter || [];        // [{..., group: <groupId>}]
+window.gBrregbedrifter = window.gBrregbedrifter || [];          // din kilde fra Brreg
+
+// Valgfri persist (kan fjernes om du ikke vil skrive til localStorage her)
+function persistAll() {
+  try {
+    localStorage.setItem('gGroupbedrifter', JSON.stringify(gGroupbedrifter));
+    localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter));
+  } catch(e) {}
+}
+
+// Hjelp: generer id til ny gruppe
+function newGroupId() {
+  return 'grp_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+}
+
+// Åpne dialogen og returner en Promise som gir valgt groupId (oppretter ny ved behov)
+function pickGroupViaDialog() {
+  return new Promise(resolve => {
+    const dlg = document.getElementById('groupPicker');
+    const select = document.getElementById('groupPickerSelect');
+    const form = document.getElementById('newGroupForm');
+    const okBtn = document.getElementById('grp_okBtn');
+    const cancelBtn = document.getElementById('grp_cancelBtn');
+
+    // 1) Fyll select med grupper + Ny gruppe
+    function fillOptions() {
+      select.innerHTML = '';
+      // Eksisterende grupper
+      gGroupbedrifter.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = g.name;
+        select.appendChild(opt);
+      });
+      // Ny gruppe
+      const optNew = document.createElement('option');
+      optNew.value = '__new__';
+      optNew.textContent = '➕ Ny gruppe…';
+      select.appendChild(optNew);
+
+      // Ingen grupper => preselect Ny gruppe
+      if (gGroupbedrifter.length === 0) select.value = '__new__';
+      form.style.display = (select.value === '__new__') ? 'block' : 'none';
+      okBtn.textContent = (select.value === '__new__') ? 'Opprett og velg' : 'Velg';
+    }
+
+    fillOptions();
+
+    // 2) Interaksjon
+    select.onchange = () => {
+      form.style.display = (select.value === '__new__') ? 'block' : 'none';
+      okBtn.textContent = (select.value === '__new__') ? 'Opprett og velg' : 'Velg';
+    };
+
+    cancelBtn.onclick = () => { dlg.close(); resolve(null); };
+
+    okBtn.onclick = () => {
+      if (select.value === '__new__') {
+        // Valider og opprett gruppe
+        const name = (document.getElementById('ng_name').value || '').trim();
+        const user = (document.getElementById('ng_user').value || '').trim();
+        const desc = (document.getElementById('ng_desc').value || '').trim();
+        if (!name || !user) { alert('Fyll inn Gruppnavn og Brukernavn.'); return; }
+        const id = newGroupId();
+        gGroupbedrifter.push({ id, name, user, desc });
+        persistAll();
+        dlg.close();
+        resolve(id);
+      } else {
+        const chosen = select.value || null;
+        if (!chosen) { alert('Velg en gruppe.'); return; }
+        dlg.close();
+        resolve(chosen);
+      }
+    };
+
+    // 3) Åpne
+    try { dlg.showModal(); } catch(e) { dlg.show(); }
+  });
+}
+
+// *** OPPDATERT FUNKSJON ***
+// - krever at bruker velger (eller lager) gruppe
+// - legger groupId inn i hvert nytt selskap (felt 'group')
+async function dataFromBrregToSelect() {
+  // finne alle checkboxer som er huket av
+  const container = document.getElementById("rowlist");
+  const checkboxes = container ? container.querySelectorAll(".selectcheckbox:checked") : [];
+  const orgnrs = Array.from(checkboxes).map(cb => cb.dataset.orgnr).filter(Boolean);
+
+  if (orgnrs.length === 0) {
+    alert("Ingen bedrifter valgt");
+    return;
+  }
+
+  // La bruker velge/evt. lage gruppe
+  const groupId = await pickGroupViaDialog();
+  if (!groupId) return; // avbrutt
+
+  // finne alle aktuelle selskaper i gBrregbedrifter
+  const selectedCompanies = gBrregbedrifter.filter(b => orgnrs.includes(b.organisasjonsnummer));
+
+  // sjekke at det ikke er noen som er alt i gSelectbedrifter
+  const existingOrgnrs = new Set(gSelectbedrifter.map(b => b.organisasjonsnummer));
+  const newCompanies = selectedCompanies
+    .filter(b => !existingOrgnrs.has(b.organisasjonsnummer))
+    .map(b => ({ ...b, group: groupId }));  // <- legg på groupId her
+
+  // legg til
+  gSelectbedrifter = gSelectbedrifter.concat(newCompanies);
+
+  // markere/disablende de som er lagt til
+  checkboxes.forEach(cb => {
+    cb.disabled = true;
+    const row = cb.closest(".default-row");
+    if (row) {
+      const statusEl = row.querySelector(".status");
+      if (statusEl) statusEl.textContent = "Valgt";
+    }
+  });
+
+  // oppdatere listevisning (din funksjon)
+  if (typeof startBrregList === 'function') startBrregList(gBrregbedrifter);
+
+  persistAll();
+  console.log('Valgt groupId:', groupId);
+  console.log('gSelectbedrifter:', gSelectbedrifter);
+}
+
+// (Valgfritt) last fra localStorage hvis du bruker persist
+try {
+  const g1 = localStorage.getItem('gGroupbedrifter');
+  if (g1) window.gGroupbedrifter = JSON.parse(g1);
+  const g2 = localStorage.getItem('gSelectbedrifter');
+  if (g2) window.gSelectbedrifter = JSON.parse(g2);
+} catch(e) {}
