@@ -1,7 +1,7 @@
-let gBrregbedrifter = [];
-let gSelectbedrifter = [];
-let gReadybedrifter = []; 
-
+let gBrregbedrifter = JSON.parse(localStorage.getItem('gBrregbedrifter') || '[]');
+let gSelectbedrifter = JSON.parse(localStorage.getItem('gSelectbedrifter') || '[]');
+let gReadybedrifter = JSON.parse(localStorage.getItem('gReadybedrifter') || '[]');
+let gGroupbedrifter = JSON.parse(localStorage.getItem('gGroupbedrifter') || '[]');
 
 
 document.getElementById("select-field-preset").addEventListener('change', (e) => {
@@ -408,10 +408,6 @@ function dataFromBrregToSelect(){
 }
 */
 
-// Globale datastrukturer (bruker dine eksisterende hvis de finnes)
-window.gGroupbedrifter = window.gGroupbedrifter || [];          // [{id, name, user, desc}]
-window.gSelectbedrifter = window.gSelectbedrifter || [];        // [{..., group: <groupId>}]
-window.gBrregbedrifter = window.gBrregbedrifter || [];          // din kilde fra Brreg
 
 // Valgfri persist (kan fjernes om du ikke vil skrive til localStorage her)
 function persistAll() {
@@ -522,6 +518,8 @@ async function dataFromBrregToSelect() {
 
   // legg til
   gSelectbedrifter = gSelectbedrifter.concat(newCompanies);
+  //lagre i lokalstorege
+  persistAll();
 
   // markere/disablende de som er lagt til
   checkboxes.forEach(cb => {

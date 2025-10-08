@@ -1,4 +1,4 @@
-let gGroupbedrifter = JSON.parse(localStorage.getItem('gGroupbedrifter') || '[]');
+
 let editIndex = null;
 
 function renderGroups(filter='') {
