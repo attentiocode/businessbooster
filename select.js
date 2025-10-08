@@ -121,12 +121,7 @@ function renderSelect(data){
     if (searchTerm) {
       filteredData = filteredData.filter(b =>
         (b.navn && b.navn.toLowerCase().includes(searchTerm)) ||
-        (b.organisasjonsnummer && b.organisasjonsnummer.includes(searchTerm)) ||
-        (b.forretningsadresse && (
-          b.forretningsadresse.adresse && b.forretningsadresse.adresse.toLowerCase().includes(searchTerm) ||
-          b.forretningsadresse.postnummer && b.forretningsadresse.postnummer.includes(searchTerm) ||
-          b.forretningsadresse.poststed && b.forretningsadresse.poststed.toLowerCase().includes(searchTerm)
-        ))
+        (b.organisasjonsnummer.includes(searchTerm))
       );
     }
 
