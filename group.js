@@ -19,6 +19,21 @@ function renderGroups(filter='') {
       tbody.appendChild(tr);
     });
   localStorage.setItem('gGroupbedrifter', JSON.stringify(gGroupbedrifter));
+
+  //oppdater selector
+    const groupSelect = document.getElementById('filterGroup');
+    if (groupSelect) {
+      const currentValue = groupSelect.value;
+      groupSelect.innerHTML = '<option value="ALL">Alle grupper</option><option value="__none__">Ingen gruppe</option>';
+      gGroupbedrifter.forEach(g => {
+        const option = document.createElement('option');
+        option.value = g.id;
+        option.textContent = g.name;
+        groupSelect.appendChild(option);
+      });
+      groupSelect.value = currentValue || 'ALL';
+    }
+    
 }
 
 function openGroupDialog() {
