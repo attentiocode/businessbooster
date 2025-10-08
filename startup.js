@@ -89,7 +89,7 @@ async function hentNystartede({ fra, til, size = 200 } = {}) {
   }
   return hentNystartedeIPeriode({ fra, til, size });
 }
-
+/*
 function loadDataBrreg(){
     // Fyll en array med resultatene
     gBrregbedrifter = [];
@@ -98,9 +98,9 @@ function loadDataBrreg(){
       .then(data => {
         gBrregbedrifter = data;
         //laste selectorer
-        loadSelectors(gBrregbedrifter);
+        //loadSelectors(gBrregbedrifter);
           // Kjør når siden lastes
-        loadPeriodsIntoSelector("periodeSelector");
+        //loadPeriodsIntoSelector("periodeSelector");
         //starte listevisning
         startBrregList(gBrregbedrifter);
 
@@ -109,15 +109,16 @@ function loadDataBrreg(){
 
       .catch(console.error);
     
-    /*
+    
     //Fra–til spesifikt
     hentNystartede({ fra: '2025-09-01', til: '2025-09-15' })
         .then(data => {
             bedrifter = data;
         })
         .catch(console.error);
-*/
+
 }
+*/
 
 function loadSelectors(data){
 
@@ -166,7 +167,7 @@ function loadSelectors(data){
 
 }
 
-/*
+
 function startBrregList(data) {
   const list = document.getElementById('rowlist');
   const library = document.getElementById('elementlibrary');
@@ -292,7 +293,7 @@ function startBrregList(data) {
     list.appendChild(node);
   });
 }
-*/
+
 function formatDate(d) {
     return d.toLocaleDateString("no-NO"); // DD.MM.YYYY
 }
