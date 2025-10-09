@@ -244,7 +244,17 @@ function startBrregList(data) {
 
   function updateSelectedCount() {
     const total = list.querySelectorAll('.selectcheckbox:checked').length;
-    if (counterSelected) counterSelected.textContent = `${total} valgt`;
+
+    if (counterSelected) {
+      counterSelected.textContent = `${total} valgt`;
+
+      // Vis / skjul etter antall
+      if (total > 0) {
+        counterSelected.style.display = 'block';
+      } else {
+        counterSelected.style.display = 'none';
+      }
+    }
   }
 
   // legg til event listeners på alle checkboxer
