@@ -186,7 +186,7 @@ function startBrregList(data) {
   list.innerHTML = '';
   const counterlistbrreg = document.getElementById('counterlistbrreg');
   const count = filteredData.length || 0;
-  counterlistbrreg.textContent = `${count}${preset ? ' (filtrert)' : ''}`;
+  counterlistbrreg.textContent = `${count} treff ${preset ? ' (filtrert)' : ''}`;
 
   filteredData.forEach((item) => {
     const tr = document.createElement('tr');
