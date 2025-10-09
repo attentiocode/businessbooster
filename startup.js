@@ -253,7 +253,7 @@ function startBrregList(data) {
   let g = null;
     if (alreadySelected) {
       tr.classList.add('selected');
-      g = (gGroupbedrifter || []).find(gr => gr.id == b.group);
+      g = (gGroupbedrifter || []).find(gr => gr.id == item.group);
     }
 
     
