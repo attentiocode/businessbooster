@@ -322,12 +322,6 @@ document.getElementById("brregmastercheckbox").addEventListener("change", functi
     
 });
 
-
-
-document.getElementById("testbutton").addEventListener("click", function() {
-  logCompanyOnce('998766834',"dataFromProff");
-});
-
 function ruteresponse(data,responseid){
 
     if(responseid==="dataFromProff"){
