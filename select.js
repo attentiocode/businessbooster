@@ -37,39 +37,44 @@ function renderSelect(data){
     if (!tbody) return;
     tbody.innerHTML = '';
   
-    // Hjelpere for trygg tekst
+    // --- Hjelpere ---
     const val = v => (v == null ? '' : String(v));
     const low = v => val(v).toLowerCase();
   
-    // Les filtre
+    const fmtDate = (d) => {
+      if (!d) return '—';
+      const dt = new Date(d);
+      return isNaN(dt) ? d : dt.toLocaleDateString('no-NO');
+    };
+  
+    const fmtAddr = (b) => {
+      const a = b?.forretningsadresse || b?.postadresse || {};
+      const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
+      return [adr, a.postnummer, a.poststed].filter(Boolean).join(', ') || '—';
+    };
+  
+    // --- Les filtre ---
     const searchEl = document.getElementById('searchSelect');
     const searchTerm  = low(searchEl ? searchEl.value : '');
   
-    // ---- robust gruppefilter ----
     const sel = document.getElementById('filterGroupSelect');
-    const rawFilter = sel ? sel.value : '';            // "" = alle, ellers en id
-    const filterGroup = String(rawFilter || '').trim(); // normaliser
-
+    const rawFilter = sel ? sel.value : '';                  // "" = alle
+    const filterGroup = String(rawFilter || '').trim();      // normaliser
+  
+    // --- Filtrer ---
     let filteredData = Array.isArray(data) ? data.slice() : [];
-
-    // ""  -> vis alle
-    // "__none__" (hvis du bruker det) -> vis uten gruppe
-    // ellers -> eksakt match (trimmet streng) mot b.group
-    if (filterGroup === ''|| filterGroup.toLowerCase() === 'all') {
-    // ingen filtrering
-    } else {
-    filteredData = filteredData.filter(
-        b => String(b.group ?? '').trim() === filterGroup
-    );
+  
+    // Gruppefilter
+    if (!(filterGroup === '' || filterGroup.toLowerCase() === 'all')) {
+      filteredData = filteredData.filter(b => String(b.group ?? '').trim() === filterGroup);
     }
   
-    // 2) Tekstsøk (navn, orgnr, adresse, postnr, poststed, + evt gruppenavn/ansvarlig)
+    // Tekstsøk (navn, orgnr, adresse, postnr, poststed, + gruppenavn/ansvarlig)
     if (searchTerm) {
       filteredData = filteredData.filter(b => {
         const a   = b?.forretningsadresse || b?.postadresse || {};
         const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
   
-        // enkel gruppeoppslag for å kunne søke på gruppenavn/ansvarlig
         const grp = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
   
         return (
@@ -83,30 +88,18 @@ function renderSelect(data){
       });
     }
   
-    // Oppdater teller om den finnes
+    // Oppdater teller
     const counter = document.getElementById("counterlistutvalg");
     if (counter) counter.textContent = `${filteredData.length} Stk.`;
   
-    // Render rader
+    // --- Render rader ---
     (filteredData || []).forEach((b, i) => {
       const tr = document.createElement('tr');
       tr.classList.add('default-row');
   
-      // gruppe for visning
-      const g = (gGroupbedrifter || []).find(gr => gr.id == b.group);
+      const g = (window.gGroupbedrifter || []).find(gr => gr.id == b.group);
   
-      const fmtDate = (d) => {
-        if (!d) return '—';
-        const dt = new Date(d);
-        return isNaN(dt) ? d : dt.toLocaleDateString('no-NO');
-      };
-  
-      const adresse = b.forretningsadresse
-        ? `${Array.isArray(b.forretningsadresse.adresse) ? b.forretningsadresse.adresse.join(', ') : (b.forretningsadresse.adresse || '')}, ${b.forretningsadresse?.postnummer || ''} ${b.forretningsadresse?.poststed || ''}`
-            .replace(/^,\s*|\s*,\s*$/g,'').trim() || '—'
-        : '—';
-  
-        tr.innerHTML = `
+      tr.innerHTML = `
         <td style="width:40px;">
           <input
             type="checkbox"
@@ -117,15 +110,112 @@ function renderSelect(data){
         </td>
         <td class="mono" style="font-size:10px;">${b.organisasjonsnummer ?? '—'}</td>
         <td style="font-weight:700;font-size:12px;">${b.navn ?? '—'}</td>
-        <td style="font-size:11px;">${adresse}</td>
+        <td style="font-size:11px;">${fmtAddr(b)}</td>
         <td style="font-size:11px;">${g ? g.name : '—'}</td>
         <td style="font-size:11px;">${g ? (g.user || '—') : '—'}</td>
         <td style="font-size:11px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
         <td class="status" style="font-size:10px;">${b.status || 'Valgt'}</td>
       `;
+  
       tbody.appendChild(tr);
     });
+  
+    // --- Massebehandling UI + handlers ---
+    const bulkBar   = document.getElementById('select-bulk-actions');
+    const bulkCount = document.getElementById('select-bulk-count');
+    const btnRemove = document.getElementById('ba-remove');
+    const btnMove   = document.getElementById('ba-move');
+    const btnEnrich = document.getElementById('ba-enrich');
+  
+    function getSelectedOrgnrs() {
+      return Array.from(tbody.querySelectorAll('.selectcheckbox'))
+        .filter(cb => cb.checked && !cb.disabled) // ikke tell disabled
+        .map(cb => cb.dataset.orgnr)
+        .filter(Boolean);
+    }
+  
+    function updateBulkUI() {
+      const n = getSelectedOrgnrs().length;
+      if (bulkBar)   bulkBar.style.display = n > 0 ? 'flex' : 'none';
+      if (bulkCount) bulkCount.textContent = `${n} valgt`;
+    }
+  
+    // Lytt på endringer i alle (ikke-disablede) checkbokser
+    tbody.querySelectorAll('.selectcheckbox').forEach(cb => {
+      if (!cb.disabled) cb.addEventListener('change', updateBulkUI);
+    });
+    updateBulkUI();
+  
+    // --- Knapp: Fjern fra utvalg ---
+    if (btnRemove) {
+      btnRemove.onclick = () => {
+        const orgnrs = getSelectedOrgnrs();
+        if (!orgnrs.length) return;
+        if (!confirm(`Fjerne ${orgnrs.length} bedrift(er) fra utvalget?`)) return;
+  
+        window.gSelectbedrifter = (window.gSelectbedrifter || []).filter(
+          b => !orgnrs.includes(String(b.organisasjonsnummer))
+        );
+        try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
+  
+        // re-render fra utvalget (eller fra filteredData hvis du ønsker å beholde filteret)
+        renderSelect(gSelectbedrifrifter);
+      };
+    }
+  
+    // --- Knapp: Flytt til annen gruppe ---
+    if (btnMove) {
+      btnMove.onclick = async () => {
+        const orgnrs = getSelectedOrgnrs();
+        if (!orgnrs.length) return;
+  
+        let groupId = null;
+        if (typeof pickGroupViaDialog === 'function') {
+          groupId = await pickGroupViaDialog();
+        } else {
+          groupId = prompt('Lim inn gruppe-ID som selskapene skal flyttes til:');
+        }
+        if (!groupId) return;
+  
+        (window.gSelectbedrifter || []).forEach(b => {
+          if (orgnrs.includes(String(b.organisasjonsnummer))) b.group = String(groupId);
+        });
+        try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
+  
+        renderSelect(gSelectbedrifter);
+      };
+    }
+  
+    // --- Knapp: Innhent mer data ---
+    if (btnEnrich) {
+      btnEnrich.onclick = async () => {
+        const orgnrs = getSelectedOrgnrs();
+        if (!orgnrs.length) return;
+  
+        async function fetchDetails(orgnr) {
+          const url = `https://data.brreg.no/enhetsregisteret/api/enheter/${orgnr}`;
+          const res = await fetch(url, { headers: { 'Accept':'application/json' }});
+          if (!res.ok) return null;
+          return await res.json();
+        }
+  
+        // Hent i puljer (10 av gangen)
+        for (let i = 0; i < orgnrs.length; i += 10) {
+          const chunk = orgnrs.slice(i, i + 10);
+          const results = await Promise.all(chunk.map(fetchDetails));
+          results.filter(Boolean).forEach(enhet => {
+            const idx = (window.gSelectbedrifter || []).findIndex(b => String(b.organisasjonsnummer) === String(enhet.organisasjonsnummer));
+            if (idx >= 0) gSelectbedrifter[idx] = { ...gSelectbedrifter[idx], ...enhet };
+          });
+        }
+  
+        try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
+  
+        renderSelect(gSelectbedrifter);
+      };
+    }
   }
+  
   
   
   
