@@ -322,14 +322,7 @@ document.getElementById("brregmastercheckbox").addEventListener("change", functi
     
 });
 
-document.getElementById("utvalgmastercheckbox").addEventListener("change", function() {
-    const container = document.getElementById("rowlistSelect");
-    const checkboxes = container.querySelectorAll(".selectcheckbox:not(:disabled)");
-    checkboxes.forEach(cb => {
-      cb.checked = this.checked;
-    });
-    
-});
+
 
 document.getElementById("testbutton").addEventListener("click", function() {
   logCompanyOnce('998766834',"dataFromProff");
@@ -342,46 +335,6 @@ function ruteresponse(data,responseid){
     }
 }
 
-/*
-function dataFromBrregToSelect(){
-
-//finne alle checkboxer som er huket av
-    const container = document.getElementById("rowlist");
-    const checkboxes = container.querySelectorAll(".selectcheckbox:checked");
-    const orgnrs = Array.from(checkboxes).map(cb => cb.dataset.orgnr).filter(Boolean);
-    if(orgnrs.length===0){
-        alert("Ingen bedrifter valgt");
-        return;
-    }
-
-    //finne alle aktuelle selskaper i gBrregbedrifter
-    const selectedCompanies = gBrregbedrifter.filter(b => orgnrs.includes(b.organisasjonsnummer));
-
-    //sjekke at det ikke er noen som er alt i gSelectbedrifter da skal de ikke legges til
-    const existingOrgnrs = new Set(gSelectbedrifter.map(b => b.organisasjonsnummer));
-    const newCompanies = selectedCompanies.filter(b => !existingOrgnrs.has(b.organisasjonsnummer));
-    gSelectbedrifter = gSelectbedrifter.concat(newCompanies);
-
-    //markere disablende de som er lagt til
-    checkboxes.forEach(cb => {
-        cb.disabled = true;
-        const row = cb.closest(".default-row");
-        if(row){
-            const statusEl = row.querySelector(".status");
-            if(statusEl){
-                statusEl.textContent = "Valgt";
-            }
-        }
-    }
-    );
-   
-    //oppdatere listevisning
-    startBrregList(gBrregbedrifter);
-    //logge gSelectbedrifter  
-
-    console.log(gSelectbedrifter);
-}
-*/
 
 
 // Valgfri persist (kan fjernes om du ikke vil skrive til localStorage her)
