@@ -246,18 +246,21 @@ function startBrregList(data) {
     const alreadySelected = gSelectbedrifter.some(
       (b) => b.organisasjonsnummer === item.organisasjonsnummer
     );
-    let statusText = "brreg";
-    if(alreadySelected){
-        statusText = "Utvalg";
-    }
+   
 
     //marker raden node som valgt hvis alreadySelected
     if (alreadySelected) {
       tr.classList.add('selected');
     }
 
-    const adresse = b.forretningsadresse
-        ? `${Array.isArray(b.forretningsadresse.adresse) ? b.forretningsadresse.adresse.join(', ') : (b.forretningsadresse.adresse || '')}, ${b.forretningsadresse?.postnummer || ''} ${b.forretningsadresse?.poststed || ''}`
+    const fmtDate = (d) => {
+      if (!d) return '—';
+      const dt = new Date(d);
+      return isNaN(dt) ? d : dt.toLocaleDateString('no-NO');
+    };
+
+    const adresse = item.forretningsadresse
+        ? `${Array.isArray(item.forretningsadresse.adresse) ? item.forretningsadresse.adresse.join(', ') : (item.forretningsadresse.adresse || '')}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`
             .replace(/^,\s*|\s*,\s*$/g,'').trim() || '—'
         : '—';
 
@@ -266,14 +269,14 @@ function startBrregList(data) {
         <input
           type="checkbox"
           class="selectcheckbox"
-          data-orgnr="${b.organisasjonsnummer || ''}"
+          data-orgnr="${item.organisasjonsnummer || ''}"
           id="sel${i}"
         />
       </td>
-      <td class="mono" style="font-size:11px;">${b.organisasjonsnummer ?? '—'}</td>
-      <td style="font-weight:700;font-size:12px;">${b.navn ?? '—'}</td>
+      <td class="mono" style="font-size:11px;">${item.organisasjonsnummer ?? '—'}</td>
+      <td style="font-weight:700;font-size:12px;">${item.navn ?? '—'}</td>
       <td style="font-size:11px;">${adresse}</td>
-      <td style="font-size:11px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
+      <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
       <td class="status" style="font-size:10px;">${b.status || 'Brreg'}</td>
     `;
     list.appendChild(tr);
