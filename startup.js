@@ -143,24 +143,16 @@ function startBrregList(data) {
   const list = document.getElementById('rowlist');
   const presetName = document.getElementById('select-field-preset')?.value;
 
-  // ------------------------------------------------------------
-  // 📦 1. Hent valgt preset (hvis det finnes)
-  // ------------------------------------------------------------
+  // 📦 1. Hent valgt preset
   const presets = JSON.parse(localStorage.getItem('industryPresets') || '{}');
   const preset = presets[presetName] || null;
 
-  // ------------------------------------------------------------
-  // 🎯 2. Filtrer data basert på valgt preset
-  // ------------------------------------------------------------
+  // 🎯 2. Filtrer data
   let filteredData = data;
-
   if (preset) {
     const { industries = [], dateFrom, dateTo } = preset;
-
     filteredData = data.filter((item) => {
       let include = true;
-
-      // --- Bransjefilter ---
       if (industries.length > 0) {
         const itemIndustry =
           (item.naeringskode1?.beskrivelse || '').toLowerCase() ||
@@ -170,67 +162,46 @@ function startBrregList(data) {
             itemIndustry.includes(ind.toLowerCase())
           ) || false;
       }
-
-      // --- Datofilter ---
       if (include && (dateFrom || dateTo)) {
         const regDate = new Date(item.registreringsdatoEnhetsregisteret);
         if (dateFrom) include = regDate >= new Date(dateFrom);
         if (dateTo) include = include && regDate <= new Date(dateTo);
       }
-
       return include;
     });
   }
 
-  // ------------------------------------------------------------
-  // 🔢 3. Sorter og vis listen
-  // ------------------------------------------------------------
+  // 🔢 3. Sorter
   filteredData.sort((a, b) => {
     const dateA = new Date(a.registreringsdatoEnhetsregisteret);
     const dateB = new Date(b.registreringsdatoEnhetsregisteret);
     if (dateA < dateB) return 1;
     if (dateA > dateB) return -1;
-
     const nameA = a.navn.toUpperCase();
     const nameB = b.navn.toUpperCase();
-    if (nameA < nameB) return -1;
-    if (nameA > nameB) return 1;
-    return 0;
+    return nameA.localeCompare(nameB);
   });
 
-  // ------------------------------------------------------------
-  // 🧹 4. Tøm liste og fyll med resultat
-  // ------------------------------------------------------------
+  // 🧹 4. Rendre tabell
   list.innerHTML = '';
   const counterlistbrreg = document.getElementById('counterlistbrreg');
   const count = filteredData.length || 0;
-  counterlistbrreg.textContent =
-    `${count} stk. nyregistrerte bedrifter${preset ? ' (filtrert)' : ''}`;
+  counterlistbrreg.textContent = `${count} stk. nyregistrerte bedrifter${preset ? ' (filtrert)' : ''}`;
 
   filteredData.forEach((item) => {
-
-    //opprett tabellrad
     const tr = document.createElement('tr');
     tr.classList.add('default-row');
 
-    //helpers
-    //finne denne bedriften i gSelectbedrifter og returnere den
     const alreadySelected = gSelectbedrifter.find(
       (b) => b.organisasjonsnummer === item.organisasjonsnummer
-    );  
+    );
 
-
-    //marker raden node som valgt hvis alreadySelected
-    // gruppe for visning
-  let g = null;
+    let g = null;
     if (alreadySelected) {
       tr.classList.add('selected');
-      item = alreadySelected; // bruk data fra valgt liste
+      item = alreadySelected;
       g = (gGroupbedrifter || []).find(gr => gr.id == item.group);
     }
-
-    //sjekke om denne bedriften alerede befinner seg i innkjøks gruppens portal
-    
 
     const fmtDate = (d) => {
       if (!d) return '—';
@@ -239,11 +210,11 @@ function startBrregList(data) {
     };
 
     const adresse = item.forretningsadresse
-        ? `${Array.isArray(item.forretningsadresse.adresse) ? item.forretningsadresse.adresse.join(', ') : (item.forretningsadresse.adresse || '')}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`
-            .replace(/^,\s*|\s*,\s*$/g,'').trim() || '—'
-        : '—';
+      ? `${Array.isArray(item.forretningsadresse.adresse) ? item.forretningsadresse.adresse.join(', ') : (item.forretningsadresse.adresse || '')}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`
+          .replace(/^,\s*|\s*,\s*$/g, '').trim() || '—'
+      : '—';
 
-      tr.innerHTML = `
+    tr.innerHTML = `
       <td style="width:40px;">
         <input
           type="checkbox"
@@ -257,17 +228,34 @@ function startBrregList(data) {
       <td style="font-size:11px;">${adresse}</td>
       <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
       <td class="status" style="font-size:10px;">
-          ${
-            alreadySelected
-              ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
-              : 'Brreg'
-          }
+        ${
+          alreadySelected
+            ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
+            : 'Brreg'
+        }
       </td>
-
     `;
+
     list.appendChild(tr);
   });
+
+  // 🧮 5. Tell valgte checkbokser dynamisk
+  const counterSelected = document.getElementById('counterlistbrregselect');
+
+  function updateSelectedCount() {
+    const total = list.querySelectorAll('.selectcheckbox:checked').length;
+    if (counterSelected) counterSelected.textContent = `${total} valgt`;
+  }
+
+  // legg til event listeners på alle checkboxer
+  list.querySelectorAll('.selectcheckbox').forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+  });
+
+  // kjør en gang for initial verdi
+  updateSelectedCount();
 }
+
 
 function formatDate(d) {
     return d.toLocaleDateString("no-NO"); // DD.MM.YYYY
