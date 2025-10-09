@@ -258,6 +258,7 @@ function startBrregList(data) {
       g = (gGroupbedrifter || []).find(gr => gr.id == item.group);
     }
 
+    //sjekke om denne bedriften alerede befinner seg i innkjøks gruppens portal
     
 
     const fmtDate = (d) => {
