@@ -270,7 +270,7 @@ function startBrregList(data) {
           type="checkbox"
           class="selectcheckbox"
           data-orgnr="${item.organisasjonsnummer || ''}"
-          id="sel${i}"
+          ${alreadySelected ? 'disabled checked' : ''}
         />
       </td>
       <td class="mono" style="font-size:11px;">${item.organisasjonsnummer ?? '—'}</td>
