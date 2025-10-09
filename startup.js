@@ -521,6 +521,10 @@ async function dataFromBrregToSelect() {
   //lagre i lokalstorege
   persistAll();
 
+  //oppdater teller
+  // teller til 1500 over 1 sekund
+  updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
+
   // markere/disablende de som er lagt til
   checkboxes.forEach(cb => {
     cb.disabled = true;
@@ -545,3 +549,10 @@ try {
   const g2 = localStorage.getItem('gSelectbedrifter');
   if (g2) window.gSelectbedrifter = JSON.parse(g2);
 } catch(e) {}
+
+// Kjør når siden er ferdig lastet
+window.addEventListener('DOMContentLoaded', () => {
+
+  // oppdater telle-elementet
+  updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
+});
