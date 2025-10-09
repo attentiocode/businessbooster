@@ -57,7 +57,7 @@ function renderSelect(data){
     const searchEl = document.getElementById('searchSelect');
     const searchTerm  = low(searchEl ? searchEl.value : '');
   
-    const sel = document.getElementById('filterGroupSelect');
+    const sel = document.getElementById('filterGroupSelectMaster');
     const rawFilter = sel ? sel.value : '';                  // "" = alle
     const filterGroup = String(rawFilter || '').trim();      // normaliser
   
