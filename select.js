@@ -26,7 +26,7 @@ document.getElementById("searchSelect").addEventListener("input", () => {
     renderSelect(gSelectbedrifter);
 });
 //når select-feltet med id filterGroupSelect endres skal renderSelect kjøres med gSelectbedrifter som inndata
-document.getElementById("filterGroupSelect").addEventListener("change", () => {
+document.getElementById("filterGroupSelectMaster").addEventListener("change", () => {
     renderSelect(gSelectbedrifter);
 });
 
