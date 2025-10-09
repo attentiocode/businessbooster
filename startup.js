@@ -89,36 +89,7 @@ async function hentNystartede({ fra, til, size = 200 } = {}) {
   }
   return hentNystartedeIPeriode({ fra, til, size });
 }
-/*
-function loadDataBrreg(){
-    // Fyll en array med resultatene
-    gBrregbedrifter = [];
-    
-    hentNystartede()
-      .then(data => {
-        gBrregbedrifter = data;
-        //laste selectorer
-        //loadSelectors(gBrregbedrifter);
-          // Kjør når siden lastes
-        //loadPeriodsIntoSelector("periodeSelector");
-        //starte listevisning
-        startBrregList(gBrregbedrifter);
 
-
-      })
-
-      .catch(console.error);
-    
-    
-    //Fra–til spesifikt
-    hentNystartede({ fra: '2025-09-01', til: '2025-09-15' })
-        .then(data => {
-            bedrifter = data;
-        })
-        .catch(console.error);
-
-}
-*/
 
 function loadSelectors(data){
 
@@ -516,6 +487,9 @@ async function dataFromBrregToSelect() {
   const newCompanies = selectedCompanies
     .filter(b => !existingOrgnrs.has(b.organisasjonsnummer))
     .map(b => ({ ...b, group: groupId }));  // <- legg på groupId her
+
+  //oppdater .status i newCompanies til Utvalg
+  newCompanies.forEach(b => { b.status = 'Utvalg'; });
 
   // legg til
   gSelectbedrifter = gSelectbedrifter.concat(newCompanies);
