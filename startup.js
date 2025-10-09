@@ -243,17 +243,18 @@ function startBrregList(data) {
     tr.classList.add('default-row');
 
     //helpers
-    const alreadySelected = gSelectbedrifter.some(
+    //finne denne bedriften i gSelectbedrifter og returnere den
+    const alreadySelected = gSelectbedrifter.find(
       (b) => b.organisasjonsnummer === item.organisasjonsnummer
-    );
-   
+    );  
+
 
     //marker raden node som valgt hvis alreadySelected
     // gruppe for visning
   let g = null;
     if (alreadySelected) {
       tr.classList.add('selected');
-      g = (gGroupbedrifter || []).find(gr => gr.id == item.group);
+      g = (gGroupbedrifter || []).find(gr => gr.id == alreadySelected.group);
     }
 
     
