@@ -249,9 +249,14 @@ function startBrregList(data) {
    
 
     //marker raden node som valgt hvis alreadySelected
+    // gruppe for visning
+  let g = null;
     if (alreadySelected) {
       tr.classList.add('selected');
+      g = (gGroupbedrifter || []).find(gr => gr.id == b.group);
     }
+
+    
 
     const fmtDate = (d) => {
       if (!d) return '—';
@@ -277,66 +282,13 @@ function startBrregList(data) {
       <td style="font-weight:700;font-size:12px;">${item.navn ?? '—'}</td>
       <td style="font-size:11px;">${adresse}</td>
       <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
-      <td class="status" style="font-size:10px;">${item.status || 'Brreg'}</td>
+      <td class="status" style="font-size:10px;">
+        ${alreadySelected
+          ? `${item.status || ''} ${g?.name || ''}`.trim() || 'Valgt'
+          : item.status || 'Brreg'}
+      </td>
     `;
     list.appendChild(tr);
-
-
-    /*
-    
-    const node = nodeRow.cloneNode(true);
-
-    node.querySelector('.org-nr').textContent =
-      item.organisasjonsnummer || 'Ukjent org.nr';
-    node.querySelector('.company-name').textContent =
-      item.navn || 'Ukjent navn';
-    node.querySelector('.start-date').textContent =
-      item.registreringsdatoEnhetsregisteret || 'Ukjent dato';
-    node.querySelector('.address').textContent = item.forretningsadresse
-      ? `${item.forretningsadresse?.adresse || ''}, ${
-          item.forretningsadresse?.postnummer || ''
-        } ${item.forretningsadresse?.poststed || ''}`.trim()
-      : 'Ukjent adresse';
-
-    //hvis dette selskaper alt er i gSelectbedrifter så skal den være disabled
-    const alreadySelected = gSelectbedrifter.some(
-      (b) => b.organisasjonsnummer === item.organisasjonsnummer
-    );
- 
-    let statusText = "brreg";
-    if(alreadySelected){
-        statusText = "Utvalg";
-    }
-    node.querySelector('.status').textContent = statusText;
-
-
-    //marker raden node som valgt hvis alreadySelected
-    if (alreadySelected) {
-      node.classList.add('selected');
-    }
-
-    const checkbox = node.querySelector('.selectcheckbox');
-    checkbox.dataset.orgnr = item.organisasjonsnummer || '';
-    if (alreadySelected) {
-      checkbox.disabled = true;
-      checkbox.checked = true;
-    }
-    //når checkbox endres så skal counter oppdateres
-    checkbox.addEventListener('change', () => {
-      const container = document.getElementById("rowlist");
-      const checkboxes = container.querySelectorAll(".selectcheckbox:checked");
-      const counterlistbrregselected = document.getElementById("counterlistbrregselect");
-      counterlistbrregselected.style.display = checkboxes.length > 0 ? "inline" : "none";
-      const selectedCount = checkboxes.length || 0;
-      counterlistbrregselected.textContent = `${selectedCount} valgt`;
-
-      const sendtoSelect = document.getElementById("sentToSelect");
-      sendtoSelect.style.display = checkboxes.length > 0 ? "inline-block" : "none";
-
-    });
-
-    list.appendChild(node);
-    */
   });
 }
 
