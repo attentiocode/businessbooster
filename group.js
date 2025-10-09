@@ -21,7 +21,7 @@ function renderGroups(filter='') {
   localStorage.setItem('gGroupbedrifter', JSON.stringify(gGroupbedrifter));
 
   //oppdater selector
-    const groupSelect = document.getElementById('filterGroupSelect');
+    const groupSelect = document.getElementById('filterGroupSelectMaster');
     if (groupSelect) {
       const currentValue = groupSelect.value;
       groupSelect.innerHTML = '<option value="ALL">Alle grupper</option>';
