@@ -257,10 +257,13 @@ function startBrregList(data) {
       <td style="font-size:11px;">${adresse}</td>
       <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
       <td class="status" style="font-size:10px;">
-        ${alreadySelected
-          ? `${item.status || ''} ${g?.name || ''}`.trim() || 'Valgt'
-          : item.status || 'Brreg'}
+          ${
+            alreadySelected
+              ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
+              : 'Brreg'
+          }
       </td>
+
     `;
     list.appendChild(tr);
   });
