@@ -152,7 +152,7 @@ function renderSelect(data){
   
         // re-render fra utvalget (eller fra filteredData hvis du ønsker å beholde filteret)
         renderSelect(gSelectbedrifter);
-        updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
+        
       };
     }
   
@@ -185,9 +185,12 @@ function renderSelect(data){
         const orgnrs = getSelectedOrgnrs();
         if (!orgnrs.length) return;
   
-        console.log("Henter mer data for valgte selskaper...", orgnrs);
+        // Kall funksjon i proff.js
+        logCompanyOnce(orgnrs[0],"dataFromProff");
       };
     }
+
+    updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
   }
   
   

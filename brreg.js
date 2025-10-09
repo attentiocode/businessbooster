@@ -222,3 +222,163 @@ function resetFilters() {
     setDatesDisabled(false);
     elStatus.textContent = 'Klar.';
   }
+
+
+  function startBrregList(data) {
+    const list = document.getElementById('rowlist');
+    const presetName = document.getElementById('select-field-preset')?.value;
+  
+    // 📦 1. Hent valgt preset
+    const presets = JSON.parse(localStorage.getItem('industryPresets') || '{}');
+    const preset = presets[presetName] || null;
+  
+    // 🎯 2. Filtrer data
+    let filteredData = data;
+    if (preset) {
+      const { industries = [], dateFrom, dateTo } = preset;
+      filteredData = data.filter((item) => {
+        let include = true;
+        if (industries.length > 0) {
+          const itemIndustry =
+            (item.naeringskode1?.beskrivelse || '').toLowerCase() ||
+            (item.bransje || '').toLowerCase();
+          include = industries.some(ind => itemIndustry.includes(ind.toLowerCase())) || false;
+        }
+        if (include && (dateFrom || dateTo)) {
+          const regDate = new Date(item.registreringsdatoEnhetsregisteret);
+          if (dateFrom) include = regDate >= new Date(dateFrom);
+          if (dateTo) include = include && regDate <= new Date(dateTo);
+        }
+        return include;
+      });
+    }
+  
+    // 🔢 3. Sorter
+    filteredData.sort((a, b) => {
+      const dateA = new Date(a.registreringsdatoEnhetsregisteret);
+      const dateB = new Date(b.registreringsdatoEnhetsregisteret);
+      if (dateA < dateB) return 1;
+      if (dateA > dateB) return -1;
+      return a.navn.toUpperCase().localeCompare(b.navn.toUpperCase());
+    });
+  
+    // 🧹 4. Rendre tabell
+    list.innerHTML = '';
+    const counterlistbrreg = document.getElementById('counterlistbrreg');
+    const count = filteredData.length || 0;
+    if (counterlistbrreg) counterlistbrreg.textContent = `${count} treff ${preset ? ' (filtrert)' : ''}`;
+  
+    filteredData.forEach((item) => {
+      const tr = document.createElement('tr');
+      tr.classList.add('default-row');
+  
+      const alreadySelected = (gSelectbedrifter || []).find(
+        b => b.organisasjonsnummer === item.organisasjonsnummer
+      );
+  
+      let g = null;
+      if (alreadySelected) {
+        tr.classList.add('selected');
+        item = alreadySelected; // vis data fra utvalg
+        g = (gGroupbedrifter || []).find(gr => gr.id == item.group);
+      }
+  
+      const fmtDate = (d) => {
+        if (!d) return '—';
+        const dt = new Date(d);
+        return isNaN(dt) ? d : dt.toLocaleDateString('no-NO');
+      };
+  
+      const adresse = item.forretningsadresse
+        ? `${Array.isArray(item.forretningsadresse.adresse) ? item.forretningsadresse.adresse.join(', ') : (item.forretningsadresse.adresse || '')}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`
+            .replace(/^,\s*|\s*,\s*$/g, '').trim() || '—'
+        : '—';
+  
+      tr.innerHTML = `
+        <td style="width:40px;">
+          <input
+            type="checkbox"
+            class="selectcheckbox"
+            data-orgnr="${item.organisasjonsnummer || ''}"
+            ${alreadySelected ? 'disabled checked' : ''}
+          />
+        </td>
+        <td class="mono" style="font-size:11px;">${item.organisasjonsnummer ?? '—'}</td>
+        <td style="font-weight:700;font-size:12px;">${item.navn ?? '—'}</td>
+        <td style="font-size:11px;">${adresse}</td>
+        <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
+        <td class="status" style="font-size:10px;">
+          ${alreadySelected
+            ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
+            : 'Brreg'}
+        </td>
+      `;
+  
+      list.appendChild(tr);
+    });
+  
+    // 🧮 5. Massebehandling UI + handlers (BRREG)
+    const bulkBar   = document.getElementById('select-bulk-actions-brreg');
+    const bulkCount = document.getElementById('select-bulk-count-brreg');
+  
+    function getSelectedOrgnrs() {
+      return Array.from(list.querySelectorAll('.selectcheckbox'))
+        .filter(cb => cb.checked && !cb.disabled) // tell kun aktive
+        .map(cb => cb.dataset.orgnr)
+        .filter(Boolean);
+    }
+  
+    function updateBulkUI() {
+      const n = getSelectedOrgnrs().length;
+      if (bulkBar)   bulkBar.style.display = n > 0 ? 'flex' : 'none';
+      if (bulkCount) bulkCount.textContent = `${n} valgt`;
+      // (valgfritt) oppdater også et eksisterende tellerfelt hvis du har det:
+      const counterSelected = document.getElementById('counterlistbrregselect');
+      if (counterSelected) {
+        counterSelected.textContent = `${n} valgt`;
+        counterSelected.style.display = n > 0 ? 'block' : 'none';
+      }
+    }
+  
+    // Lytt på endringer i alle (ikke-disablede) checkbokser
+    list.querySelectorAll('.selectcheckbox').forEach(cb => {
+      if (!cb.disabled) cb.addEventListener('change', updateBulkUI);
+    });
+    updateBulkUI();
+  
+    
+  }
+
+  document.getElementById("brregmastercheckbox").addEventListener("change", function() {
+    const container = document.getElementById("rowlist");
+    const checkboxes = container.querySelectorAll(".selectcheckbox")
+    checkboxes.forEach(cb => {
+      // kun de som ikke er disabled
+      if (!cb.disabled){
+      cb.checked = this.checked;
+      }
+    });
+
+    //hvis det er mer en 1 checkbox som er valgt så gjør maassbehandling synlig
+    const bulkBar   = document.getElementById('select-bulk-actions-brreg');
+    //linjen under bør få tak i alle selectedchexbox også filtrere vekk disabled chackboxer
+    const checkboxesChecked = container.querySelectorAll(".selectcheckbox:checked:not([disabled])");
+
+    if (checkboxesChecked.length > 0){
+      bulkBar.style.display = "flex";
+      const bulkCount = document.getElementById('select-bulk-count-brreg');
+      //finne ut hvor mange chackboxer som er checked i listen med id rowlistSelect
+      const checkedCount = checkboxes.length;
+      bulkCount.textContent = `${checkedCount} valgt`;
+
+    }else{
+      bulkBar.style.display = "none";
+    }
+    
+});
+
+
+let sentToSelectButton = document.getElementById("sentToSelect");
+sentToSelectButton.addEventListener("click", function() {
+  dataFromBrregToSelect();
+  });
