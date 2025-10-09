@@ -170,8 +170,6 @@ function loadSelectors(data){
 
 function startBrregList(data) {
   const list = document.getElementById('rowlist');
-  const library = document.getElementById('elementlibrary');
-  const nodeRow = library.querySelector('.default-row');
   const presetName = document.getElementById('select-field-preset')?.value;
 
   // ------------------------------------------------------------
@@ -239,6 +237,50 @@ function startBrregList(data) {
     `${count} stk. nyregistrerte bedrifter${preset ? ' (filtrert)' : ''}`;
 
   filteredData.forEach((item) => {
+
+    //opprett tabellrad
+    const tr = document.createElement('tr');
+    tr.classList.add('default-row');
+
+    //helpers
+    const alreadySelected = gSelectbedrifter.some(
+      (b) => b.organisasjonsnummer === item.organisasjonsnummer
+    );
+    let statusText = "brreg";
+    if(alreadySelected){
+        statusText = "Utvalg";
+    }
+
+    //marker raden node som valgt hvis alreadySelected
+    if (alreadySelected) {
+      tr.classList.add('selected');
+    }
+
+    const adresse = b.forretningsadresse
+        ? `${Array.isArray(b.forretningsadresse.adresse) ? b.forretningsadresse.adresse.join(', ') : (b.forretningsadresse.adresse || '')}, ${b.forretningsadresse?.postnummer || ''} ${b.forretningsadresse?.poststed || ''}`
+            .replace(/^,\s*|\s*,\s*$/g,'').trim() || '—'
+        : '—';
+
+      tr.innerHTML = `
+      <td style="width:40px;">
+        <input
+          type="checkbox"
+          class="selectcheckbox"
+          data-orgnr="${b.organisasjonsnummer || ''}"
+          id="sel${i}"
+        />
+      </td>
+      <td class="mono" style="font-size:11px;">${b.organisasjonsnummer ?? '—'}</td>
+      <td style="font-weight:700;font-size:12px;">${b.navn ?? '—'}</td>
+      <td style="font-size:11px;">${adresse}</td>
+      <td style="font-size:11px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
+      <td class="status" style="font-size:10px;">${b.status || 'Brreg'}</td>
+    `;
+    list.appendChild(tr);
+
+
+    /*
+    
     const node = nodeRow.cloneNode(true);
 
     node.querySelector('.org-nr').textContent =
@@ -291,6 +333,7 @@ function startBrregList(data) {
     });
 
     list.appendChild(node);
+    */
   });
 }
 
