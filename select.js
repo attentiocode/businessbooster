@@ -159,7 +159,7 @@ function renderSelect(data){
         try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
   
         // re-render fra utvalget (eller fra filteredData hvis du ønsker å beholde filteret)
-        renderSelect(gSelectbedrifrifter);
+        renderSelect(gSelectbedrifter);
       };
     }
   
