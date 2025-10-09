@@ -3,17 +3,9 @@ document.getElementById("tabSelectButton").addEventListener("click", () => {
     startSelection(gSelectbedrifter);
 });
 
-document.getElementById("getInfoFromProff").addEventListener("click", () => {
-    const list = document.getElementById('rowlistSelect');
-    const checkboxes = list.querySelectorAll(".selectcheckbox:checked");
-    const orgnrs = Array.from(checkboxes).map(cb => cb.dataset.orgnr).filter(Boolean);
-    if (orgnrs.length === 0) {
-        alert("Ingen selskaper valgt.");
-        return;
-    }
-    
-    logCompanyOnce("998766834","dataFromProff");
-});
+
+//logCompanyOnce("998766834","dataFromProff");
+
 
 function startSelection(data) {
    
@@ -160,6 +152,7 @@ function renderSelect(data){
   
         // re-render fra utvalget (eller fra filteredData hvis du ønsker å beholde filteret)
         renderSelect(gSelectbedrifter);
+        updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
       };
     }
   

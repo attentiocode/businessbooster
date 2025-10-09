@@ -23,7 +23,7 @@ const cdnScripts = [
 cdnScripts.reduce((promise, script) => {
     return promise.then(() => loadScript(script));
 }, Promise.resolve()).then(() => {
-    console.log("All scripts loaded via. attentiocode");
+    console.log("All scripts loaded lokalt");
     
     MemberStack.onReady.then(function(member) {
         

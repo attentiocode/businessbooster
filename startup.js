@@ -317,10 +317,29 @@ document.getElementById("brregmastercheckbox").addEventListener("change", functi
     const container = document.getElementById("rowlist");
     const checkboxes = container.querySelectorAll(".selectcheckbox");
     checkboxes.forEach(cb => {
+      // kun de som ikke er disabled
+      if (!cb.disabled){
       cb.checked = this.checked;
+      }
     });
     
 });
+
+
+document.getElementById("selectmastercheckbox").addEventListener("change", function() {
+    const container = document.getElementById("rowlistSelect");
+    const checkboxes = container.querySelectorAll(".selectcheckbox");
+    checkboxes.forEach(cb => {
+      // kun de som ikke er disabled
+      if (!cb.disabled){
+      cb.checked = this.checked;
+      }
+    });
+    
+});
+
+
+
 
 function ruteresponse(data,responseid){
 
