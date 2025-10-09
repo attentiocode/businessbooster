@@ -277,7 +277,7 @@ function startBrregList(data) {
       <td style="font-weight:700;font-size:12px;">${item.navn ?? '—'}</td>
       <td style="font-size:11px;">${adresse}</td>
       <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
-      <td class="status" style="font-size:10px;">${b.status || 'Brreg'}</td>
+      <td class="status" style="font-size:10px;">${item.status || 'Brreg'}</td>
     `;
     list.appendChild(tr);
 
