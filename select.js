@@ -97,7 +97,7 @@ function renderSelect(data){
       const tr = document.createElement('tr');
       tr.classList.add('default-row');
   
-      const g = (window.gGroupbedrifter || []).find(gr => gr.id == b.group);
+      const g = (gGroupbedrifter || []).find(gr => gr.id == b.group);
   
       tr.innerHTML = `
         <td style="width:40px;">
@@ -153,7 +153,7 @@ function renderSelect(data){
         if (!orgnrs.length) return;
         if (!confirm(`Fjerne ${orgnrs.length} bedrift(er) fra utvalget?`)) return;
   
-        window.gSelectbedrifter = (window.gSelectbedrifter || []).filter(
+        gSelectbedrifter = (gSelectbedrifter || []).filter(
           b => !orgnrs.includes(String(b.organisasjonsnummer))
         );
         try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
@@ -177,7 +177,7 @@ function renderSelect(data){
         }
         if (!groupId) return;
   
-        (window.gSelectbedrifter || []).forEach(b => {
+        (gSelectbedrifter || []).forEach(b => {
           if (orgnrs.includes(String(b.organisasjonsnummer))) b.group = String(groupId);
         });
         try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
@@ -192,26 +192,7 @@ function renderSelect(data){
         const orgnrs = getSelectedOrgnrs();
         if (!orgnrs.length) return;
   
-        async function fetchDetails(orgnr) {
-          const url = `https://data.brreg.no/enhetsregisteret/api/enheter/${orgnr}`;
-          const res = await fetch(url, { headers: { 'Accept':'application/json' }});
-          if (!res.ok) return null;
-          return await res.json();
-        }
-  
-        // Hent i puljer (10 av gangen)
-        for (let i = 0; i < orgnrs.length; i += 10) {
-          const chunk = orgnrs.slice(i, i + 10);
-          const results = await Promise.all(chunk.map(fetchDetails));
-          results.filter(Boolean).forEach(enhet => {
-            const idx = (window.gSelectbedrifter || []).findIndex(b => String(b.organisasjonsnummer) === String(enhet.organisasjonsnummer));
-            if (idx >= 0) gSelectbedrifter[idx] = { ...gSelectbedrifter[idx], ...enhet };
-          });
-        }
-  
-        try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
-  
-        renderSelect(gSelectbedrifter);
+        console.log("Henter mer data for valgte selskaper...", orgnrs);
       };
     }
   }
