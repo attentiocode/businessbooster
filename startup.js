@@ -186,7 +186,7 @@ function startBrregList(data) {
   list.innerHTML = '';
   const counterlistbrreg = document.getElementById('counterlistbrreg');
   const count = filteredData.length || 0;
-  counterlistbrreg.textContent = `${count} stk. nyregistrerte bedrifter${preset ? ' (filtrert)' : ''}`;
+  counterlistbrreg.textContent = `${count}${preset ? ' (filtrert)' : ''}`;
 
   filteredData.forEach((item) => {
     const tr = document.createElement('tr');
@@ -243,23 +243,23 @@ function startBrregList(data) {
   const counterSelected = document.getElementById('counterlistbrregselect');
 
   function updateSelectedCount() {
-    const total = list.querySelectorAll('.selectcheckbox:checked').length;
+    // Teller kun de som er checked og IKKE disabled
+    const total = Array.from(list.querySelectorAll('.selectcheckbox'))
+      .filter(cb => cb.checked && !cb.disabled)
+      .length;
 
     if (counterSelected) {
       counterSelected.textContent = `${total} valgt`;
 
-      // Vis / skjul etter antall
-      if (total > 0) {
-        counterSelected.style.display = 'block';
-      } else {
-        counterSelected.style.display = 'none';
-      }
+      // Vis / skjul kun når det faktisk er aktive valg
+      counterSelected.style.display = total > 0 ? 'block' : 'none';
     }
   }
 
   // legg til event listeners på alle checkboxer
   list.querySelectorAll('.selectcheckbox').forEach(cb => {
-    cb.addEventListener('change', updateSelectedCount);
+    // lytter kun på de som ikke er disabled
+    if (!cb.disabled) cb.addEventListener('change', updateSelectedCount);
   });
 
   // kjør en gang for initial verdi
