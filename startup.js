@@ -254,7 +254,8 @@ function startBrregList(data) {
   let g = null;
     if (alreadySelected) {
       tr.classList.add('selected');
-      g = (gGroupbedrifter || []).find(gr => gr.id == alreadySelected.group);
+      item = alreadySelected; // bruk data fra valgt liste
+      g = (gGroupbedrifter || []).find(gr => gr.id == item.group);
     }
 
     
