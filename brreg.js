@@ -252,6 +252,7 @@ function startBrregList(data) {
         return include;
       });
     }
+    
   /*
     // 🔢 3. Sorter
     filteredData.sort((a, b) => {
