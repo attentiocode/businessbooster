@@ -425,6 +425,7 @@ function customerResponse(data){
       
       let customers = convertCustomerJsonStringsToObjects(jsonStrings);
       gCustomers = customers;
+      updateCounter("label-companys-in-portal", gCustomers.length, 1000);
   
 }
 
