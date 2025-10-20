@@ -87,7 +87,6 @@ async function hentNystartede({ fra, til, size = 200 } = {}) {
   return hentNystartedeIPeriode({ fra, til, size });
 }
 
-
 function loadSelectors(data){
 
 
@@ -134,7 +133,6 @@ function loadSelectors(data){
     */
 
 }
-
 
 function formatDate(d) {
     return d.toLocaleDateString("no-NO"); // DD.MM.YYYY
@@ -194,7 +192,6 @@ document.getElementById("brregmastercheckbox").addEventListener("change", functi
     
 });
 
-
 document.getElementById("selectmastercheckbox").addEventListener("change", function() {
     const container = document.getElementById("rowlistSelect");
     const checkboxes = container.querySelectorAll(".selectcheckbox")
@@ -229,8 +226,6 @@ function ruteresponse(data,responseid){
       customerResponse(data);
     }
 }
-
-
 
 // Valgfri persist (kan fjernes om du ikke vil skrive til localStorage her)
 function persistAll() {
@@ -311,7 +306,6 @@ function pickGroupViaDialog() {
     try { dlg.showModal(); } catch(e) { dlg.show(); }
   });
 }
-
 
 async function dataFromBrregToSelect() {
  
@@ -408,7 +402,7 @@ function updateCounter(elementId, newValue, duration = 500) {
 function getCustomer(){     
   //hente kunder
   GETairtable("app1WzN1IxEnVu3m0","tbldZL68MyLNBRjQC","rec1QGUGBMVaqxhp1","customerResponse","skipCache");
-  }
+}
   
 function customerResponse(data){
   
