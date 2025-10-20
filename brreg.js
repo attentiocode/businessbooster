@@ -323,7 +323,7 @@ function startBrregList(data) {
       // --- Prioritet: Portal > Utvalg ---
       let g = null;
       if (isInPortal) {
-        tr.classList.add('in-portal');
+        tr.classList.add('inportal');
       } else if (alreadySelected) {
         tr.classList.add('selected');
         item = alreadySelected; // vis data fra utvalg
