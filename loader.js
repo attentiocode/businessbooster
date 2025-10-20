@@ -31,6 +31,7 @@ cdnScripts.reduce((promise, script) => {
         
         if (member.loggedIn){
             console.log("Member is logged in");
+            userid = member.airtableid;
 
             //trykk på knappen mainpagetabbutton
             document.getElementById("mainpagetabbutton").click();
