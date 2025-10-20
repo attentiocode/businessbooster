@@ -294,9 +294,10 @@ function startBrregList(data) {
   
     // 🧹 4. Rendre tabell
     list.innerHTML = '';
-    const counterlistbrreg = document.getElementById('counterlistbrreg');
-    const count = filteredData.length || 0;
-    if (counterlistbrreg) counterlistbrreg.textContent = `${count} treff ${preset ? ' (filtrert)' : ''}`;
+    
+    let sumTotal = filteredData.length || 0;
+    let sumInPortal = 0;
+    let sumSelected = 0;
   
     filteredData.forEach((rawItem) => {
       const tr = document.createElement('tr');
@@ -323,8 +324,10 @@ function startBrregList(data) {
       // --- Prioritet: Portal > Utvalg ---
       let g = null;
       if (isInPortal) {
+        sumInPortal++;
         tr.classList.add('inportal');
       } else if (alreadySelected) {
+        sumSelected++;
         tr.classList.add('selected');
         item = alreadySelected; // vis data fra utvalg
         g = (gGroupbedrifter || []).find((gr) => gr.id == item.group);
@@ -372,6 +375,13 @@ function startBrregList(data) {
     
       list.appendChild(tr);
     });
+
+    // Oppdater total-teller
+    const counter = document.getElementById('counterlistbrreg');
+    if (counter) {
+      counter.textContent = `Totalt: ${sumTotal} stk. | I portal: ${sumInPortal} stk. | Valgt: ${sumSelected} stk.`;
+    }
+   
     
   
     // 🧮 5. Massebehandling UI + handlers (BRREG)
