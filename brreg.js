@@ -221,7 +221,7 @@ function resetFilters() {
     elFrom.value = r.fra; elTo.value = r.til;
     setDatesDisabled(false);
     elStatus.textContent = 'Klar.';
-  }
+}
 
 
 function startBrregList(data) {
@@ -252,8 +252,8 @@ function startBrregList(data) {
         return include;
       });
     }
-    
-  /*
+
+  
     // 🔢 3. Sorter
     filteredData.sort((a, b) => {
       const dateA = new Date(a.registreringsdatoEnhetsregisteret);
@@ -262,7 +262,19 @@ function startBrregList(data) {
       if (dateA > dateB) return -1;
       return a.navn.toUpperCase().localeCompare(b.navn.toUpperCase());
     });
-  */
+
+    //hvis det er identisk navn/ vedi i inputfeltet så skal de vises øverst i listen
+    const qRaw   = (elQuery.value || '').trim().toLowerCase();
+    if (qRaw){
+      filteredData.sort((a, b) => {
+        const nameA = (a.navn || '').toLowerCase();
+        const nameB = (b.navn || '').toLowerCase();
+        if (nameA === qRaw && nameB !== qRaw) return -1;
+        if (nameA !== qRaw && nameB === qRaw) return 1;
+        return 0;
+      });
+    }
+  
     // 🧹 4. Rendre tabell
     list.innerHTML = '';
     const counterlistbrreg = document.getElementById('counterlistbrreg');
@@ -348,9 +360,9 @@ function startBrregList(data) {
     updateBulkUI();
   
     
-  }
+}
 
-  document.getElementById("brregmastercheckbox").addEventListener("change", function() {
+document.getElementById("brregmastercheckbox").addEventListener("change", function() {
     const container = document.getElementById("rowlist");
     const checkboxes = container.querySelectorAll(".selectcheckbox")
     checkboxes.forEach(cb => {
@@ -377,7 +389,6 @@ function startBrregList(data) {
     }
     
 });
-
 
 let sentToSelectButton = document.getElementById("sentToSelect");
 sentToSelectButton.addEventListener("click", function() {
