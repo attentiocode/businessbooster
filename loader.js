@@ -35,6 +35,9 @@ cdnScripts.reduce((promise, script) => {
             //trykk på knappen mainpagetabbutton
             document.getElementById("mainpagetabbutton").click();
 
+            //hent alle kunder fra airtable
+            getCustomer();
+
         }else{
             console.log("Member is NOT logged in");
             //trykk på knappen logintabbutton

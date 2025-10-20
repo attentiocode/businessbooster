@@ -2,6 +2,7 @@ let gBrregbedrifter = JSON.parse(localStorage.getItem('gBrregbedrifter') || '[]'
 let gSelectbedrifter = JSON.parse(localStorage.getItem('gSelectbedrifter') || '[]');
 let gReadybedrifter = JSON.parse(localStorage.getItem('gReadybedrifter') || '[]');
 let gGroupbedrifter = JSON.parse(localStorage.getItem('gGroupbedrifter') || '[]');
+let gCustomers = [];
 
 
 document.getElementById("select-field-preset").addEventListener('change', (e) => {
@@ -223,6 +224,8 @@ function ruteresponse(data,responseid){
 
     if(responseid==="dataFromProff"){
       dataFromProff(data);
+    }else if(responseid==="customerResponse"){
+      customerResponse(data);
     }
 }
 
@@ -399,4 +402,33 @@ function updateCounter(elementId, newValue, duration = 500) {
   }
 
   requestAnimationFrame(animate);
+}
+
+function getCustomer(){     
+  //hente kunder
+  GETairtable("app1WzN1IxEnVu3m0","tbldZL68MyLNBRjQC","rec1QGUGBMVaqxhp1","customerResponse","skipCache");
+  }
+  
+function customerResponse(data){
+  
+      if (!data || !data.fields || !data.fields.membersjson || !Array.isArray(data.fields.membersjson)) {
+          console.error("Ugyldig dataformat: Forventet et objekt med 'fields.supplierjson' som en array.");
+          return; // Avbryt hvis data ikke er gyldig
+      }
+  
+      //sjekke om data.feilds.superAdmin array inneholder min brukerid
+      if(data.fields.superAdmin){
+          if(data.fields.superAdmin.includes(userid)){
+              
+          }else{  
+              return;
+          }
+      }
+  
+      // Konverter JSON-strenger til objekter
+      const jsonStrings = data.fields.membersjson;
+      
+      let customers = convertCustomerJsonStringsToObjects(jsonStrings);
+      gCustomers = customers;
+  
 }
