@@ -263,8 +263,8 @@ function startBrregList(data) {
       return a.navn.toUpperCase().localeCompare(b.navn.toUpperCase());
     });
 
+    // Ekstra sortering basert på søkestreng
     const query = elQuery.value.trim().toLowerCase();
-
     if (query) {
       filteredData.sort((a, b) => {
         const nameA = a.navn.toLowerCase();
@@ -298,39 +298,67 @@ function startBrregList(data) {
     const count = filteredData.length || 0;
     if (counterlistbrreg) counterlistbrreg.textContent = `${count} treff ${preset ? ' (filtrert)' : ''}`;
   
-    filteredData.forEach((item) => {
+    filteredData.forEach((rawItem) => {
       const tr = document.createElement('tr');
       tr.classList.add('default-row');
-  
-      const alreadySelected = (gSelectbedrifter || []).find(
-        b => b.organisasjonsnummer === item.organisasjonsnummer
+    
+      // --- Hjelpere ---
+      const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
+      const getOrgnr = (obj) =>
+        normalizeOrgnr(
+          obj?.organisasjonsnummer ??
+          obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber
+        );
+    
+      let item = rawItem;
+    
+      const isInPortal = (gCustomers || []).some(
+        (c) => getOrgnr(c) === getOrgnr(item)
       );
-  
+    
+      const alreadySelected = (gSelectbedrifter || []).find(
+        (b) => getOrgnr(b) === getOrgnr(item)
+      );
+    
+      // --- Prioritet: Portal > Utvalg ---
       let g = null;
-      if (alreadySelected) {
+      if (isInPortal) {
+        tr.classList.add('in-portal');
+      } else if (alreadySelected) {
         tr.classList.add('selected');
         item = alreadySelected; // vis data fra utvalg
-        g = (gGroupbedrifter || []).find(gr => gr.id == item.group);
+        g = (gGroupbedrifter || []).find((gr) => gr.id == item.group);
       }
-  
+    
       const fmtDate = (d) => {
         if (!d) return '—';
         const dt = new Date(d);
         return isNaN(dt) ? d : dt.toLocaleDateString('no-NO');
       };
-  
+    
       const adresse = item.forretningsadresse
-        ? `${Array.isArray(item.forretningsadresse.adresse) ? item.forretningsadresse.adresse.join(', ') : (item.forretningsadresse.adresse || '')}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`
-            .replace(/^,\s*|\s*,\s*$/g, '').trim() || '—'
+        ? `${Array.isArray(item.forretningsadresse.adresse)
+            ? item.forretningsadresse.adresse.join(', ')
+            : (item.forretningsadresse.adresse || '')}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`
+            .replace(/^,\s*|\s*,\s*$/g, '')
+            .trim() || '—'
         : '—';
-  
+    
+      const checkboxAttrs = (alreadySelected || isInPortal) ? 'disabled checked' : '';
+    
+      const statusHtml = isInPortal
+        ? `<strong>Er registrert i portal</strong>`
+        : (alreadySelected
+            ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
+            : 'Brreg');
+    
       tr.innerHTML = `
         <td style="width:40px;">
           <input
             type="checkbox"
             class="selectcheckbox"
             data-orgnr="${item.organisasjonsnummer || ''}"
-            ${alreadySelected ? 'disabled checked' : ''}
+            ${checkboxAttrs}
           />
         </td>
         <td class="mono" style="font-size:11px;">${item.organisasjonsnummer ?? '—'}</td>
@@ -338,14 +366,13 @@ function startBrregList(data) {
         <td style="font-size:11px;">${adresse}</td>
         <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
         <td class="status" style="font-size:10px;">
-          ${alreadySelected
-            ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
-            : 'Brreg'}
+          ${statusHtml}
         </td>
       `;
-  
+    
       list.appendChild(tr);
     });
+    
   
     // 🧮 5. Massebehandling UI + handlers (BRREG)
     const bulkBar   = document.getElementById('select-bulk-actions-brreg');
