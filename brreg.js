@@ -224,7 +224,7 @@ function resetFilters() {
   }
 
 
-  function startBrregList(data) {
+function startBrregList(data) {
     const list = document.getElementById('rowlist');
     const presetName = document.getElementById('select-field-preset')?.value;
   
@@ -252,7 +252,7 @@ function resetFilters() {
         return include;
       });
     }
-  
+  /*
     // 🔢 3. Sorter
     filteredData.sort((a, b) => {
       const dateA = new Date(a.registreringsdatoEnhetsregisteret);
@@ -261,7 +261,7 @@ function resetFilters() {
       if (dateA > dateB) return -1;
       return a.navn.toUpperCase().localeCompare(b.navn.toUpperCase());
     });
-  
+  */
     // 🧹 4. Rendre tabell
     list.innerHTML = '';
     const counterlistbrreg = document.getElementById('counterlistbrreg');
