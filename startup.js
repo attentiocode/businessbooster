@@ -461,3 +461,5 @@ function convertCustomerJsonStringsToObjects(jsonStrings) {
       }
   });
 }
+
+updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
