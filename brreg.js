@@ -263,17 +263,16 @@ function startBrregList(data) {
       return a.navn.toUpperCase().localeCompare(b.navn.toUpperCase());
     });
 
-    //hvis det er identisk navn/ vedi i inputfeltet så skal de vises øverst i listen
-    const qRaw   = (elQuery.value || '').trim().toLowerCase();
-    if (qRaw){
+    //hvis det er identisk navn i inputfeltetsom i item.navn så skal de vises øverst i listen
+    const query = elQuery.value.trim().toLowerCase();
+    if (query) {
       filteredData.sort((a, b) => {
-        const nameA = (a.navn || '').toLowerCase();
-        const nameB = (b.navn || '').toLowerCase();
-        if (nameA === qRaw && nameB !== qRaw) return -1;
-        if (nameA !== qRaw && nameB === qRaw) return 1;
+        const nameA = a.navn.toLowerCase();
+        const nameB = b.navn.toLowerCase();
+        if (nameA === query && nameB !== query) return -1;
+        if (nameA !== query && nameB === query) return 1;
         return 0;
       });
-    }
   
     // 🧹 4. Rendre tabell
     list.innerHTML = '';
