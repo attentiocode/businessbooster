@@ -108,7 +108,7 @@ async function PATCHairtable(baseId,tableId,itemId,body,id){
             apireturn({success: true, data: data, id: id});
         }
 }
-    
+/*
 async function GETairtable(baseId,tableId,itemId,id,public){
 
     let response;
@@ -125,6 +125,26 @@ async function GETairtable(baseId,tableId,itemId,id,public){
             let data = await response.json();
             apireturn({success: true, data: data, id: id});
         }   
+}
+*/
+
+async function GETairtable(baseId,tableId,itemId,id,status){
+    let skipCache = "";
+    if(status == "skipCache"){
+      skipCache = "&skipCache=true"
+    }
+
+
+      let token = MemberStack.getToken();
+      let response = await fetch(`https://expoapi-zeta.vercel.app/api/row?baseId=${baseId}&tableId=${tableId}&rowId=${itemId}&token=${token}${skipCache}`);
+     
+      if (!response.ok) {
+        throw new Error(`HTTP-feil! status: ${response.status} - ${response.statusText}`);
+      }else {
+        let data = await response.json();
+      apireturn({success: true, data: data, id: id});
+      }
+      
 }
 
 async function POSTairtableMulti(baseId, tableId, body) {
@@ -249,7 +269,7 @@ function airtableBodyKlientidFind(idOrArray, extraFilters = {}, options = {}) {
       : containsClause;
   
     return JSON.stringify({ formula, pageSize, offset });
-  }
+}
   
   
   
