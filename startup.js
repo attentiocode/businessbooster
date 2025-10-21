@@ -10,6 +10,10 @@ document.getElementById("select-field-preset").addEventListener('change', (e) =>
     startBrregList(gBrregbedrifter);
 });
 
+document.getElementById("select-contact-info-filter").addEventListener('change', (e) => {
+  startBrregList(gBrregbedrifter);
+});
+
 //sideknappene rooting
 document.getElementById("dashboardSideButton").addEventListener("click", function() {
     document.getElementById("dashboardTabButton").click();

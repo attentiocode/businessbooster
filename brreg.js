@@ -664,28 +664,7 @@ function initContactInfoFilter() {
   }
 }
 
-document.addEventListener('change', (e) => {
-  if (e.target.id === 'select-contact-info-filter') {
-    const value = e.target.value;
 
-    let visibleData = [...filteredData]; // start fra all data
-
-    visibleData = visibleData.filter((item) => {
-      const email = item.epostadresse || item.email || item.epost || item.mail;
-      const web = item.hjemmeside || item.web || item.nettside || item.website;
-      const phone = item.telefon || item.mobil || item.telefonnummer || item.phone || item.tlf;
-
-      if (!value) return true; // "Alle"
-      if (value === 'email') return !!email;
-      if (value === 'web') return !!web;
-      if (value === 'phone') return !!phone;
-      return true;
-    });
-
-    // kall din eksisterende renderfunksjon med visibleData
-    renderCompanyList(visibleData);
-  }
-});
 
 
 
