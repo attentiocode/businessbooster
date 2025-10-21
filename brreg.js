@@ -578,7 +578,7 @@ sentToSelectButton.addEventListener("click", function() {
   });
 
 
-  function updateBrregCounterDark(sumTotal = 0, sumInPortal = 0, sumSelected = 0, preset = false) {
+function updateBrregCounterDark(sumTotal = 0, sumInPortal = 0, sumSelected = 0, preset = false) {
     const counter = document.getElementById('counterlistbrreg');
     if (!counter) return;
   
@@ -631,7 +631,7 @@ sentToSelectButton.addEventListener("click", function() {
       suffix.style.marginLeft = '6px';
       counter.appendChild(suffix);
     }
-  }
+}
 
 function initContactInfoFilter() {
   const select = document.getElementById('select-contact-info-filter');
