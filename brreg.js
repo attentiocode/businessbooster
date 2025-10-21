@@ -343,7 +343,6 @@ function startBrregList(data) {
           industryTxt.includes(String(ind).toLowerCase())
         );
       }
-
       // Dato
       if (include && (fromDt || toDt)) {
         const regDateRaw =
