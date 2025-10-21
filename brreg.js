@@ -247,6 +247,7 @@ function renderContactIcons(item) {
     // Enkel epostvalidering
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : '';
   };
+  
 
   // --- Felter ---
   const rawWeb =
