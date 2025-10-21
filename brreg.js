@@ -223,6 +223,7 @@ function resetFilters() {
     elStatus.textContent = 'Klar.';
 }
 
+
 // --- 1) HJELPER: kontakt-ikoner (ren JS, ingen ekstern CSS) ---
 function renderContactIcons(item) {
   const normalizeUrl = (u) => {
@@ -278,84 +279,125 @@ function renderContactIcons(item) {
   return html || '—';
 }
 
-// --- 2) HOVEDFUNKSJON ---
 function startBrregList(data) {
-  // Injiser CSS én gang
+  // --- 0) Injiser CSS én gang ---
   if (!document.getElementById('brreg-contact-style')) {
-    const brregStyle = document.createElement('style');
-    brregStyle.id = 'brreg-contact-style';
-    brregStyle.textContent = `
+    const style = document.createElement('style');
+    style.id = 'brreg-contact-style';
+    style.textContent = `
       .icon-btn {
         display:inline-flex; align-items:center; justify-content:center;
         width:26px; height:26px; border-radius:6px; margin-right:6px;
-        border:1px solid #e5e7eb; background:#f9fafb; text-decoration:none;
-        color:#1e3a8a; cursor:pointer;
+        border:1px solid #e5e7eb; background:#f9fafb;
+        color:#1e3a8a; cursor:pointer; text-decoration:none;
       }
       .icon-btn:hover { background:#eef2ff; }
       .contact-cell { white-space:nowrap; }
-      tr.inportal { background: rgba(60, 180, 75, 0.07); }
-      tr.selected  { background: rgba(0, 120, 215, 0.07); }
+      tr.inportal { background: rgba(60,180,75,0.07); }
+      tr.selected  { background: rgba(0,120,215,0.07); }
     `;
-    document.head.appendChild(brregStyle);
+    document.head.appendChild(style);
   }
 
   const list = document.getElementById('rowlist');
-  const presetName = document.getElementById('select-field-preset')?.value;
+  if (!list) return;
 
-  // 1) Hent valgt preset
+  // --- 1) Hent valgt preset og kontaktfilter ---
+  const presetName = document.getElementById('select-field-preset')?.value;
+  const contactFilter = document.getElementById('select-contact-info-filter')?.value || '';
+
   const presets = JSON.parse(localStorage.getItem('industryPresets') || '{}');
   const preset = presets[presetName] || null;
 
-  // 2) Filtrer data
+  // --- 2) Hjelpefunksjoner ---
+  const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
+  const getOrgnr = (obj) =>
+    normalizeOrgnr(
+      obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber
+    );
+
+  const hasEmail = (it) =>
+    !!String(it.epostadresse ?? it.epost ?? it.email ?? it.mail ?? '').trim();
+  const hasWeb = (it) =>
+    !!String(it.hjemmeside ?? it.hjemmesideurl ?? it.hjemmesideUrl ??
+      it.web ?? it.www ?? it.website ?? it.nettside ?? '').trim();
+  const hasPhone = (it) =>
+    !!String(it.mobil ?? it.mobilnummer ?? it.telefon ?? it.telefonnummer ??
+      it.phone ?? it.tlf ?? '').trim();
+
+  // --- 3) Filtrer data ---
   let filteredData = data;
   if (preset) {
     const { industries = [], dateFrom, dateTo } = preset;
+    const fromDt = dateFrom ? new Date(dateFrom) : null;
+    const toDt = dateTo ? new Date(dateTo) : null;
+
     filteredData = data.filter((item) => {
       let include = true;
+
+      // Bransje
       if (industries.length > 0) {
-        const itemIndustry =
-          (item.naeringskode1?.beskrivelse || '').toLowerCase() ||
-          (item.bransje || '').toLowerCase();
-        include = industries.some(ind => itemIndustry.includes(ind.toLowerCase())) || false;
+        const industryTxt =
+          ((item.naeringskode1?.beskrivelse ?? '') || (item.bransje ?? '')).toLowerCase();
+        include = industries.some((ind) =>
+          industryTxt.includes(String(ind).toLowerCase())
+        );
       }
-      if (include && (dateFrom || dateTo)) {
-        const regDate = new Date(item.registreringsdatoEnhetsregisteret);
-        if (dateFrom) include = regDate >= new Date(dateFrom);
-        if (dateTo) include = include && regDate <= new Date(dateTo);
+
+      // Dato
+      if (include && (fromDt || toDt)) {
+        const regDateRaw =
+          item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret;
+        if (!regDateRaw) return false;
+        const regDate = new Date(regDateRaw);
+        if (fromDt && regDate < fromDt) include = false;
+        if (toDt && regDate > toDt) include = false;
       }
+
+      // Kontaktfilter
+      if (include && contactFilter) {
+        if (contactFilter === 'email') include = hasEmail(item);
+        if (contactFilter === 'web') include = hasWeb(item);
+        if (contactFilter === 'phone') include = hasPhone(item);
+      }
+
       return include;
+    });
+  } else if (contactFilter) {
+    filteredData = data.filter((item) => {
+      if (contactFilter === 'email') return hasEmail(item);
+      if (contactFilter === 'web') return hasWeb(item);
+      if (contactFilter === 'phone') return hasPhone(item);
+      return true;
     });
   }
 
-  // 3) Sorter: nyeste først, deretter navn
+  // --- 4) Sortering ---
   filteredData.sort((a, b) => {
-    const dateA = new Date(a.registreringsdatoEnhetsregisteret);
-    const dateB = new Date(b.registreringsdatoEnhetsregisteret);
-    if (dateA < dateB) return 1;
-    if (dateA > dateB) return -1;
+    const da = new Date(a.registreringsdatoEnhetsregisteret);
+    const db = new Date(b.registreringsdatoEnhetsregisteret);
+    if (da < db) return 1;
+    if (da > db) return -1;
     return a.navn.toUpperCase().localeCompare(b.navn.toUpperCase());
   });
 
-  // Ekstra sortering på søkestreng (eksakt -> startsWith)
+  // Ekstra sortering for søkestreng
   const qStr = (typeof elQuery !== 'undefined' && elQuery?.value) ? elQuery.value : '';
   const query = qStr.trim().toLowerCase();
   if (query) {
     filteredData.sort((a, b) => {
-      const nameA = a.navn.toLowerCase();
-      const nameB = b.navn.toLowerCase();
-      const normalize = (str) => str.replace(/\b(as|asa)\b\.?/g, "").trim();
+      const normalize = (s) => s.toLowerCase().replace(/\b(as|asa)\b\.?/g, '').trim();
+      const nameA = normalize(a.navn);
+      const nameB = normalize(b.navn);
+      const normQ = normalize(query);
 
-      const normA = normalize(nameA);
-      const normB = normalize(nameB);
-      const normQuery = normalize(query);
-
-      const aExact = normA === normQuery;
-      const bExact = normB === normQuery;
+      const aExact = nameA === normQ;
+      const bExact = nameB === normQ;
       if (aExact && !bExact) return -1;
       if (!aExact && bExact) return 1;
 
-      const aStarts = normA.startsWith(normQuery);
-      const bStarts = normB.startsWith(normQuery);
+      const aStarts = nameA.startsWith(normQ);
+      const bStarts = nameB.startsWith(normQ);
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
 
@@ -363,46 +405,44 @@ function startBrregList(data) {
     });
   }
 
-  // 4) Rendre tabell
+  // --- 5) Rendre tabell ---
   list.innerHTML = '';
 
-  let sumTotal = filteredData.length || 0;
+  let sumTotal = filteredData.length;
   let sumInPortal = 0;
   let sumSelected = 0;
+  let sumEmail = 0;
+  let sumWeb = 0;
+  let sumPhone = 0;
 
   filteredData.forEach((rawItem) => {
     const tr = document.createElement('tr');
     tr.classList.add('default-row');
 
-    // Hjelpere orgnr
-    const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
-    const getOrgnr = (obj) =>
-      normalizeOrgnr(
-        obj?.organisasjonsnummer ??
-        obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber
-      );
+    const isInPortal = (gCustomers || []).some(
+      (c) => getOrgnr(c) === getOrgnr(rawItem)
+    );
+    const alreadySelected = (gSelectbedrifter || []).find(
+      (b) => getOrgnr(b) === getOrgnr(rawItem)
+    );
 
     let item = rawItem;
-
-    const isInPortal = (gCustomers || []).some(
-      (c) => getOrgnr(c) === getOrgnr(item)
-    );
-
-    const alreadySelected = (gSelectbedrifter || []).find(
-      (b) => getOrgnr(b) === getOrgnr(item)
-    );
-
-    // Portal > Utvalg
     let g = null;
+
+    // Prioritet: Portal > Utvalg
     if (isInPortal) {
       sumInPortal++;
       tr.classList.add('inportal');
     } else if (alreadySelected) {
       sumSelected++;
       tr.classList.add('selected');
-      item = alreadySelected; // vis data fra utvalg
+      item = alreadySelected;
       g = (gGroupbedrifter || []).find((gr) => gr.id == item.group);
     }
+
+    if (hasEmail(item)) sumEmail++;
+    if (hasWeb(item)) sumWeb++;
+    if (hasPhone(item)) sumPhone++;
 
     const fmtDate = (d) => {
       if (!d) return '—';
@@ -418,9 +458,7 @@ function startBrregList(data) {
           .trim() || '—'
       : '—';
 
-    // Kontakt-HTML (egen funksjon)
     const contactHtml = renderContactIcons(item);
-
     const checkboxAttrs = (alreadySelected || isInPortal) ? 'disabled checked' : '';
 
     const statusHtml = isInPortal
@@ -429,51 +467,43 @@ function startBrregList(data) {
           ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
           : 'Brreg');
 
-    // NB: Husk header <th>Kontakt</th> i tabellen din
     tr.innerHTML = `
       <td style="width:40px;">
-        <input
-          type="checkbox"
-          class="selectcheckbox"
-          data-orgnr="${item.organisasjonsnummer || ''}"
-          ${checkboxAttrs}
-        />
+        <input type="checkbox" class="selectcheckbox"
+          data-orgnr="${item.organisasjonsnummer || ''}" ${checkboxAttrs} />
       </td>
       <td class="mono" style="font-size:11px;">${item.organisasjonsnummer ?? '—'}</td>
       <td style="font-weight:700;font-size:12px;">${item.navn ?? '—'}</td>
-      <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
       <td style="font-size:11px;">${adresse}</td>
       <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
-      <td class="status" style="font-size:10px;">
-        ${statusHtml}
-      </td>
+      <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
+      <td class="status" style="font-size:10px;">${statusHtml}</td>
     `;
 
     list.appendChild(tr);
   });
 
-  // 5) Oppdater total-teller (din eksisterende funksjon)
-  updateBrregCounterDark(sumTotal, sumInPortal, sumSelected, preset);
+  // --- 6) Oppdater teller ---
+  updateBrregCounterDark(sumTotal, sumInPortal, sumSelected, !!preset, sumEmail, sumWeb, sumPhone);
 
-  // 6) Massebehandling UI + handlers (BRREG)
-  const bulkBar   = document.getElementById('select-bulk-actions-brreg');
+  // --- 7) Massebehandling (bulk selection) ---
+  const bulkBar = document.getElementById('select-bulk-actions-brreg');
   const bulkCount = document.getElementById('select-bulk-count-brreg');
 
-  function getSelectedOrgnrs() {
-    return Array.from(list.querySelectorAll('.selectcheckbox'))
+  const getSelectedOrgnrs = () =>
+    Array.from(list.querySelectorAll('.selectcheckbox'))
       .filter(cb => cb.checked && !cb.disabled)
       .map(cb => cb.dataset.orgnr)
       .filter(Boolean);
-  }
 
   function updateBulkUI() {
     const n = getSelectedOrgnrs().length;
     if (bulkBar)   bulkBar.style.display = n > 0 ? 'flex' : 'none';
     if (bulkCount) bulkCount.textContent = `${n} valgt`;
-    const counterSelected = document.getElementById('counterlistbrregselect');
-    if (counterSelected) {
-      counterSelected.textContent = `${n} valgt`;
-      counterSelected.style.display = n > 0 ? 'block' : 'none';
+    const counterSel = document.getElementById('counterlistbrregselect');
+    if (counterSel) {
+      counterSel.textContent = `${n} valgt`;
+      counterSel.style.display = n > 0 ? 'block' : 'none';
     }
   }
 
@@ -482,7 +512,6 @@ function startBrregList(data) {
   });
   updateBulkUI();
 }
-
 
 
 
@@ -521,7 +550,15 @@ sentToSelectButton.addEventListener("click", function() {
   });
 
 
-function updateBrregCounterDark(sumTotal = 0, sumInPortal = 0, sumSelected = 0, preset = false) {
+function updateBrregCounterDark(
+    sumTotal = 0,
+    sumInPortal = 0,
+    sumSelected = 0,
+    preset = false,
+    sumEmail = 0,
+    sumWeb = 0,
+    sumPhone = 0
+  ) {
     const counter = document.getElementById('counterlistbrreg');
     if (!counter) return;
   
@@ -529,86 +566,65 @@ function updateBrregCounterDark(sumTotal = 0, sumInPortal = 0, sumSelected = 0, 
     counter.innerHTML = '';
   
     // --- Stil for hele raden ---
-    counter.style.display = 'flex';
-    counter.style.gap = '8px';
-    counter.style.flexWrap = 'wrap';
-    counter.style.alignItems = 'center';
-    counter.style.fontFamily = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-    counter.style.fontSize = '13px';
-    counter.style.fontWeight = '500';
-    counter.style.color = '#E5E7EB'; // lys grå tekst
+    Object.assign(counter.style, {
+      display: 'flex',
+      gap: '8px',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+      fontSize: '13px',
+      fontWeight: '500',
+      color: '#E5E7EB'
+    });
   
     // --- Chip generator ---
     const makeChip = (label, value, colors) => {
       const el = document.createElement('span');
       el.textContent = `${label}: ${value} stk.`;
-      el.style.padding = '4px 10px';
-      el.style.borderRadius = '9999px';
-      el.style.background = colors.bg;
-      el.style.color = colors.text;
-      el.style.border = `1px solid ${colors.border}`;
-      el.style.fontWeight = '500';
-      el.style.boxShadow = '0 0 3px rgba(0,0,0,0.15)';
+      Object.assign(el.style, {
+        padding: '4px 10px',
+        borderRadius: '9999px',
+        background: colors.bg,
+        color: colors.text,
+        border: `1px solid ${colors.border}`,
+        fontWeight: '500',
+        boxShadow: '0 0 3px rgba(0,0,0,0.15)'
+      });
       return el;
     };
   
     // --- Fargepalett tilpasset mørkt dashbord ---
     const colors = {
-      total:   { bg: '#1E3A8A1A', text: '#93C5FD', border: '#1E3A8A40' }, // lys blå chip
-      portal:  { bg: '#064E3B33', text: '#6EE7B7', border: '#10B98140' }, // grønn chip
-      selected:{ bg: '#1E40AF33', text: '#93C5FD', border: '#3B82F640' }  // blå chip
+      total:   { bg: '#1E3A8A1A', text: '#93C5FD', border: '#1E3A8A40' },
+      portal:  { bg: '#064E3B33', text: '#6EE7B7', border: '#10B98140' },
+      selected:{ bg: '#1E40AF33', text: '#93C5FD', border: '#3B82F640' },
+      email:   { bg: '#312E8122', text: '#A78BFA', border: '#7C3AED40' }, // lilla
+      web:     { bg: '#07598533', text: '#38BDF8', border: '#0EA5E940' }, // cyan
+      phone:   { bg: '#14532D33', text: '#4ADE80', border: '#22C55E40' }  // grønn
     };
   
     // --- Legg til elementene ---
     const totalEl    = makeChip('Totalt', sumTotal, colors.total);
     const portalEl   = makeChip('I portal', sumInPortal, colors.portal);
     const selectedEl = makeChip('Valgt', sumSelected, colors.selected);
+    const emailEl    = makeChip('Har e-post', sumEmail, colors.email);
+    const webEl      = makeChip('Har nettside', sumWeb, colors.web);
+    const phoneEl    = makeChip('Har telefon', sumPhone, colors.phone);
   
-    counter.append(totalEl, portalEl, selectedEl);
+    counter.append(totalEl, portalEl, selectedEl, emailEl, webEl, phoneEl);
   
     if (preset) {
       const suffix = document.createElement('span');
       suffix.textContent = '(filtrert)';
-      suffix.style.opacity = '0.7';
-      suffix.style.fontSize = '12px';
-      suffix.style.marginLeft = '6px';
+      Object.assign(suffix.style, {
+        opacity: '0.7',
+        fontSize: '12px',
+        marginLeft: '6px'
+      });
       counter.appendChild(suffix);
     }
 }
-
-function initContactInfoFilter() {
-  const select = document.getElementById('select-contact-info-filter');
-  if (!select) return;
-
-  // Tøm først
-  select.innerHTML = '';
-
-  // Ikoner (samme stil som i renderContactIcons)
-  const globeSvg = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3c3.5 3.8 3.5 13.2 0 18M12 3c-3.5 3.8-3.5 13.2 0 18" stroke="currentColor" stroke-width="1.6"/></svg>`;
-  const mailSvg = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></svg>`;
-  const phoneSvg = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><path d="M6 4h4l1 4-2 1a12 12 0 0 0 6 6l1-2 4 1v4a2 2 0 0 1-2 2 16 16 0 0 1-16-16 2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></svg>`;
-
-  // Fordi <option> ikke støtter inline SVG direkte i alle browsere, lager vi
-  // en liten tekstbasert fallback med emoji + ikonstøtte i supported browser.
-  // (Se under hvordan vi kan style ikonene i et <datalist> alternativt)
-  const options = [
-    { value: '', label: 'Alle kontakter' },
-    { value: 'email', label: `E-post` },
-    { value: 'web', label: `Nettside` },
-    { value: 'phone', label: `Telefon` },
-  ];
-
-  for (const opt of options) {
-    const o = document.createElement('option');
-    o.value = opt.value;
-    o.textContent = opt.label;
-    select.appendChild(o);
-  }
-}
-
-
-
-
+  
 
 
   
