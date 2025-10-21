@@ -32,12 +32,15 @@ cdnScripts.reduce((promise, script) => {
         if (member.loggedIn){
             console.log("Member is logged in");
             userid = member.airtableid;
-            
+
             //trykk på knappen mainpagetabbutton
             document.getElementById("mainpagetabbutton").click();
 
             //hent alle kunder fra airtable
             getCustomer();
+
+            //  
+            initContactInfoFilter();
 
         }else{
             console.log("Member is NOT logged in");

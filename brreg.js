@@ -247,7 +247,7 @@ function renderContactIcons(item) {
     // Enkel epostvalidering
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : '';
   };
-  
+
 
   // --- Felter ---
   const rawWeb =
@@ -609,6 +609,58 @@ sentToSelectButton.addEventListener("click", function() {
     }
   }
 
+function initContactInfoFilter() {
+  const select = document.getElementById('select-contact-info-filter');
+  if (!select) return;
+
+  // Tøm først
+  select.innerHTML = '';
+
+  // Ikoner (samme stil som i renderContactIcons)
+  const globeSvg = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3c3.5 3.8 3.5 13.2 0 18M12 3c-3.5 3.8-3.5 13.2 0 18" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  const mailSvg = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></svg>`;
+  const phoneSvg = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><path d="M6 4h4l1 4-2 1a12 12 0 0 0 6 6l1-2 4 1v4a2 2 0 0 1-2 2 16 16 0 0 1-16-16 2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></svg>`;
+
+  // Fordi <option> ikke støtter inline SVG direkte i alle browsere, lager vi
+  // en liten tekstbasert fallback med emoji + ikonstøtte i supported browser.
+  // (Se under hvordan vi kan style ikonene i et <datalist> alternativt)
+  const options = [
+    { value: '', label: 'Alle kontakter' },
+    { value: 'email', label: `E-post` },
+    { value: 'web', label: `Nettside` },
+    { value: 'phone', label: `Telefon` },
+  ];
+
+  for (const opt of options) {
+    const o = document.createElement('option');
+    o.value = opt.value;
+    o.textContent = opt.label;
+    select.appendChild(o);
+  }
+}
+
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'select-contact-info-filter') {
+    const value = e.target.value;
+
+    let visibleData = [...filteredData]; // start fra all data
+
+    visibleData = visibleData.filter((item) => {
+      const email = item.epostadresse || item.email || item.epost || item.mail;
+      const web = item.hjemmeside || item.web || item.nettside || item.website;
+      const phone = item.telefon || item.mobil || item.telefonnummer || item.phone || item.tlf;
+
+      if (!value) return true; // "Alle"
+      if (value === 'email') return !!email;
+      if (value === 'web') return !!web;
+      if (value === 'phone') return !!phone;
+      return true;
+    });
+
+    // kall din eksisterende renderfunksjon med visibleData
+    renderCompanyList(visibleData);
+  }
+});
 
 
 
