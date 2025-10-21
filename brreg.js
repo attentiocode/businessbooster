@@ -377,7 +377,8 @@ function startBrregList(data) {
     });
 
     // Oppdater total-teller
-    updateBrregCounter(sumTotal, sumInPortal, sumSelected, preset);
+    updateBrregCounterDark(sumTotal, sumInPortal, sumSelected, preset);
+
     
     // 🧮 5. Massebehandling UI + handlers (BRREG)
     const bulkBar   = document.getElementById('select-bulk-actions-brreg');
@@ -445,52 +446,59 @@ sentToSelectButton.addEventListener("click", function() {
   });
 
 
-  function updateBrregCounter(sumTotal = 0, sumInPortal = 0, sumSelected = 0, preset = false) {
+  function updateBrregCounterDark(sumTotal = 0, sumInPortal = 0, sumSelected = 0, preset = false) {
     const counter = document.getElementById('counterlistbrreg');
     if (!counter) return;
   
-    // Opprett hovedcontainer
+    // Fjern gammel innhold
     counter.innerHTML = '';
   
-    // Hjelpefunksjon for å lage en "chip"
-    const makeChip = (label, value, color) => {
-      const span = document.createElement('span');
-      span.style.display = 'inline-block';
-      span.style.padding = '4px 10px';
-      span.style.marginRight = '6px';
-      span.style.borderRadius = '20px';
-      span.style.fontSize = '13px';
-      span.style.fontWeight = '500';
-      span.style.border = '1px solid #ddd';
-      span.style.background = color.bg;
-      span.style.color = color.text;
-      span.textContent = `${label}: ${value} stk.`;
-      return span;
+    // --- Stil for hele raden ---
+    counter.style.display = 'flex';
+    counter.style.gap = '8px';
+    counter.style.flexWrap = 'wrap';
+    counter.style.alignItems = 'center';
+    counter.style.fontFamily = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    counter.style.fontSize = '13px';
+    counter.style.fontWeight = '500';
+    counter.style.color = '#E5E7EB'; // lys grå tekst
+  
+    // --- Chip generator ---
+    const makeChip = (label, value, colors) => {
+      const el = document.createElement('span');
+      el.textContent = `${label}: ${value} stk.`;
+      el.style.padding = '4px 10px';
+      el.style.borderRadius = '9999px';
+      el.style.background = colors.bg;
+      el.style.color = colors.text;
+      el.style.border = `1px solid ${colors.border}`;
+      el.style.fontWeight = '500';
+      el.style.boxShadow = '0 0 3px rgba(0,0,0,0.15)';
+      return el;
     };
   
-    // Farger (enkle og lesbare)
-    const colorTotal    = { bg: '#eef2ff', text: '#1e3a8a' }; // blålig
-    const colorPortal   = { bg: '#ecfdf3', text: '#065f46' }; // grønn
-    const colorSelected = { bg: '#eff6ff', text: '#1e40af' }; // lys blå
+    // --- Fargepalett tilpasset mørkt dashbord ---
+    const colors = {
+      total:   { bg: '#1E3A8A1A', text: '#93C5FD', border: '#1E3A8A40' }, // lys blå chip
+      portal:  { bg: '#064E3B33', text: '#6EE7B7', border: '#10B98140' }, // grønn chip
+      selected:{ bg: '#1E40AF33', text: '#93C5FD', border: '#3B82F640' }  // blå chip
+    };
   
-    // Bygg tellerne
-    const totalEl    = makeChip('Totalt', sumTotal, colorTotal);
-    const portalEl   = makeChip('I portal', sumInPortal, colorPortal);
-    const selectedEl = makeChip('Valgt', sumSelected, colorSelected);
+    // --- Legg til elementene ---
+    const totalEl    = makeChip('Totalt', sumTotal, colors.total);
+    const portalEl   = makeChip('I portal', sumInPortal, colors.portal);
+    const selectedEl = makeChip('Valgt', sumSelected, colors.selected);
   
-    // Legg til elementene i DOM
-    counter.appendChild(totalEl);
-    counter.appendChild(portalEl);
-    counter.appendChild(selectedEl);
+    counter.append(totalEl, portalEl, selectedEl);
   
-    // Legg til "(filtrert)" hvis preset = true
     if (preset) {
-      const filtered = document.createElement('span');
-      filtered.textContent = '(filtrert)';
-      filtered.style.fontSize = '12px';
-      filtered.style.opacity = '0.7';
-      filtered.style.marginLeft = '8px';
-      counter.appendChild(filtered);
+      const suffix = document.createElement('span');
+      suffix.textContent = '(filtrert)';
+      suffix.style.opacity = '0.7';
+      suffix.style.fontSize = '12px';
+      suffix.style.marginLeft = '6px';
+      counter.appendChild(suffix);
     }
   }
+  
   
