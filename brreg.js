@@ -223,10 +223,8 @@ function resetFilters() {
     elStatus.textContent = 'Klar.';
 }
 
-
 // --- 1) HJELPER: kontakt-ikoner (ren JS, ingen ekstern CSS) ---
 function renderContactIcons(item) {
-  // --- Hjelpere ---
   const normalizeUrl = (u) => {
     if (!u) return '';
     let s = String(u).trim();
@@ -241,68 +239,35 @@ function renderContactIcons(item) {
     return digits.length ? digits : '';
   };
 
-  const normalizeEmail = (e) => {
-    if (!e) return '';
-    const s = String(e).trim().toLowerCase();
-    // Enkel epostvalidering
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : '';
-  };
-
-
-  // --- Felter ---
   const rawWeb =
     item.hjemmeside ?? item.hjemmesideurl ?? item.hjemmesideUrl ??
     item.web ?? item.www ?? item.website ?? item.nettside ?? '';
-
   const rawPhone =
     item.mobil ?? item.mobilnummer ?? item.telefon ?? item.telefonnummer ??
     item.phone ?? item.tlf ?? '';
 
-  const rawEmail =
-    item.epostadresse ?? item.epost ?? item.email ?? item.mail ?? '';
-
-  // --- Normaliserte verdier ---
   const website = normalizeUrl(rawWeb);
   const phone = normalizePhone(rawPhone);
-  const email = normalizeEmail(rawEmail);
 
-  // --- Ikoner (samme stil som tidligere) ---
   const globeSvg = `
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="14" height="14">
       <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
       <path d="M3 12h18M12 3c3.5 3.8 3.5 13.2 0 18M12 3c-3.5 3.8-3.5 13.2 0 18" stroke="currentColor" stroke-width="1.6"/>
     </svg>`;
-
   const phoneSvg = `
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="14" height="14">
       <path d="M6 4h4l1 4-2 1a12 12 0 0 0 6 6l1-2 4 1v4a2 2 0 0 1-2 2 16 16 0 0 1-16-16 2 2 0 0 1 2-2z"
             stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round" />
     </svg>`;
 
-  const mailSvg = `
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="14" height="14">
-      <rect x="3" y="5" width="18" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="1.6" fill="none"/>
-      <path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
-    </svg>`;
-
-  // --- Generer HTML ---
   let html = '';
-
   if (website) {
     html += `
       <a class="icon-btn" href="${website}" target="_blank" rel="noopener noreferrer"
-         title="Åpne nettside: ${website}" aria-label="Åpne nettside">
+         title="${website}" aria-label="Åpne nettside">
         ${globeSvg}
       </a>`;
   }
-
-  if (email) {
-    html += `
-      <a class="icon-btn" href="mailto:${email}" title="${email}" aria-label="Send e-post til ${email}">
-        ${mailSvg}
-      </a>`;
-  }
-
   if (phone) {
     html += `
       <a class="icon-btn" href="tel:${phone}" title="${phone}" aria-label="Ring ${phone}">
@@ -313,128 +278,84 @@ function renderContactIcons(item) {
   return html || '—';
 }
 
-
 // --- 2) HOVEDFUNKSJON ---
 function startBrregList(data) {
-  // --- 0) Injiser CSS én gang ---
+  // Injiser CSS én gang
   if (!document.getElementById('brreg-contact-style')) {
-    const style = document.createElement('style');
-    style.id = 'brreg-contact-style';
-    style.textContent = `
+    const brregStyle = document.createElement('style');
+    brregStyle.id = 'brreg-contact-style';
+    brregStyle.textContent = `
       .icon-btn {
         display:inline-flex; align-items:center; justify-content:center;
         width:26px; height:26px; border-radius:6px; margin-right:6px;
-        border:1px solid #e5e7eb; background:#f9fafb;
-        color:#1e3a8a; cursor:pointer; text-decoration:none;
+        border:1px solid #e5e7eb; background:#f9fafb; text-decoration:none;
+        color:#1e3a8a; cursor:pointer;
       }
       .icon-btn:hover { background:#eef2ff; }
       .contact-cell { white-space:nowrap; }
-      tr.inportal { background: rgba(60,180,75,0.07); }
-      tr.selected  { background: rgba(0,120,215,0.07); }
+      tr.inportal { background: rgba(60, 180, 75, 0.07); }
+      tr.selected  { background: rgba(0, 120, 215, 0.07); }
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(brregStyle);
   }
 
   const list = document.getElementById('rowlist');
-  if (!list) return;
-
-  // --- 1) Hent valgt preset og kontaktfilter ---
   const presetName = document.getElementById('select-field-preset')?.value;
-  const contactFilter = document.getElementById('select-contact-info-filter')?.value || '';
 
+  // 1) Hent valgt preset
   const presets = JSON.parse(localStorage.getItem('industryPresets') || '{}');
   const preset = presets[presetName] || null;
 
-  // --- 2) Hjelpefunksjoner ---
-  const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
-  const getOrgnr = (obj) =>
-    normalizeOrgnr(
-      obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber
-    );
-
-  const hasEmail = (it) =>
-    !!String(it.epostadresse ?? it.epost ?? it.email ?? it.mail ?? '').trim();
-  const hasWeb = (it) =>
-    !!String(it.hjemmeside ?? it.hjemmesideurl ?? it.hjemmesideUrl ??
-      it.web ?? it.www ?? it.website ?? it.nettside ?? '').trim();
-  const hasPhone = (it) =>
-    !!String(it.mobil ?? it.mobilnummer ?? it.telefon ?? it.telefonnummer ??
-      it.phone ?? it.tlf ?? '').trim();
-
-  // --- 3) Filtrer data ---
+  // 2) Filtrer data
   let filteredData = data;
   if (preset) {
     const { industries = [], dateFrom, dateTo } = preset;
-    const fromDt = dateFrom ? new Date(dateFrom) : null;
-    const toDt = dateTo ? new Date(dateTo) : null;
-
     filteredData = data.filter((item) => {
       let include = true;
-
-      // Bransje
       if (industries.length > 0) {
-        const industryTxt =
-          ((item.naeringskode1?.beskrivelse ?? '') || (item.bransje ?? '')).toLowerCase();
-        include = industries.some((ind) =>
-          industryTxt.includes(String(ind).toLowerCase())
-        );
+        const itemIndustry =
+          (item.naeringskode1?.beskrivelse || '').toLowerCase() ||
+          (item.bransje || '').toLowerCase();
+        include = industries.some(ind => itemIndustry.includes(ind.toLowerCase())) || false;
       }
-
-      // Dato
-      if (include && (fromDt || toDt)) {
-        const regDateRaw =
-          item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret;
-        if (!regDateRaw) return false;
-        const regDate = new Date(regDateRaw);
-        if (fromDt && regDate < fromDt) include = false;
-        if (toDt && regDate > toDt) include = false;
+      if (include && (dateFrom || dateTo)) {
+        const regDate = new Date(item.registreringsdatoEnhetsregisteret);
+        if (dateFrom) include = regDate >= new Date(dateFrom);
+        if (dateTo) include = include && regDate <= new Date(dateTo);
       }
-
-      // Kontaktfilter
-      if (include && contactFilter) {
-        if (contactFilter === 'email') include = hasEmail(item);
-        if (contactFilter === 'web') include = hasWeb(item);
-        if (contactFilter === 'phone') include = hasPhone(item);
-      }
-
       return include;
-    });
-  } else if (contactFilter) {
-    // Bare kontaktfilter uten preset
-    filteredData = data.filter((item) => {
-      if (contactFilter === 'email') return hasEmail(item);
-      if (contactFilter === 'web') return hasWeb(item);
-      if (contactFilter === 'phone') return hasPhone(item);
-      return true;
     });
   }
 
-  // --- 4) Sortering ---
+  // 3) Sorter: nyeste først, deretter navn
   filteredData.sort((a, b) => {
-    const da = new Date(a.registreringsdatoEnhetsregisteret);
-    const db = new Date(b.registreringsdatoEnhetsregisteret);
-    if (da < db) return 1;
-    if (da > db) return -1;
+    const dateA = new Date(a.registreringsdatoEnhetsregisteret);
+    const dateB = new Date(b.registreringsdatoEnhetsregisteret);
+    if (dateA < dateB) return 1;
+    if (dateA > dateB) return -1;
     return a.navn.toUpperCase().localeCompare(b.navn.toUpperCase());
   });
 
-  // Ekstra sortering for søkestreng
+  // Ekstra sortering på søkestreng (eksakt -> startsWith)
   const qStr = (typeof elQuery !== 'undefined' && elQuery?.value) ? elQuery.value : '';
   const query = qStr.trim().toLowerCase();
   if (query) {
     filteredData.sort((a, b) => {
-      const normalize = (s) => s.toLowerCase().replace(/\b(as|asa)\b\.?/g, '').trim();
-      const nameA = normalize(a.navn);
-      const nameB = normalize(b.navn);
-      const normQ = normalize(query);
+      const nameA = a.navn.toLowerCase();
+      const nameB = b.navn.toLowerCase();
+      const normalize = (str) => str.replace(/\b(as|asa)\b\.?/g, "").trim();
 
-      const aExact = nameA === normQ;
-      const bExact = nameB === normQ;
+      const normA = normalize(nameA);
+      const normB = normalize(nameB);
+      const normQuery = normalize(query);
+
+      const aExact = normA === normQuery;
+      const bExact = normB === normQuery;
       if (aExact && !bExact) return -1;
       if (!aExact && bExact) return 1;
 
-      const aStarts = nameA.startsWith(normQ);
-      const bStarts = nameB.startsWith(normQ);
+      const aStarts = normA.startsWith(normQuery);
+      const bStarts = normB.startsWith(normQuery);
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
 
@@ -442,10 +363,10 @@ function startBrregList(data) {
     });
   }
 
-  // --- 5) Rendre tabell ---
+  // 4) Rendre tabell
   list.innerHTML = '';
 
-  let sumTotal = filteredData.length;
+  let sumTotal = filteredData.length || 0;
   let sumInPortal = 0;
   let sumSelected = 0;
 
@@ -453,24 +374,33 @@ function startBrregList(data) {
     const tr = document.createElement('tr');
     tr.classList.add('default-row');
 
-    const isInPortal = (gCustomers || []).some(
-      (c) => getOrgnr(c) === getOrgnr(rawItem)
-    );
-    const alreadySelected = (gSelectbedrifter || []).find(
-      (b) => getOrgnr(b) === getOrgnr(rawItem)
-    );
+    // Hjelpere orgnr
+    const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
+    const getOrgnr = (obj) =>
+      normalizeOrgnr(
+        obj?.organisasjonsnummer ??
+        obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber
+      );
 
     let item = rawItem;
-    let g = null;
 
-    // Prioritet: Portal > Utvalg
+    const isInPortal = (gCustomers || []).some(
+      (c) => getOrgnr(c) === getOrgnr(item)
+    );
+
+    const alreadySelected = (gSelectbedrifter || []).find(
+      (b) => getOrgnr(b) === getOrgnr(item)
+    );
+
+    // Portal > Utvalg
+    let g = null;
     if (isInPortal) {
       sumInPortal++;
       tr.classList.add('inportal');
     } else if (alreadySelected) {
       sumSelected++;
       tr.classList.add('selected');
-      item = alreadySelected;
+      item = alreadySelected; // vis data fra utvalg
       g = (gGroupbedrifter || []).find((gr) => gr.id == item.group);
     }
 
@@ -488,7 +418,9 @@ function startBrregList(data) {
           .trim() || '—'
       : '—';
 
+    // Kontakt-HTML (egen funksjon)
     const contactHtml = renderContactIcons(item);
+
     const checkboxAttrs = (alreadySelected || isInPortal) ? 'disabled checked' : '';
 
     const statusHtml = isInPortal
@@ -497,43 +429,51 @@ function startBrregList(data) {
           ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
           : 'Brreg');
 
+    // NB: Husk header <th>Kontakt</th> i tabellen din
     tr.innerHTML = `
       <td style="width:40px;">
-        <input type="checkbox" class="selectcheckbox"
-          data-orgnr="${item.organisasjonsnummer || ''}" ${checkboxAttrs} />
+        <input
+          type="checkbox"
+          class="selectcheckbox"
+          data-orgnr="${item.organisasjonsnummer || ''}"
+          ${checkboxAttrs}
+        />
       </td>
       <td class="mono" style="font-size:11px;">${item.organisasjonsnummer ?? '—'}</td>
       <td style="font-weight:700;font-size:12px;">${item.navn ?? '—'}</td>
+      <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
       <td style="font-size:11px;">${adresse}</td>
       <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
-      <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
-      <td class="status" style="font-size:10px;">${statusHtml}</td>
+      <td class="status" style="font-size:10px;">
+        ${statusHtml}
+      </td>
     `;
 
     list.appendChild(tr);
   });
 
-  // --- 6) Oppdater teller ---
-  updateBrregCounterDark(sumTotal, sumInPortal, sumSelected, !!preset);
+  // 5) Oppdater total-teller (din eksisterende funksjon)
+  updateBrregCounterDark(sumTotal, sumInPortal, sumSelected, preset);
 
-  // --- 7) Massebehandling (bulk selection) ---
-  const bulkBar = document.getElementById('select-bulk-actions-brreg');
+  // 6) Massebehandling UI + handlers (BRREG)
+  const bulkBar   = document.getElementById('select-bulk-actions-brreg');
   const bulkCount = document.getElementById('select-bulk-count-brreg');
 
-  const getSelectedOrgnrs = () =>
-    Array.from(list.querySelectorAll('.selectcheckbox'))
+  function getSelectedOrgnrs() {
+    return Array.from(list.querySelectorAll('.selectcheckbox'))
       .filter(cb => cb.checked && !cb.disabled)
       .map(cb => cb.dataset.orgnr)
       .filter(Boolean);
+  }
 
   function updateBulkUI() {
     const n = getSelectedOrgnrs().length;
     if (bulkBar)   bulkBar.style.display = n > 0 ? 'flex' : 'none';
     if (bulkCount) bulkCount.textContent = `${n} valgt`;
-    const counterSel = document.getElementById('counterlistbrregselect');
-    if (counterSel) {
-      counterSel.textContent = `${n} valgt`;
-      counterSel.style.display = n > 0 ? 'block' : 'none';
+    const counterSelected = document.getElementById('counterlistbrregselect');
+    if (counterSelected) {
+      counterSelected.textContent = `${n} valgt`;
+      counterSelected.style.display = n > 0 ? 'block' : 'none';
     }
   }
 
@@ -542,6 +482,9 @@ function startBrregList(data) {
   });
   updateBulkUI();
 }
+
+
+
 
 
 document.getElementById("brregmastercheckbox").addEventListener("change", function() {
