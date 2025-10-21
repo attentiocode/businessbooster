@@ -317,20 +317,41 @@ function startBrregList(data) {
     );
 
   const hasEmail = (it) =>
-    !!String(it.epostadresse ?? it.epost ?? it.email ?? it.mail ?? '').trim();
+    !!String(it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '').trim();
   const hasWeb = (it) =>
-    !!String(it.hjemmeside ?? it.hjemmesideurl ?? it.hjemmesideUrl ??
-      it.web ?? it.www ?? it.website ?? it.nettside ?? '').trim();
+    !!String(it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ??
+      it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? '').trim();
   const hasPhone = (it) =>
-    !!String(it.mobil ?? it.mobilnummer ?? it.telefon ?? it.telefonnummer ??
-      it.phone ?? it.tlf ?? '').trim();
+    !!String(it?.mobil ?? it?.m mobilnummer ?? it?.telefon ?? it?.telefonnummer ??
+      it?.phone ?? it?.tlf ?? '').trim();
+
+  const passesContactFilter = (item, filterVal) => {
+    if (!filterVal) return true;
+    const email = hasEmail(item);
+    const web = hasWeb(item);
+    const phone = hasPhone(item);
+
+    switch (filterVal) {
+      case 'email':        return email;
+      case 'web':          return web;
+      case 'phone':        return phone;
+      case 'email-only':   return email && !web && !phone;
+      case 'web-only':     return web && !email && !phone;
+      case 'phone-only':   return phone && !email && !web;
+      case 'email-web':    return email && web && !phone;
+      case 'email-phone':  return email && phone && !web;
+      case 'web-phone':    return web && phone && !email;
+      case 'all-three':    return email && web && phone;
+      default:             return true;
+    }
+  };
 
   // --- 3) Filtrer data ---
   let filteredData = data;
   if (preset) {
     const { industries = [], dateFrom, dateTo } = preset;
     const fromDt = dateFrom ? new Date(dateFrom) : null;
-    const toDt = dateTo ? new Date(dateTo) : null;
+    const toDt   = dateTo   ? new Date(dateTo)   : null;
 
     filteredData = data.filter((item) => {
       let include = true;
@@ -339,68 +360,27 @@ function startBrregList(data) {
       if (industries.length > 0) {
         const industryTxt =
           ((item.naeringskode1?.beskrivelse ?? '') || (item.bransje ?? '')).toLowerCase();
-        include = industries.some((ind) =>
-          industryTxt.includes(String(ind).toLowerCase())
-        );
+        include = industries.some((ind) => industryTxt.includes(String(ind).toLowerCase()));
       }
-      // Dato
+
+      // Dato (fallback til Foretaksreg. hvis Enhetsreg. mangler)
       if (include && (fromDt || toDt)) {
         const regDateRaw =
           item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret;
         if (!regDateRaw) return false;
         const regDate = new Date(regDateRaw);
         if (fromDt && regDate < fromDt) include = false;
-        if (toDt && regDate > toDt) include = false;
+        if (toDt && regDate > toDt)     include = false;
       }
 
-      // --- Kontaktfelt-hjelpere ---
-      const hasEmail = (it) => {
-        const val = it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '';
-        return typeof val === 'string' && val.trim() !== '';
-      };
-
-      const hasWeb = (it) => {
-        const val = it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ??
-                    it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? '';
-        return typeof val === 'string' && val.trim() !== '';
-      };
-
-      const hasPhone = (it) => {
-        const val = it?.mobil ?? it?.mobilnummer ?? it?.telefon ?? it?.telefonnummer ??
-                    it?.phone ?? it?.tlf ?? '';
-        return typeof val === 'string' && val.trim() !== '';
-      };
-
-      // --- Kontaktfilterlogikk (brukes inne i filter-funksjonen) ---
-      if (include && contactFilter) {
-        const email = hasEmail(item);
-        const web = hasWeb(item);
-        const phone = hasPhone(item);
-
-        switch (contactFilter) {
-          case 'email':        include = email; break;
-          case 'web':          include = web; break;
-          case 'phone':        include = phone; break;
-          case 'email-only':   include = email && !web && !phone; break;
-          case 'web-only':     include = web && !email && !phone; break;
-          case 'phone-only':   include = phone && !email && !web; break;
-          case 'email-web':    include = email && web && !phone; break;
-          case 'email-phone':  include = email && phone && !web; break;
-          case 'web-phone':    include = web && phone && !email; break;
-          case 'all-three':    include = email && web && phone; break;
-          default:             include = true; break;
-        }
-      }
+      // Kontaktfilter (alle varianter)
+      if (include) include = passesContactFilter(item, contactFilter);
 
       return include;
     });
   } else if (contactFilter) {
-    filteredData = data.filter((item) => {
-      if (contactFilter === 'email') return hasEmail(item);
-      if (contactFilter === 'web') return hasWeb(item);
-      if (contactFilter === 'phone') return hasPhone(item);
-      return true;
-    });
+    // Ingen preset: filtrer kun på kontaktfilter (alle varianter)
+    filteredData = data.filter((item) => passesContactFilter(item, contactFilter));
   }
 
   // --- 4) Sortering ---
@@ -412,7 +392,7 @@ function startBrregList(data) {
     return a.navn.toUpperCase().localeCompare(b.navn.toUpperCase());
   });
 
-  // Ekstra sortering for søkestreng
+  // Ekstra sortering for søkestreng (eksakt -> startsWith)
   const qStr = (typeof elQuery !== 'undefined' && elQuery?.value) ? elQuery.value : '';
   const query = qStr.trim().toLowerCase();
   if (query) {
@@ -439,12 +419,12 @@ function startBrregList(data) {
   // --- 5) Rendre tabell ---
   list.innerHTML = '';
 
-  let sumTotal = filteredData.length;
+  let sumTotal    = filteredData.length;
   let sumInPortal = 0;
   let sumSelected = 0;
-  let sumEmail = 0;
-  let sumWeb = 0;
-  let sumPhone = 0;
+  let sumEmail    = 0;
+  let sumWeb      = 0;
+  let sumPhone    = 0;
 
   filteredData.forEach((rawItem) => {
     const tr = document.createElement('tr');
@@ -472,7 +452,7 @@ function startBrregList(data) {
     }
 
     if (hasEmail(item)) sumEmail++;
-    if (hasWeb(item)) sumWeb++;
+    if (hasWeb(item))   sumWeb++;
     if (hasPhone(item)) sumPhone++;
 
     const fmtDate = (d) => {
@@ -515,7 +495,9 @@ function startBrregList(data) {
   });
 
   // --- 6) Oppdater teller ---
-  updateBrregCounterDark(sumTotal, sumInPortal, sumSelected, !!preset, sumEmail, sumWeb, sumPhone);
+  updateBrregCounterDark(
+    sumTotal, sumInPortal, sumSelected, !!preset, sumEmail, sumWeb, sumPhone
+  );
 
   // --- 7) Massebehandling (bulk selection) ---
   const bulkBar = document.getElementById('select-bulk-actions-brreg');
