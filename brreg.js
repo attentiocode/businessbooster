@@ -442,9 +442,9 @@ function startBrregList(data) {
       </td>
       <td class="mono" style="font-size:11px;">${item.organisasjonsnummer ?? '—'}</td>
       <td style="font-weight:700;font-size:12px;">${item.navn ?? '—'}</td>
-      <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
       <td style="font-size:11px;">${adresse}</td>
       <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
+      <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
       <td class="status" style="font-size:10px;">
         ${statusHtml}
       </td>
