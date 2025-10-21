@@ -91,12 +91,8 @@ function renderSelect(data){
   
       const g = (gGroupbedrifter || []).find(gr => gr.id == b.group);
 
-      //finne epost og telefon fra gSelectbedrifter
-      const sb = (gSelectbedrifter || []).find(sb => String(sb.organisasjonsnummer) === String(b.organisasjonsnummer));
-      if (sb) {
-        if (sb.email) b.email = sb.email;
-        if (sb.telefon) b.telefon = sb.telefon;
-      }
+     // Kontakt-HTML (egen funksjon)
+    const contactHtml = renderContactIcons(item);
   
       tr.innerHTML = `
         <td style="width:40px;">
@@ -113,8 +109,7 @@ function renderSelect(data){
         <td style="font-size:11px;">${g ? g.name : '—'}</td>
         <td style="font-size:11px;">${g ? (g.user || '—') : '—'}</td>
         <td style="font-size:11px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
-        <td style="font-size:11px;">${b.email ?? '—'}</td>
-        <td style="font-size:11px;">${b.telefon ?? '—'}</td>
+        <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
         
       `;
   
