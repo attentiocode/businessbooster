@@ -353,23 +353,42 @@ function startBrregList(data) {
         if (toDt && regDate > toDt) include = false;
       }
 
+      // --- Kontaktfelt-hjelpere ---
+      const hasEmail = (it) => {
+        const val = it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '';
+        return typeof val === 'string' && val.trim() !== '';
+      };
+
+      const hasWeb = (it) => {
+        const val = it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ??
+                    it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? '';
+        return typeof val === 'string' && val.trim() !== '';
+      };
+
+      const hasPhone = (it) => {
+        const val = it?.mobil ?? it?.mobilnummer ?? it?.telefon ?? it?.telefonnummer ??
+                    it?.phone ?? it?.tlf ?? '';
+        return typeof val === 'string' && val.trim() !== '';
+      };
+
+      // --- Kontaktfilterlogikk (brukes inne i filter-funksjonen) ---
       if (include && contactFilter) {
         const email = hasEmail(item);
         const web = hasWeb(item);
         const phone = hasPhone(item);
-      
+
         switch (contactFilter) {
-          case 'email': include = email; break;
-          case 'web': include = web; break;
-          case 'phone': include = phone; break;
-          case 'email-only': include = email && !web && !phone; break;
-          case 'web-only': include = web && !email && !phone; break;
-          case 'phone-only': include = phone && !email && !web; break;
-          case 'email-web': include = email && web && !phone; break;
-          case 'email-phone': include = email && phone && !web; break;
-          case 'web-phone': include = web && phone && !email; break;
-          case 'all-three': include = email && web && phone; break;
-          default: include = true; break;
+          case 'email':        include = email; break;
+          case 'web':          include = web; break;
+          case 'phone':        include = phone; break;
+          case 'email-only':   include = email && !web && !phone; break;
+          case 'web-only':     include = web && !email && !phone; break;
+          case 'phone-only':   include = phone && !email && !web; break;
+          case 'email-web':    include = email && web && !phone; break;
+          case 'email-phone':  include = email && phone && !web; break;
+          case 'web-phone':    include = web && phone && !email; break;
+          case 'all-three':    include = email && web && phone; break;
+          default:             include = true; break;
         }
       }
 
