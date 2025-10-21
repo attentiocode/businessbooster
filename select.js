@@ -92,7 +92,7 @@ function renderSelect(data){
       const g = (gGroupbedrifter || []).find(gr => gr.id == b.group);
 
      // Kontakt-HTML (egen funksjon)
-    const contactHtml = renderContactIcons(item);
+    const contactHtml = renderContactIcons(b);
   
       tr.innerHTML = `
         <td style="width:40px;">
