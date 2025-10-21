@@ -226,6 +226,7 @@ function resetFilters() {
 
 // --- 1) HJELPER: kontakt-ikoner (ren JS, ingen ekstern CSS) ---
 function renderContactIcons(item) {
+  // --- Hjelpere ---
   const normalizeUrl = (u) => {
     if (!u) return '';
     let s = String(u).trim();
@@ -240,35 +241,67 @@ function renderContactIcons(item) {
     return digits.length ? digits : '';
   };
 
+  const normalizeEmail = (e) => {
+    if (!e) return '';
+    const s = String(e).trim().toLowerCase();
+    // Enkel epostvalidering
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : '';
+  };
+
+  // --- Felter ---
   const rawWeb =
     item.hjemmeside ?? item.hjemmesideurl ?? item.hjemmesideUrl ??
     item.web ?? item.www ?? item.website ?? item.nettside ?? '';
+
   const rawPhone =
     item.mobil ?? item.mobilnummer ?? item.telefon ?? item.telefonnummer ??
     item.phone ?? item.tlf ?? '';
 
+  const rawEmail =
+    item.epostadresse ?? item.epost ?? item.email ?? item.mail ?? '';
+
+  // --- Normaliserte verdier ---
   const website = normalizeUrl(rawWeb);
   const phone = normalizePhone(rawPhone);
+  const email = normalizeEmail(rawEmail);
 
+  // --- Ikoner (samme stil som tidligere) ---
   const globeSvg = `
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="14" height="14">
       <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
       <path d="M3 12h18M12 3c3.5 3.8 3.5 13.2 0 18M12 3c-3.5 3.8-3.5 13.2 0 18" stroke="currentColor" stroke-width="1.6"/>
     </svg>`;
+
   const phoneSvg = `
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="14" height="14">
       <path d="M6 4h4l1 4-2 1a12 12 0 0 0 6 6l1-2 4 1v4a2 2 0 0 1-2 2 16 16 0 0 1-16-16 2 2 0 0 1 2-2z"
             stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round" />
     </svg>`;
 
+  const mailSvg = `
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="14" height="14">
+      <rect x="3" y="5" width="18" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="1.6" fill="none"/>
+      <path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
+    </svg>`;
+
+  // --- Generer HTML ---
   let html = '';
+
   if (website) {
     html += `
       <a class="icon-btn" href="${website}" target="_blank" rel="noopener noreferrer"
-         title="${website}" aria-label="Åpne nettside">
+         title="Åpne nettside: ${website}" aria-label="Åpne nettside">
         ${globeSvg}
       </a>`;
   }
+
+  if (email) {
+    html += `
+      <a class="icon-btn" href="mailto:${email}" title="${email}" aria-label="Send e-post til ${email}">
+        ${mailSvg}
+      </a>`;
+  }
+
   if (phone) {
     html += `
       <a class="icon-btn" href="tel:${phone}" title="${phone}" aria-label="Ring ${phone}">
@@ -278,6 +311,7 @@ function renderContactIcons(item) {
 
   return html || '—';
 }
+
 
 // --- 2) HOVEDFUNKSJON ---
 function startBrregList(data) {
