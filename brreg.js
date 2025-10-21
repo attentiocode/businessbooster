@@ -354,11 +354,24 @@ function startBrregList(data) {
         if (toDt && regDate > toDt) include = false;
       }
 
-      // Kontaktfilter
       if (include && contactFilter) {
-        if (contactFilter === 'email') include = hasEmail(item);
-        if (contactFilter === 'web') include = hasWeb(item);
-        if (contactFilter === 'phone') include = hasPhone(item);
+        const email = hasEmail(item);
+        const web = hasWeb(item);
+        const phone = hasPhone(item);
+      
+        switch (contactFilter) {
+          case 'email': include = email; break;
+          case 'web': include = web; break;
+          case 'phone': include = phone; break;
+          case 'email-only': include = email && !web && !phone; break;
+          case 'web-only': include = web && !email && !phone; break;
+          case 'phone-only': include = phone && !email && !web; break;
+          case 'email-web': include = email && web && !phone; break;
+          case 'email-phone': include = email && phone && !web; break;
+          case 'web-phone': include = web && phone && !email; break;
+          case 'all-three': include = email && web && phone; break;
+          default: include = true; break;
+        }
       }
 
       return include;
@@ -627,5 +640,68 @@ function updateBrregCounterDark(
   
 
 
-  
+function initContactInfoFilter() {
+  let select = document.getElementById('select-contact-info-filter');
+
+  // Opprett select hvis den ikke finnes
+  if (!select) {
+    select = document.createElement('select');
+    select.id = 'select-contact-info-filter';
+    select.className = 'select-input-field w-select';
+    document.body.prepend(select); // legg den hvor du ønsker
+  }
+
+  // Fjern eksisterende valg
+  select.innerHTML = '';
+
+  // --- Utvidede valg ---
+  const options = [
+    { value: '', label: 'Alle kontakter' },
+    { value: 'email', label: 'Har e-post 📧' },
+    { value: 'web', label: 'Har nettside 🌐' },
+    { value: 'phone', label: 'Har telefon 📞' },
+    { value: 'email-only', label: 'Kun e-post 📧' },
+    { value: 'web-only', label: 'Kun nettside 🌐' },
+    { value: 'phone-only', label: 'Kun telefon 📞' },
+    { value: 'email-web', label: 'E-post og nettside 📧🌐' },
+    { value: 'email-phone', label: 'E-post og telefon 📧📞' },
+    { value: 'web-phone', label: 'Nettside og telefon 🌐📞' },
+    { value: 'all-three', label: 'Alle tre 📧🌐📞' },
+  ];
+
+  // Bygg opp option-elementene
+  for (const opt of options) {
+    const o = document.createElement('option');
+    o.value = opt.value;
+    o.textContent = opt.label;
+    select.appendChild(o);
+  }
+
+  // Enkel styling (mørk UI)
+  Object.assign(select.style, {
+    background: '#111827',
+    color: '#E5E7EB',
+    border: '1px solid #1F2937',
+    borderRadius: '6px',
+    padding: '6px 10px',
+    fontSize: '13px',
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+    outline: 'none',
+    cursor: 'pointer',
+  });
+
+  select.addEventListener('focus', () => {
+    select.style.borderColor = '#2563EB';
+  });
+  select.addEventListener('blur', () => {
+    select.style.borderColor = '#1F2937';
+  });
+
+  // Reload når valg endres (dersom data finnes globalt)
+  select.addEventListener('change', () => {
+    if (typeof window.brregData !== 'undefined') {
+      startBrregList(window.brregData);
+    }
+  });
+}
   
