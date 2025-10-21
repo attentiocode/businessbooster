@@ -377,13 +377,8 @@ function startBrregList(data) {
     });
 
     // Oppdater total-teller
-    const counter = document.getElementById('counterlistbrreg');
-    if (counter) {
-      counter.textContent = `Totalt: ${sumTotal} stk. | I portal: ${sumInPortal} stk. | Valgt: ${sumSelected} stk.`;
-    }
-   
+    updateBrregCounter(sumTotal, sumInPortal, sumSelected, preset);
     
-  
     // 🧮 5. Massebehandling UI + handlers (BRREG)
     const bulkBar   = document.getElementById('select-bulk-actions-brreg');
     const bulkCount = document.getElementById('select-bulk-count-brreg');
@@ -448,3 +443,54 @@ let sentToSelectButton = document.getElementById("sentToSelect");
 sentToSelectButton.addEventListener("click", function() {
   dataFromBrregToSelect();
   });
+
+
+  function updateBrregCounter(sumTotal = 0, sumInPortal = 0, sumSelected = 0, preset = false) {
+    const counter = document.getElementById('counterlistbrreg');
+    if (!counter) return;
+  
+    // Opprett hovedcontainer
+    counter.innerHTML = '';
+  
+    // Hjelpefunksjon for å lage en "chip"
+    const makeChip = (label, value, color) => {
+      const span = document.createElement('span');
+      span.style.display = 'inline-block';
+      span.style.padding = '4px 10px';
+      span.style.marginRight = '6px';
+      span.style.borderRadius = '20px';
+      span.style.fontSize = '13px';
+      span.style.fontWeight = '500';
+      span.style.border = '1px solid #ddd';
+      span.style.background = color.bg;
+      span.style.color = color.text;
+      span.textContent = `${label}: ${value} stk.`;
+      return span;
+    };
+  
+    // Farger (enkle og lesbare)
+    const colorTotal    = { bg: '#eef2ff', text: '#1e3a8a' }; // blålig
+    const colorPortal   = { bg: '#ecfdf3', text: '#065f46' }; // grønn
+    const colorSelected = { bg: '#eff6ff', text: '#1e40af' }; // lys blå
+  
+    // Bygg tellerne
+    const totalEl    = makeChip('Totalt', sumTotal, colorTotal);
+    const portalEl   = makeChip('I portal', sumInPortal, colorPortal);
+    const selectedEl = makeChip('Valgt', sumSelected, colorSelected);
+  
+    // Legg til elementene i DOM
+    counter.appendChild(totalEl);
+    counter.appendChild(portalEl);
+    counter.appendChild(selectedEl);
+  
+    // Legg til "(filtrert)" hvis preset = true
+    if (preset) {
+      const filtered = document.createElement('span');
+      filtered.textContent = '(filtrert)';
+      filtered.style.fontSize = '12px';
+      filtered.style.opacity = '0.7';
+      filtered.style.marginLeft = '8px';
+      counter.appendChild(filtered);
+    }
+  }
+  
