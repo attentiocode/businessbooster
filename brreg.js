@@ -544,7 +544,6 @@ function startBrregList(data) {
 }
 
 
-
 document.getElementById("brregmastercheckbox").addEventListener("change", function() {
     const container = document.getElementById("rowlist");
     const checkboxes = container.querySelectorAll(".selectcheckbox")
