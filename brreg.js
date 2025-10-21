@@ -316,82 +316,125 @@ function renderContactIcons(item) {
 
 // --- 2) HOVEDFUNKSJON ---
 function startBrregList(data) {
-  // Injiser CSS én gang
+  // --- 0) Injiser CSS én gang ---
   if (!document.getElementById('brreg-contact-style')) {
-    const brregStyle = document.createElement('style');
-    brregStyle.id = 'brreg-contact-style';
-    brregStyle.textContent = `
+    const style = document.createElement('style');
+    style.id = 'brreg-contact-style';
+    style.textContent = `
       .icon-btn {
         display:inline-flex; align-items:center; justify-content:center;
         width:26px; height:26px; border-radius:6px; margin-right:6px;
-        border:1px solid #e5e7eb; background:#f9fafb; text-decoration:none;
-        color:#1e3a8a; cursor:pointer;
+        border:1px solid #e5e7eb; background:#f9fafb;
+        color:#1e3a8a; cursor:pointer; text-decoration:none;
       }
       .icon-btn:hover { background:#eef2ff; }
       .contact-cell { white-space:nowrap; }
-      tr.inportal { background: rgba(60, 180, 75, 0.07); }
-      tr.selected  { background: rgba(0, 120, 215, 0.07); }
+      tr.inportal { background: rgba(60,180,75,0.07); }
+      tr.selected  { background: rgba(0,120,215,0.07); }
     `;
-    document.head.appendChild(brregStyle);
+    document.head.appendChild(style);
   }
 
   const list = document.getElementById('rowlist');
-  const presetName = document.getElementById('select-field-preset')?.value;
+  if (!list) return;
 
-  // 1) Hent valgt preset
+  // --- 1) Hent valgt preset og kontaktfilter ---
+  const presetName = document.getElementById('select-field-preset')?.value;
+  const contactFilter = document.getElementById('select-contact-info-filter')?.value || '';
+
   const presets = JSON.parse(localStorage.getItem('industryPresets') || '{}');
   const preset = presets[presetName] || null;
 
-  // 2) Filtrer data
+  // --- 2) Hjelpefunksjoner ---
+  const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
+  const getOrgnr = (obj) =>
+    normalizeOrgnr(
+      obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber
+    );
+
+  const hasEmail = (it) =>
+    !!String(it.epostadresse ?? it.epost ?? it.email ?? it.mail ?? '').trim();
+  const hasWeb = (it) =>
+    !!String(it.hjemmeside ?? it.hjemmesideurl ?? it.hjemmesideUrl ??
+      it.web ?? it.www ?? it.website ?? it.nettside ?? '').trim();
+  const hasPhone = (it) =>
+    !!String(it.mobil ?? it.mobilnummer ?? it.telefon ?? it.telefonnummer ??
+      it.phone ?? it.tlf ?? '').trim();
+
+  // --- 3) Filtrer data ---
   let filteredData = data;
   if (preset) {
     const { industries = [], dateFrom, dateTo } = preset;
+    const fromDt = dateFrom ? new Date(dateFrom) : null;
+    const toDt = dateTo ? new Date(dateTo) : null;
+
     filteredData = data.filter((item) => {
       let include = true;
+
+      // Bransje
       if (industries.length > 0) {
-        const itemIndustry =
-          (item.naeringskode1?.beskrivelse || '').toLowerCase() ||
-          (item.bransje || '').toLowerCase();
-        include = industries.some(ind => itemIndustry.includes(ind.toLowerCase())) || false;
+        const industryTxt =
+          ((item.naeringskode1?.beskrivelse ?? '') || (item.bransje ?? '')).toLowerCase();
+        include = industries.some((ind) =>
+          industryTxt.includes(String(ind).toLowerCase())
+        );
       }
-      if (include && (dateFrom || dateTo)) {
-        const regDate = new Date(item.registreringsdatoEnhetsregisteret);
-        if (dateFrom) include = regDate >= new Date(dateFrom);
-        if (dateTo) include = include && regDate <= new Date(dateTo);
+
+      // Dato
+      if (include && (fromDt || toDt)) {
+        const regDateRaw =
+          item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret;
+        if (!regDateRaw) return false;
+        const regDate = new Date(regDateRaw);
+        if (fromDt && regDate < fromDt) include = false;
+        if (toDt && regDate > toDt) include = false;
       }
+
+      // Kontaktfilter
+      if (include && contactFilter) {
+        if (contactFilter === 'email') include = hasEmail(item);
+        if (contactFilter === 'web') include = hasWeb(item);
+        if (contactFilter === 'phone') include = hasPhone(item);
+      }
+
       return include;
+    });
+  } else if (contactFilter) {
+    // Bare kontaktfilter uten preset
+    filteredData = data.filter((item) => {
+      if (contactFilter === 'email') return hasEmail(item);
+      if (contactFilter === 'web') return hasWeb(item);
+      if (contactFilter === 'phone') return hasPhone(item);
+      return true;
     });
   }
 
-  // 3) Sorter: nyeste først, deretter navn
+  // --- 4) Sortering ---
   filteredData.sort((a, b) => {
-    const dateA = new Date(a.registreringsdatoEnhetsregisteret);
-    const dateB = new Date(b.registreringsdatoEnhetsregisteret);
-    if (dateA < dateB) return 1;
-    if (dateA > dateB) return -1;
+    const da = new Date(a.registreringsdatoEnhetsregisteret);
+    const db = new Date(b.registreringsdatoEnhetsregisteret);
+    if (da < db) return 1;
+    if (da > db) return -1;
     return a.navn.toUpperCase().localeCompare(b.navn.toUpperCase());
   });
 
-  // Ekstra sortering på søkestreng (eksakt -> startsWith)
+  // Ekstra sortering for søkestreng
   const qStr = (typeof elQuery !== 'undefined' && elQuery?.value) ? elQuery.value : '';
   const query = qStr.trim().toLowerCase();
   if (query) {
     filteredData.sort((a, b) => {
-      const nameA = a.navn.toLowerCase();
-      const nameB = b.navn.toLowerCase();
-      const normalize = (str) => str.replace(/\b(as|asa)\b\.?/g, "").trim();
+      const normalize = (s) => s.toLowerCase().replace(/\b(as|asa)\b\.?/g, '').trim();
+      const nameA = normalize(a.navn);
+      const nameB = normalize(b.navn);
+      const normQ = normalize(query);
 
-      const normA = normalize(nameA);
-      const normB = normalize(nameB);
-      const normQuery = normalize(query);
-
-      const aExact = normA === normQuery;
-      const bExact = normB === normQuery;
+      const aExact = nameA === normQ;
+      const bExact = nameB === normQ;
       if (aExact && !bExact) return -1;
       if (!aExact && bExact) return 1;
 
-      const aStarts = normA.startsWith(normQuery);
-      const bStarts = normB.startsWith(normQuery);
+      const aStarts = nameA.startsWith(normQ);
+      const bStarts = nameB.startsWith(normQ);
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
 
@@ -399,10 +442,10 @@ function startBrregList(data) {
     });
   }
 
-  // 4) Rendre tabell
+  // --- 5) Rendre tabell ---
   list.innerHTML = '';
 
-  let sumTotal = filteredData.length || 0;
+  let sumTotal = filteredData.length;
   let sumInPortal = 0;
   let sumSelected = 0;
 
@@ -410,33 +453,24 @@ function startBrregList(data) {
     const tr = document.createElement('tr');
     tr.classList.add('default-row');
 
-    // Hjelpere orgnr
-    const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
-    const getOrgnr = (obj) =>
-      normalizeOrgnr(
-        obj?.organisasjonsnummer ??
-        obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber
-      );
+    const isInPortal = (gCustomers || []).some(
+      (c) => getOrgnr(c) === getOrgnr(rawItem)
+    );
+    const alreadySelected = (gSelectbedrifter || []).find(
+      (b) => getOrgnr(b) === getOrgnr(rawItem)
+    );
 
     let item = rawItem;
-
-    const isInPortal = (gCustomers || []).some(
-      (c) => getOrgnr(c) === getOrgnr(item)
-    );
-
-    const alreadySelected = (gSelectbedrifter || []).find(
-      (b) => getOrgnr(b) === getOrgnr(item)
-    );
-
-    // Portal > Utvalg
     let g = null;
+
+    // Prioritet: Portal > Utvalg
     if (isInPortal) {
       sumInPortal++;
       tr.classList.add('inportal');
     } else if (alreadySelected) {
       sumSelected++;
       tr.classList.add('selected');
-      item = alreadySelected; // vis data fra utvalg
+      item = alreadySelected;
       g = (gGroupbedrifter || []).find((gr) => gr.id == item.group);
     }
 
@@ -454,9 +488,7 @@ function startBrregList(data) {
           .trim() || '—'
       : '—';
 
-    // Kontakt-HTML (egen funksjon)
     const contactHtml = renderContactIcons(item);
-
     const checkboxAttrs = (alreadySelected || isInPortal) ? 'disabled checked' : '';
 
     const statusHtml = isInPortal
@@ -465,51 +497,43 @@ function startBrregList(data) {
           ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
           : 'Brreg');
 
-    // NB: Husk header <th>Kontakt</th> i tabellen din
     tr.innerHTML = `
       <td style="width:40px;">
-        <input
-          type="checkbox"
-          class="selectcheckbox"
-          data-orgnr="${item.organisasjonsnummer || ''}"
-          ${checkboxAttrs}
-        />
+        <input type="checkbox" class="selectcheckbox"
+          data-orgnr="${item.organisasjonsnummer || ''}" ${checkboxAttrs} />
       </td>
       <td class="mono" style="font-size:11px;">${item.organisasjonsnummer ?? '—'}</td>
       <td style="font-weight:700;font-size:12px;">${item.navn ?? '—'}</td>
       <td style="font-size:11px;">${adresse}</td>
       <td style="font-size:11px;">${fmtDate(item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret)}</td>
       <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
-      <td class="status" style="font-size:10px;">
-        ${statusHtml}
-      </td>
+      <td class="status" style="font-size:10px;">${statusHtml}</td>
     `;
 
     list.appendChild(tr);
   });
 
-  // 5) Oppdater total-teller (din eksisterende funksjon)
-  updateBrregCounterDark(sumTotal, sumInPortal, sumSelected, preset);
+  // --- 6) Oppdater teller ---
+  updateBrregCounterDark(sumTotal, sumInPortal, sumSelected, !!preset);
 
-  // 6) Massebehandling UI + handlers (BRREG)
-  const bulkBar   = document.getElementById('select-bulk-actions-brreg');
+  // --- 7) Massebehandling (bulk selection) ---
+  const bulkBar = document.getElementById('select-bulk-actions-brreg');
   const bulkCount = document.getElementById('select-bulk-count-brreg');
 
-  function getSelectedOrgnrs() {
-    return Array.from(list.querySelectorAll('.selectcheckbox'))
+  const getSelectedOrgnrs = () =>
+    Array.from(list.querySelectorAll('.selectcheckbox'))
       .filter(cb => cb.checked && !cb.disabled)
       .map(cb => cb.dataset.orgnr)
       .filter(Boolean);
-  }
 
   function updateBulkUI() {
     const n = getSelectedOrgnrs().length;
     if (bulkBar)   bulkBar.style.display = n > 0 ? 'flex' : 'none';
     if (bulkCount) bulkCount.textContent = `${n} valgt`;
-    const counterSelected = document.getElementById('counterlistbrregselect');
-    if (counterSelected) {
-      counterSelected.textContent = `${n} valgt`;
-      counterSelected.style.display = n > 0 ? 'block' : 'none';
+    const counterSel = document.getElementById('counterlistbrregselect');
+    if (counterSel) {
+      counterSel.textContent = `${n} valgt`;
+      counterSel.style.display = n > 0 ? 'block' : 'none';
     }
   }
 
@@ -518,6 +542,7 @@ function startBrregList(data) {
   });
   updateBulkUI();
 }
+
 
 
 document.getElementById("brregmastercheckbox").addEventListener("change", function() {
