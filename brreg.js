@@ -317,13 +317,21 @@ function startBrregList(data) {
     );
 
   const hasEmail = (it) =>
-    !!String(it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '').trim();
+    !!String(
+      it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? ''
+    ).trim();
+
   const hasWeb = (it) =>
-    !!String(it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ??
-      it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? '').trim();
+    !!String(
+      it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ??
+      it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? ''
+    ).trim();
+
   const hasPhone = (it) =>
-    !!String(it?.mobil ?? it?.m mobilnummer ?? it?.telefon ?? it?.telefonnummer ??
-      it?.phone ?? it?.tlf ?? '').trim();
+    !!String(
+      it?.mobil ?? it?.mobilnummer ?? it?.telefon ?? it?.telefonnummer ??
+      it?.phone ?? it?.tlf ?? ''
+    ).trim();
 
   const passesContactFilter = (item, filterVal) => {
     if (!filterVal) return true;
@@ -345,6 +353,7 @@ function startBrregList(data) {
       default:             return true;
     }
   };
+
 
   // --- 3) Filtrer data ---
   let filteredData = data;
