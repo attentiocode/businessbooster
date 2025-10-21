@@ -90,6 +90,13 @@ function renderSelect(data){
       tr.classList.add('default-row');
   
       const g = (gGroupbedrifter || []).find(gr => gr.id == b.group);
+
+      //finne epost og telefon fra gSelectbedrifter
+      const sb = (gSelectbedrifter || []).find(sb => String(sb.organisasjonsnummer) === String(b.organisasjonsnummer));
+      if (sb) {
+        if (sb.email) b.email = sb.email;
+        if (sb.telefon) b.telefon = sb.telefon;
+      }
   
       tr.innerHTML = `
         <td style="width:40px;">
@@ -106,7 +113,9 @@ function renderSelect(data){
         <td style="font-size:11px;">${g ? g.name : '—'}</td>
         <td style="font-size:11px;">${g ? (g.user || '—') : '—'}</td>
         <td style="font-size:11px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
-        <td class="status" style="font-size:10px;">${b.status || 'Valgt'}</td>
+        <td style="font-size:11px;">${b.email ?? '—'}</td>
+        <td style="font-size:11px;">${b.telefon ?? '—'}</td>
+        
       `;
   
       tbody.appendChild(tr);
