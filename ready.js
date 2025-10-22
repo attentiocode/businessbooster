@@ -455,15 +455,15 @@ function renderReady(data) {
 
 
 
-  function startEmailProcess(orgnrList) {
+function startEmailProcess(orgnrList) {
 
     //skal sende epost til hver orgnr i listen til funkjsonen sendEmailToCompany
     orgnrList.forEach(orgnr => {
         sendEmailToCompany(orgnr);
     });
-  }
+}
 
- function sendEmailToCompany(orgnr) {
+function sendEmailToCompany(orgnr) {
     // Simulert sending av e-post til en bedrift basert på org.nr
     console.log(`Sender e-post til bedrift med org.nr: ${orgnr}`);
   //hent opp bedriftsdata fra gReadybedrifter
