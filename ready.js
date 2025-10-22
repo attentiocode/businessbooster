@@ -456,12 +456,6 @@ function renderReady(data) {
 
 
   function startEmailProcess(orgnrList) {
-    // Simulert e-postprosess
-    console.log("Starter e-postprosess for følgende org.nr:", orgnrList);
-  
-    // Her kan du legge til faktisk e-postlogikk
-    alert(`E-postprosess startet for ${orgnrList.length} bedrift(er). Sjekk konsollen for detaljer.`);
-
 
     //skal sende epost til hver orgnr i listen til funkjsonen sendEmailToCompany
     orgnrList.forEach(orgnr => {
@@ -485,8 +479,6 @@ function renderReady(data) {
     let emailBody = getEmailBody(company,null);
     let subject = `Kort om hvordan Innkjøps-gruppen kan gi dere bedre innkjøpsbetingelser og lavere kostnader.`;
 
-    // skal sende til https://hooks.zapier.com/hooks/catch/24993663/uragru1/
-    const webhookUrl = "https://hooks.zapier.com/hooks/catch/24993663/uragru1/";
     const payload = {
         orgnr: orgnr,
         navn: company.navn || '',
@@ -496,26 +488,34 @@ function renderReady(data) {
         emailBody: emailBody,
         subject: subject
     };
-    fetch(webhookUrl, {
+
+    //sende til zapier
+    let url = "https://hooks.zapier.com/hooks/catch/24993663/uragru1/"
+    
+    sendDataToZapierWebhook(payload, url);
+
+
+}
+
+async function sendDataToZapierWebhook(data,url) {
+    const formData = new FormData();
+    for (const key in data) {
+        const value = data[key];
+        formData.append(key, typeof value === 'object' ? JSON.stringify(value) : value);
+    }
+
+    const response = await fetch(url, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-    }).then(response => {
-        if (response.ok) {
-            console.log(`E-post sendt til bedrift med org.nr: ${orgnr}`);
-        } else {
-            console.error(`Feil ved sending av e-post til bedrift med org.nr: ${orgnr}`);
-        }
-    }).catch(error => {
-        console.error(`Feil ved sending av e-post til bedrift med org.nr: ${orgnr}`, error);
+        body: formData
     });
 
+    if (!response.ok) {
+        console.error("Error sending data to Zapier:", response.statusText);
+    }
+}
 
-  }
 
-  function getEmailBody(company, type) {
+function getEmailBody(company, type) {
     const orgnr   = String(company?.organisasjonsnummer ?? company?.orgnr ?? '').replace(/\D/g,'').padStart(9,'0');
     const navn    = company?.navn || '';
     // Forsøk å finne mottaker-navn (tilpass gjerne feltene under hvis du har andre kilder)
