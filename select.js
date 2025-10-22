@@ -443,7 +443,7 @@ function updateSelectCounterDark(
   const webEl    = makeChip('Har nettside', sumWeb, colors.web);
   const phoneEl  = makeChip('Har telefon', sumPhone, colors.phone);
 
-  counter.append(totalEl, portalEl, utvalgEl, readyEl, emailEl, webEl, phoneEl);
+  counter.append(totalEl, portalEl, readyEl, emailEl, webEl, phoneEl);
 }
 
   
