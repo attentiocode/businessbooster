@@ -510,7 +510,7 @@ updateCounter("label-mailer-sendt", countReadyAndSendtCostumers(), 1000);
 
 function countReadyAndSendtCostumers(){
 //telle alle cunder som har status som sendt returner antall
-  return  gSelectbedrifter.filter(b => b.status === 'EpostSendt').length;
+  return  gReadybedrifter.filter(b => b.status === 'EpostSendt').length;
   
 }
 

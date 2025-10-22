@@ -387,7 +387,7 @@ function renderReady(data) {
     }
   
     // Ev. annen teller
-    updateCounter("label-ready-customers", (gSelectbedrifter || []).length, 1000);
+    updateCounter("label-ready-customers", (countReadyAndSendtCostumers() || []).length, 1000);
   }
 
 
