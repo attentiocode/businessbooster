@@ -518,15 +518,12 @@ async function sendDataToZapierWebhook(data,url) {
 function getEmailBody(company, type) {
     const orgnr   = String(company?.organisasjonsnummer ?? company?.orgnr ?? '').replace(/\D/g,'').padStart(9,'0');
     const navn    = company?.navn || '';
-    // Forsøk å finne mottaker-navn (tilpass gjerne feltene under hvis du har andre kilder)
     const kontakt = company?.kontaktperson?.navn || company?.lederNavn || '';
     const greetingName = kontakt || navn || 'der';
   
-    // Forhåndstekst (vises i en del e-postklienter ved siden av emne)
-    const preheader = `Kort om hvordan Innkjøps-gruppen kan gi dere bedre innkjøpsbetingelser og lavere kostnader.`;
-  
-    // Enkel CTA-lenke – tilpass om du har egen landingsside
-    const ctaHref = 'https://www.innkjops-gruppen.no/';
+    const preheader = `Prøv Innkjøps-gruppen helt uforpliktet i 30 dager – sparer du ikke, betaler du ikke.`;
+    const ctaHrefTrial = 'https://www.innkjops-gruppen.no/prov-gratis';
+    const ctaHrefContact = 'mailto:post@innkjops-gruppen.no';
   
     return `
     <!doctype html>
@@ -538,14 +535,12 @@ function getEmailBody(company, type) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Innkjøps-gruppen</title>
       <style>
-        /* Reset for trygg rendering i mange klienter */
         body,table,td,p { margin:0; padding:0; }
         img { border:0; outline:none; text-decoration:none; display:block; }
         a { text-decoration:none; }
-        /* Dark-mode vennlige farger + god kontrast */
         .container { width:100%; background:#0B1220; padding:24px 0; }
         .card {
-          width:100%; max-width:640px; margin:0 auto; 
+          width:100%; max-width:640px; margin:0 auto;
           background:#0F172A; color:#E5E7EB;
           border:1px solid #1F2937; border-radius:12px; overflow:hidden;
           font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -554,31 +549,35 @@ function getEmailBody(company, type) {
         .title  { font-size:20px; font-weight:700; color:#F3F4F6; margin:0; }
         .subtle { font-size:12px; color:#93A1B3; }
         .content { padding:24px; line-height:1.55; font-size:14px; color:#E5E7EB; }
-        .list     { margin:12px 0 18px; padding-left:18px; }
-        .list li  { margin:6px 0; }
+        .list { margin:12px 0 18px; padding-left:18px; }
+        .list li { margin:6px 0; }
         .chip {
           display:inline-block; font-size:12px; padding:4px 10px; border-radius:9999px;
           background:rgba(37,99,235,0.12); color:#93C5FD; border:1px solid rgba(37,99,235,0.35);
           margin-right:6px; margin-top:8px;
         }
         .cta {
-          display:inline-block; margin-top:16px; padding:10px 16px; font-weight:700;
+          display:inline-block; margin-top:18px; padding:12px 22px; font-weight:700;
           background:#2563EB; color:#ffffff; border-radius:8px; border:1px solid #1D4ED8;
         }
-        .meta {
-          margin-top:18px; font-size:12px; color:#9CA3AF;
+        .cta-secondary {
+          display:inline-block; margin-top:12px; padding:10px 20px; font-weight:600;
+          background:transparent; color:#60A5FA; border-radius:8px; border:1px solid #1E3A8A;
+        }
+        .meta { margin-top:20px; font-size:13px; color:#9CA3AF; }
+        .highlight {
+          font-size:16px; color:#FBBF24; font-weight:600;
+          margin-top:20px; text-align:center;
         }
         .signature { padding:20px 24px; border-top:1px solid #1F2937; background:#0B1220; }
-        /* Mobil */
         @media (max-width:480px) {
           .content { padding:20px; }
-          .header  { padding:16px 20px; }
+          .header { padding:16px 20px; }
           .signature { padding:16px 20px; }
         }
       </style>
     </head>
     <body style="background:#0B1220; margin:0;">
-      <!-- Preheader (skjult) -->
       <div style="display:none; max-height:0; overflow:hidden; opacity:0; visibility:hidden;">
         ${preheader}
       </div>
@@ -599,42 +598,38 @@ function getEmailBody(company, type) {
                   <td class="content">
                     <p>Hei ${escapeHtml(greetingName)},</p>
                     <p style="margin-top:10px;">
-                      Vi i <strong>Innkjøps-gruppen</strong> hjelper bedrifter med å redusere kostnader og få bedre vilkår hos
-                      leverandører – uten komplisert innføring. Dere får tilgang til fremforhandlede avtaler,
-                      forutsigbare priser og bedre betingelser på tvers av sentrale innkjøpsområder.
+                      Vi i <strong>Innkjøps-gruppen</strong> hjelper bedrifter å redusere kostnader og oppnå bedre avtaler –
+                      helt uten binding. Dere får tilgang til fremforhandlede priser og rammeavtaler med solide leverandører
+                      innenfor de viktigste innkjøpsområdene.
                     </p>
   
                     <ul class="list">
-                      <li><strong>Lavere priser</strong> gjennom volum og rammeavtaler</li>
-                      <li><strong>Enklere hverdag</strong> med standardiserte avtaler og tydelige kontaktpunkter</li>
-                      <li><strong>Tid spart</strong> – vi forhandler, dere bruker tiden på kjernevirksomheten</li>
-                      <li><strong>Ingen binding</strong> – prøv oss på ett område først</li>
+                      <li><strong>Lavere priser</strong> gjennom felles volum</li>
+                      <li><strong>Forutsigbare vilkår</strong> og enklere administrasjon</li>
+                      <li><strong>Ingen binding</strong> – prøv oss risikofritt</li>
+                      <li><strong>Personlig oppfølging</strong> fra vårt erfarne team</li>
                     </ul>
   
-                    <div>
-                      <span class="chip">Innkjøp</span>
-                      <span class="chip">Forhandling</span>
-                      <span class="chip">Rammeavtaler</span>
-                      <span class="chip">Kostnadskutt</span>
+                    <div class="highlight">
+                      Sparer du ikke – betaler du ikke.
                     </div>
   
-                    <p style="margin-top:14px;">
-                      Jeg foreslår en kort prat for å se hvor dere raskt kan hente ut gevinster.
-                    </p>
-  
-                    <a href="${ctaHref}" class="cta" target="_blank" rel="noopener">
-                      Les mer / ta kontakt
+                    <a href="${ctaHrefTrial}" class="cta" target="_blank" rel="noopener">
+                      Prøv oss helt uforpliktet i 30 dager
                     </a>
   
-                    <p class="meta">
-                      Tips: Har dere allerede avtaler i dag, kan vi kvalitetssikre og sammenligne – helt uforpliktende.
-                    </p>
+                    <a href="${ctaHrefContact}" class="cta-secondary" target="_blank" rel="noopener">
+                      Har du spørsmål? Ta gjerne kontakt her
+                    </a>
+  
+                    <div class="meta">
+                      Mange bedrifter sparer betydelige summer allerede første måned – la oss vise deg hvordan.
+                    </div>
                   </td>
                 </tr>
   
                 <tr>
                   <td class="signature">
-                    <!-- Signatur (din HTML uendret) -->
                     <p>&nbsp;<strong>innkj&oslash;psGRUPPEN<br /></strong>
                       <span>Mobil:&nbsp;+47 91 14 52 94</span><br />
                       <span>Epost: </span><u><a href="mailto:post@innkjops-gruppen.no">post@innkjops-gruppen.no</a><br /><br /></u>
@@ -654,6 +649,13 @@ function getEmailBody(company, type) {
     </html>
     `;
   }
+  
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => (
+      { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]
+    ));
+  }
+  
   
   /* Enkel HTML-escaping for hilsning */
   function escapeHtml(s) {
