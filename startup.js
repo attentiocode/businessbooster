@@ -14,6 +14,10 @@ document.getElementById("select-contact-info-filter").addEventListener('change',
   startBrregList(gBrregbedrifter);
 });
 
+document.getElementById("select-contact-state-filter").addEventListener('change', (e) => {
+  startBrregList(gBrregbedrifter);
+});
+
 //sideknappene rooting
 document.getElementById("dashboardSideButton").addEventListener("click", function() {
     document.getElementById("dashboardTabButton").click();

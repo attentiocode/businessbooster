@@ -312,7 +312,6 @@ function renderContactIcons(item) {
   return html || '—';
 }
 
-
 function startBrregList(data) {
   // --- 0) Injiser CSS én gang ---
   if (!document.getElementById('brreg-contact-style')) {
@@ -336,43 +335,31 @@ function startBrregList(data) {
   const list = document.getElementById('rowlist');
   if (!list) return;
 
-  // --- 1) Hent valgt preset og kontaktfilter ---
-  const presetName = document.getElementById('select-field-preset')?.value;
+  // --- 1) Hent filterverdier ---
+  const presetName    = document.getElementById('select-field-preset')?.value;
   const contactFilter = document.getElementById('select-contact-info-filter')?.value || '';
+  const stateFilter   = document.getElementById('select-contact-state-filter')?.value || ''; // '', 'portal', 'utvalg'
 
   const presets = JSON.parse(localStorage.getItem('industryPresets') || '{}');
-  const preset = presets[presetName] || null;
+  const preset  = presets[presetName] || null;
 
-  // --- 2) Hjelpefunksjoner ---
+  // --- 2) Hjelpere ---
   const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
   const getOrgnr = (obj) =>
-    normalizeOrgnr(
-      obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber
-    );
+    normalizeOrgnr(obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber);
 
   const hasEmail = (it) =>
-    !!String(
-      it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? ''
-    ).trim();
-
+    !!String(it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '').trim();
   const hasWeb = (it) =>
-    !!String(
-      it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ??
-      it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? ''
-    ).trim();
-
+    !!String(it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ??
+             it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? '').trim();
   const hasPhone = (it) =>
-    !!String(
-      it?.mobil ?? it?.mobilnummer ?? it?.telefon ?? it?.telefonnummer ??
-      it?.phone ?? it?.tlf ?? ''
-    ).trim();
+    !!String(it?.mobil ?? it?.mobilnummer ?? it?.telefon ?? it?.telefonnummer ??
+             it?.phone ?? it?.tlf ?? '').trim();
 
   const passesContactFilter = (item, filterVal) => {
     if (!filterVal) return true;
-    const email = hasEmail(item);
-    const web = hasWeb(item);
-    const phone = hasPhone(item);
-
+    const email = hasEmail(item), web = hasWeb(item), phone = hasPhone(item);
     switch (filterVal) {
       case 'email':        return email;
       case 'web':          return web;
@@ -388,8 +375,19 @@ function startBrregList(data) {
     }
   };
 
+  // Sett for rask state-sjekk
+  const inPortalSet = new Set((gCustomers || []).map(getOrgnr).filter(Boolean));
+  const selectedSet = new Set((gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
 
-  // --- 3) Filtrer data ---
+  const passesStateFilter = (item, filterVal) => {
+    if (!filterVal) return true; // alle selskap
+    const org = getOrgnr(item);
+    if (filterVal === 'portal') return inPortalSet.has(org);
+    if (filterVal === 'utvalg') return selectedSet.has(org);
+    return true;
+  };
+
+  // --- 3) Filtrer data (preset + kontakt + state) ---
   let filteredData = data;
   if (preset) {
     const { industries = [], dateFrom, dateTo } = preset;
@@ -401,29 +399,29 @@ function startBrregList(data) {
 
       // Bransje
       if (industries.length > 0) {
-        const industryTxt =
-          ((item.naeringskode1?.beskrivelse ?? '') || (item.bransje ?? '')).toLowerCase();
+        const industryTxt = ((item.naeringskode1?.beskrivelse ?? '') || (item.bransje ?? '')).toLowerCase();
         include = industries.some((ind) => industryTxt.includes(String(ind).toLowerCase()));
       }
 
-      // Dato (fallback til Foretaksreg. hvis Enhetsreg. mangler)
+      // Dato
       if (include && (fromDt || toDt)) {
-        const regDateRaw =
-          item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret;
+        const regDateRaw = item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret;
         if (!regDateRaw) return false;
         const regDate = new Date(regDateRaw);
         if (fromDt && regDate < fromDt) include = false;
         if (toDt && regDate > toDt)     include = false;
       }
 
-      // Kontaktfilter (alle varianter)
       if (include) include = passesContactFilter(item, contactFilter);
+      if (include) include = passesStateFilter(item, stateFilter);
 
       return include;
     });
-  } else if (contactFilter) {
-    // Ingen preset: filtrer kun på kontaktfilter (alle varianter)
-    filteredData = data.filter((item) => passesContactFilter(item, contactFilter));
+  } else {
+    // Ingen preset: filtrer på kontakt/state hvis satt
+    filteredData = data.filter((item) =>
+      passesContactFilter(item, contactFilter) && passesStateFilter(item, stateFilter)
+    );
   }
 
   // --- 4) Sortering ---
@@ -435,26 +433,19 @@ function startBrregList(data) {
     return a.navn.toUpperCase().localeCompare(b.navn.toUpperCase());
   });
 
-  // Ekstra sortering for søkestreng (eksakt -> startsWith)
+  // Ekstra sortering for søkestreng (eksakt → startsWith)
   const qStr = (typeof elQuery !== 'undefined' && elQuery?.value) ? elQuery.value : '';
   const query = qStr.trim().toLowerCase();
   if (query) {
     filteredData.sort((a, b) => {
       const normalize = (s) => s.toLowerCase().replace(/\b(as|asa)\b\.?/g, '').trim();
-      const nameA = normalize(a.navn);
-      const nameB = normalize(b.navn);
-      const normQ = normalize(query);
-
-      const aExact = nameA === normQ;
-      const bExact = nameB === normQ;
+      const nameA = normalize(a.navn), nameB = normalize(b.navn), normQ = normalize(query);
+      const aExact = nameA === normQ, bExact = nameB === normQ;
       if (aExact && !bExact) return -1;
       if (!aExact && bExact) return 1;
-
-      const aStarts = nameA.startsWith(normQ);
-      const bStarts = nameB.startsWith(normQ);
+      const aStarts = nameA.startsWith(normQ), bStarts = nameB.startsWith(normQ);
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
-
       return 0;
     });
   }
@@ -473,12 +464,10 @@ function startBrregList(data) {
     const tr = document.createElement('tr');
     tr.classList.add('default-row');
 
-    const isInPortal = (gCustomers || []).some(
-      (c) => getOrgnr(c) === getOrgnr(rawItem)
-    );
-    const alreadySelected = (gSelectbedrifter || []).find(
-      (b) => getOrgnr(b) === getOrgnr(rawItem)
-    );
+    const org = getOrgnr(rawItem);
+    const isInPortal     = inPortalSet.has(org);
+    const isAlreadySel   = selectedSet.has(org);
+    const alreadySelected = (gSelectbedrifter || []).find(b => getOrgnr(b) === org);
 
     let item = rawItem;
     let g = null;
@@ -487,7 +476,7 @@ function startBrregList(data) {
     if (isInPortal) {
       sumInPortal++;
       tr.classList.add('inportal');
-    } else if (alreadySelected) {
+    } else if (isAlreadySel && alreadySelected) {
       sumSelected++;
       tr.classList.add('selected');
       item = alreadySelected;
@@ -506,18 +495,18 @@ function startBrregList(data) {
 
     const adresse = item.forretningsadresse
       ? `${Array.isArray(item.forretningsadresse.adresse)
-          ? item.forretningsadresse.adresse.join(', ')
-          : (item.forretningsadresse.adresse || '')}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`
+            ? item.forretningsadresse.adresse.join(', ')
+            : (item.forretningsadresse.adresse || '')}, ${item.forretningsadresse?.postnummer || ''} ${item.forretningsadresse?.poststed || ''}`
           .replace(/^,\s*|\s*,\s*$/g, '')
           .trim() || '—'
       : '—';
 
-    const contactHtml = renderContactIcons(item);
-    const checkboxAttrs = (alreadySelected || isInPortal) ? 'disabled checked' : '';
+    const contactHtml  = renderContactIcons(item);
+    const checkboxAttrs = (isInPortal || isAlreadySel) ? 'disabled checked' : '';
 
     const statusHtml = isInPortal
       ? `<strong>Er registrert i portal</strong>`
-      : (alreadySelected
+      : (isAlreadySel
           ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
           : 'Brreg');
 
@@ -569,6 +558,7 @@ function startBrregList(data) {
   updateBulkUI();
 }
 
+
 document.getElementById("brregmastercheckbox").addEventListener("change", function() {
     const container = document.getElementById("rowlist");
     const checkboxes = container.querySelectorAll(".selectcheckbox")
@@ -600,7 +590,7 @@ document.getElementById("brregmastercheckbox").addEventListener("change", functi
 let sentToSelectButton = document.getElementById("sentToSelect");
 sentToSelectButton.addEventListener("click", function() {
   dataFromBrregToSelect();
-  });
+});
 
 
 function updateBrregCounterDark(
@@ -678,8 +668,12 @@ function updateBrregCounterDark(
     }
 }
   
+function initFilterselectors() {
 
+  initContactInfoFilter();
+  initContactStateFilter();
 
+}
 function initContactInfoFilter() {
   let select = document.getElementById('select-contact-info-filter');
 
@@ -742,6 +736,22 @@ function initContactInfoFilter() {
     if (typeof window.brregData !== 'undefined') {
       startBrregList(window.brregData);
     }
+  });
+}
+
+function initContactStateFilter(){
+  const sel = document.getElementById('select-contact-state-filter');
+  if (!sel) return;
+  sel.innerHTML = '';
+  [
+    {value:'',        label:'Alle selskap'},
+    {value:'portal',  label:'Er i Portal'},
+    {value:'utvalg',  label:'Er i utvalg'},
+  ].forEach(({value,label})=>{
+    const o=document.createElement('option'); o.value=value; o.textContent=label; sel.appendChild(o);
+  });
+  sel.addEventListener('change', ()=> {
+    if (typeof window.brregData !== 'undefined') startBrregList(window.brregData);
   });
 }
   

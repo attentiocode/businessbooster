@@ -40,7 +40,7 @@ cdnScripts.reduce((promise, script) => {
             getCustomer();
 
             //  
-            initContactInfoFilter();
+            initFilterselectors();
 
         }else{
             console.log("Member is NOT logged in");
