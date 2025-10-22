@@ -395,7 +395,7 @@ function updateSelectCounterDark(
   sumWeb = 0,
   sumPhone = 0
 ) {
-  const counter = document.getElementById('counterlistutvalg');
+  const counter = document.getElementById('counterlistselect');
   if (!counter) return;
 
   counter.innerHTML = '';
