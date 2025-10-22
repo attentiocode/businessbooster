@@ -382,7 +382,7 @@ try {
   const g1 = localStorage.getItem('gGroupbedrifter');
   if (g1) window.gGroupbedrifter = JSON.parse(g1);
   const g2 = localStorage.getItem('gSelectbedrifter');
-  if (g2) window.gSelectbedrifter = JSON.parse(g2);
+  if (g2) gSelectbedrifter = JSON.parse(g2);
 } catch(e) {}
 
 // Kjør når siden er ferdig lastet

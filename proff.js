@@ -161,11 +161,11 @@ function dataFromProff(data){
           lederEpost: leder.email || '',
           lederTelefon: leder.phone || '',
         };
-        window.gSelectbedrifter = Array.isArray(window.gSelectbedrifter) ? window.gSelectbedrifter : [];
-        window.gSelectbedrifter.push(entry);
-        try { localStorage.setItem('gSelectbedrifter', JSON.stringify(window.gSelectbedrifter)); } catch {}
+        gSelectbedrifter = Array.isArray(gSelectbedrifter) ? gSelectbedrifter : [];
+        gSelectbedrifter.push(entry);
+        try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch {}
         // Render på nytt (dersom du vil oppdatere nåværende view)
-        if (typeof renderSelect === 'function') renderSelect(window.gSelectbedrifter);
+        if (typeof renderSelect === 'function') renderSelect(gSelectbedrifter);
       };
       actEl.appendChild(addBtn);
     }
@@ -173,7 +173,7 @@ function dataFromProff(data){
     return;
   }
 
-  const current = window.gSelectbedrifter[selIdx] || {};
+  const current = gSelectbedrifter[selIdx] || {};
   const diffRows = [];
 
   // Definer hvilke felt du ønsker å diff’e
@@ -241,12 +241,12 @@ function dataFromProff(data){
       diffRows.forEach(r => {
         updated[r.target] = r.rawNew;
       });
-      window.gSelectbedrifter[selIdx] = updated;
-      try { localStorage.setItem('gSelectbedrifter', JSON.stringify(window.gSelectbedrifter)); } catch {}
+      gSelectbedrifter[selIdx] = updated;
+      try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch {}
 
       // Liten bekreftelse + oppdater UI
       alert('Selskapet er beriket med nye data fra Proff.');
-      if (typeof renderSelect === 'function') renderSelect(window.gSelectbedrifter);
+      if (typeof renderSelect === 'function') renderSelect(gSelectbedrifter);
       // Oppdater eventuell åpen radvisning hvis du har egen liste også
     };
 

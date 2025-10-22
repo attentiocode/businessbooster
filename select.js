@@ -76,7 +76,7 @@ function renderSelect(data) {
 
   // Sets for state
   const inPortalSet = new Set((window.gCustomers || []).map(getOrgnr).filter(Boolean));
-  const inUtvalgSet = new Set((window.gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
+  const inUtvalgSet = new Set((gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
   const readySet    = new Set((window.gReadybedrifter || []).map(getOrgnr).filter(Boolean));
 
   // Ready-status
@@ -360,12 +360,12 @@ function renderSelect(data) {
       if (!orgnrs.length) return;
       if (!confirm(`Fjerne ${orgnrs.length} bedrift(er) fra utvalget?`)) return;
 
-      window.gSelectbedrifter = (window.gSelectbedrifter || []).filter(
+      gSelectbedrifter = (gSelectbedrifter || []).filter(
         b => !orgnrs.includes(normalizeOrgnr(b.organisasjonsnummer))
       );
-      try { localStorage.setItem('gSelectbedrifter', JSON.stringify(window.gSelectbedrifter)); } catch(e){}
+      try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
 
-      renderSelect(window.gSelectbedrifter);
+      renderSelect(gSelectbedrifter);
     };
   }
 
@@ -380,12 +380,12 @@ function renderSelect(data) {
       else groupId = prompt('Lim inn gruppe-ID som selskapene skal flyttes til:');
       if (!groupId) return;
 
-      (window.gSelectbedrifter || []).forEach(b => {
+      (gSelectbedrifter || []).forEach(b => {
         if (orgnrs.includes(normalizeOrgnr(b.organisasjonsnummer))) b.group = String(groupId);
       });
-      try { localStorage.setItem('gSelectbedrifter', JSON.stringify(window.gSelectbedrifter)); } catch(e){}
+      try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
 
-      renderSelect(window.gSelectbedrifter);
+      renderSelect(gSelectbedrifter);
     };
   }
 
