@@ -446,7 +446,7 @@ function customerResponse(data){
 
       //finne ut hvor mange kunder som har kommet inn i portalen de siste 30 dager
       let newcustomers = getNewCustomersInPortal(customers,30);
-      updateCounter("rosent-mailer-sendt", newcustomers, 1000);
+      updateCounter("label-new-customers", newcustomers, 1000);
 
    
   
