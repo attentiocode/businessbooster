@@ -23,14 +23,13 @@ async function logCompanyOnce(orgnr,returnid) {
     // Endepunktet ditt returnerer { ok, source, data, shaped }
     const data = json.shaped ?? json.data ?? json;
     console.timeEnd(`[proff] ${clean}`);
-    ruteresponse(data,returnid);
+    dataFromProff(data);
   } catch (err) {
     console.error(`[proff] ${orgnr} – FEIL:`, err?.message || err);
+    dataFromProff(null); // vis tom modal ved feil
     throw err;
   }
 }
-
-
 
 // Hjelpere
 const _val = v => (v == null ? '' : String(v));
@@ -59,9 +58,35 @@ function showProffModal(){
   window.addEventListener('keydown', onEsc, { once:true });
 }
 
-// Hovedfunksjonen du etterspurte:
 function dataFromProff(data){
-  // Sikre objekt
+  // --- 0) Håndter null/ingen treff ---
+  if (!data || (data && !data.name && !data.orgnr)) {
+    const titleEl = document.getElementById('proffTitle');
+    const subtitleEl = document.getElementById('proffSubtitle');
+    const body = document.getElementById('proffBody');
+
+    if (titleEl) titleEl.textContent = 'Selskap ikke funnet i Proff';
+    if (subtitleEl) subtitleEl.innerHTML = '';
+
+    if (body) {
+      body.innerHTML = `
+        <div class="proff-section" style="padding:12px;border:1px solid #374151;border-radius:8px;background:#111827;color:#E5E7EB;">
+          <div style="font-weight:600;margin-bottom:6px;">Ingen treff</div>
+          <div style="opacity:0.85;">
+            Vi fant ingen data for dette selskapet i Proff akkurat nå. Prøv igjen senere,
+            kontroller organisasjonsnummeret, eller søk manuelt på proff.no.
+          </div>
+        </div>
+      `;
+      if (typeof showProffModal === 'function') showProffModal();
+      else alert('Selskap ikke funnet i Proff.');
+    } else {
+      alert('Selskap ikke funnet i Proff.');
+    }
+    return;
+  }
+
+  // --- 1) Sikre objekt + helpers ---
   const d = data || {};
   const title = _safe(d.name);
   const org = normalizeOrgnr(_safe(d.orgnr));
@@ -72,10 +97,9 @@ function dataFromProff(data){
 
   const v = d.address?.visit || {};
   const p = d.address?.postal || {};
-
   const leder = d.dagligLeder || {};
 
-  // Fyll header
+  // --- 2) Header ---
   const titleEl = document.getElementById('proffTitle');
   if (titleEl) titleEl.textContent = title;
 
@@ -86,7 +110,7 @@ function dataFromProff(data){
     }`;
   }
 
-  // Bygg body
+  // --- 3) Body ---
   const body = document.getElementById('proffBody');
   if (!body) return;
 
@@ -102,7 +126,9 @@ function dataFromProff(data){
 
       <div class="proff-section">
         <h4 class="proff-sec-title">Daglig leder</h4>
-        <div class="proff-row">${_safe(leder.name)} ${leder.role ? `<span class="proff-chip">${leder.role}</span>` : ''}</div>
+        <div class="proff-row">
+          ${_safe(leder.name)} ${leder.role ? `<span class="proff-chip">${leder.role}</span>` : ''}
+        </div>
         <div class="proff-row"><small>E-post:</small> ${_mail(leder.email) || '—'}</div>
         <div class="proff-row"><small>Telefon:</small> ${_tel(leder.phone) || '—'}</div>
       </div>
@@ -132,13 +158,14 @@ function dataFromProff(data){
     </div>
   `;
 
-  // Bygg diff mot gSelectbedrifter (hvis selskapet finnes)
-  const selIdx = (gSelectbedrifter || []).findIndex(b => normalizeOrgnr(b?.organisasjonsnummer) === org);
+  // --- 4) Diff mot gSelectbedrifter ---
+  const selIdx = (gSelectbedrifter || []).findIndex(
+    b => normalizeOrgnr(b?.organisasjonsnummer) === org
+  );
   const diffEl = document.getElementById('proff-enrich-content');
   const actEl  = document.getElementById('proff-enrich-actions');
 
   if (selIdx === -1) {
-    // Ikke i utvalg: foreslå å legge til
     if (diffEl) {
       diffEl.innerHTML = `
         <div class="proff-row" style="opacity:0.9;">
@@ -156,35 +183,32 @@ function dataFromProff(data){
           epostadresse: d.email || '',
           telefon: d.phone || '',
           hjemmeside: d.homepage || '',
-          // valgfritt: lagre leder-info
           lederNavn: leder.name || '',
           lederEpost: leder.email || '',
           lederTelefon: leder.phone || '',
         };
-        gSelectbedrifter = Array.isArray(gSelectbedrifter) ? gSelectbedrifter : [];
+        gSelectbedrifter = Array.isArray(gSelectbedrifter) ? gSelectbedrifrifter : [];
         gSelectbedrifter.push(entry);
         try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch {}
-        // Render på nytt (dersom du vil oppdatere nåværende view)
         if (typeof renderSelect === 'function') renderSelect(gSelectbedrifter);
       };
       actEl.appendChild(addBtn);
     }
-    showProffModal();
+    if (typeof showProffModal === 'function') showProffModal();
     return;
   }
 
   const current = gSelectbedrifter[selIdx] || {};
   const diffRows = [];
 
-  // Definer hvilke felt du ønsker å diff’e
   const DIFF_FIELDS = [
-    { proff: 'email',             label: 'E-post',    target: 'epostadresse' },
-    { proff: 'phone',             label: 'Telefon',   target: 'telefon' },
-    { proff: 'homepage',          label: 'Nettside',  target: 'hjemmeside',
+    { proff: 'email',             label: 'E-post',         target: 'epostadresse' },
+    { proff: 'phone',             label: 'Telefon',        target: 'telefon' },
+    { proff: 'homepage',          label: 'Nettside',       target: 'hjemmeside',
       renderNew: v => prettyUrl(v), renderOld: v => prettyUrl(v) },
-    { proff: 'dagligLeder.name',  label: 'Leder navn', target: 'lederNavn' },
-    { proff: 'dagligLeder.email', label: 'Leder e-post', target: 'lederEpost' },
-    { proff: 'dagligLeder.phone', label: 'Leder telefon', target: 'lederTelefon' },
+    { proff: 'dagligLeder.name',  label: 'Leder navn',     target: 'lederNavn' },
+    { proff: 'dagligLeder.email', label: 'Leder e-post',   target: 'lederEpost' },
+    { proff: 'dagligLeder.phone', label: 'Leder telefon',  target: 'lederTelefon' },
   ];
 
   DIFF_FIELDS.forEach(({ proff, label, target, renderNew, renderOld }) => {
@@ -192,8 +216,6 @@ function dataFromProff(data){
     const oldVal   = current[target];
     const sNew = toStr(proffVal);
     const sOld = toStr(oldVal);
-
-    // Vis kun rader der Proff faktisk har verdi, og den er forskjellig fra lagret
     if (!sNew) return;
     if (sNew === sOld) return;
 
@@ -201,31 +223,29 @@ function dataFromProff(data){
       label,
       oldVal: renderOld ? renderOld(sOld) : sOld,
       newVal: renderNew ? renderNew(sNew) : sNew,
-      target,   // hvilket felt vi oppdaterer i vårt objekt
+      target,
       rawNew: sNew
     });
   });
 
-  // Render diff-tabell
   if (diffEl) {
     if (!diffRows.length) {
       diffEl.innerHTML = `<div class="proff-row" style="opacity:0.8;">Ingen nye verdier å berike – alt er allerede oppdatert.</div>`;
     } else {
-      const rowsHtml = diffRows.map(r => `
-        <div class="proff-diff-row" style="display:grid;grid-template-columns:130px 1fr 24px 1fr;gap:8px;align-items:center;padding:6px 8px;border:1px solid #374151;border-radius:6px;margin-bottom:6px;">
+      diffEl.innerHTML = diffRows.map(r => `
+        <div class="proff-diff-row"
+             style="display:grid;grid-template-columns:130px 1fr 24px 1fr;gap:8px;align-items:center;padding:6px 8px;border:1px solid #374151;border-radius:6px;margin-bottom:6px;">
           <div style="color:#9CA3AF;">${r.label}</div>
           <div style="opacity:0.9;">${r.oldVal || '—'}</div>
           <div style="text-align:center;">→</div>
           <div style="font-weight:600;">${r.newVal}</div>
         </div>
       `).join('');
-      diffEl.innerHTML = rowsHtml;
     }
   }
 
-  // Render knapper
   if (actEl) {
-    actEl.innerHTML = ''; // reset
+    actEl.innerHTML = '';
     const enrichBtn = document.createElement('button');
     enrichBtn.textContent = 'Berik selskap';
     Object.assign(enrichBtn.style, btnPrimaryStyle());
@@ -238,58 +258,34 @@ function dataFromProff(data){
     enrichBtn.onclick = () => {
       if (!diffRows.length) return;
       const updated = { ...current };
-      diffRows.forEach(r => {
-        updated[r.target] = r.rawNew;
-      });
+      diffRows.forEach(r => { updated[r.target] = r.rawNew; });
       gSelectbedrifter[selIdx] = updated;
       try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch {}
-
-      // Liten bekreftelse + oppdater UI
       alert('Selskapet er beriket med nye data fra Proff.');
       if (typeof renderSelect === 'function') renderSelect(gSelectbedrifter);
-      // Oppdater eventuell åpen radvisning hvis du har egen liste også
     };
 
     cancelBtn.onclick = () => {
-      closeProffModal ? closeProffModal() : (document.getElementById('proffModal')?.classList.remove('open'));
+      if (typeof closeProffModal === 'function') closeProffModal();
+      else document.getElementById('proffModal')?.classList.remove('open');
     };
 
     actEl.appendChild(enrichBtn);
     actEl.appendChild(cancelBtn);
   }
 
-  showProffModal();
+  if (typeof showProffModal === 'function') showProffModal();
 }
 
-// Enkel knappe-stil (mørkt UI)
-function btnPrimaryStyle() {
-  return {
-    background: '#2563EB',
-    color: '#fff',
-    border: '1px solid #1D4ED8',
-    padding: '8px 12px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: '600'
-  };
-}
-function btnGhostStyle() {
-  return {
-    background: 'transparent',
-    color: '#E5E7EB',
-    border: '1px solid #374151',
-    padding: '8px 12px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: '500'
-  };
-}
+// --- Små helpers brukt over (hvis du ikke allerede har dem globalt) ---
+function normalizeOrgnr(v){ return String(v ?? '').replace(/\D/g,'').padStart(9,'0'); }
+function prettyUrl(u=''){ return String(u||'').replace(/^https?:\/\//i,'').replace(/\/$/,''); }
+function pick(obj, path){ return path.split('.').reduce((a,k)=> (a && a[k]!=null ? a[k] : undefined), obj); }
+function toStr(v){ return v==null ? '' : String(v).trim(); }
+function btnPrimaryStyle(){ return { background:'#2563EB', color:'#fff', border:'1px solid #1D4ED8', padding:'8px 12px', borderRadius:'8px', cursor:'pointer', fontWeight:'600' }; }
+function btnGhostStyle(){ return { background:'transparent', color:'#E5E7EB', border:'1px solid #374151', padding:'8px 12px', borderRadius:'8px', cursor:'pointer', fontWeight:'500' }; }
 
 
-
-function normalizeOrgnr(v) {
-  return String(v ?? '').replace(/\D/g, '').padStart(9, '0');
-}
 
 // Felt-mapping fra Proff -> vårt datasett
 const PROFF_FIELD_MAP = {
@@ -302,15 +298,3 @@ const PROFF_FIELD_MAP = {
   'dagligLeder.phone': 'lederTelefon',
 };
 
-// Plukk verdi fra nested objekt via path som "dagligLeder.email"
-function pick(obj, path) {
-  return path.split('.').reduce((acc, k) => (acc && acc[k] != null ? acc[k] : undefined), obj);
-}
-
-// Gjør URL pen i visning
-function prettyUrl(u = '') {
-  return String(u).replace(/^https?:\/\//i, '').replace(/\/$/, '');
-}
-
-// Diff én verdi (strenge sammenligning etter trimming)
-function toStr(v) { return v == null ? '' : String(v).trim(); }
