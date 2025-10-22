@@ -176,7 +176,6 @@ function renderSelect(data){
   // --- TELLERE ---
   let sumTotal   = filteredData.length;
   let sumPortal  = 0;
-  let sumUtvalg  = 0;
   let sumReady   = 0;
   let sumEmail   = 0;
   let sumWeb     = 0;
@@ -192,7 +191,6 @@ function renderSelect(data){
     // Tellere (per rad)
     const org = getOrgnr(b);
     if (inPortalSet.has(org)) sumPortal++;
-    if (inUtvalgSet.has(org)) sumUtvalg++;
     if (isReady(b))          sumReady++;
     if (hasEmail(b))         sumEmail++;
     if (hasWeb(b))           sumWeb++;
@@ -226,7 +224,6 @@ function renderSelect(data){
   updateSelectCounterDark(
     sumTotal,   // Totalt
     sumPortal,  // I portal
-    sumUtvalg,  // I utvalg
     sumReady,   // Klar
     sumEmail,   // Har e-post
     sumWeb,     // Har nettside
@@ -393,7 +390,6 @@ function initContactStateSelectFilter(){
 function updateSelectCounterDark(
   sumTotal = 0,
   sumPortal = 0,
-  sumUtvalg = 0,
   sumReady = 0,
   sumEmail = 0,
   sumWeb = 0,
@@ -442,7 +438,6 @@ function updateSelectCounterDark(
 
   const totalEl  = makeChip('Totalt', sumTotal, colors.total);
   const portalEl = makeChip('I portal', sumPortal, colors.portal);
-  const utvalgEl = makeChip('I utvalg', sumUtvalg, colors.utvalg);
   const readyEl  = makeChip('Klar', sumReady, colors.ready);
   const emailEl  = makeChip('Har e-post', sumEmail, colors.email);
   const webEl    = makeChip('Har nettside', sumWeb, colors.web);
