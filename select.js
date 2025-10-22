@@ -85,6 +85,10 @@ function renderSelect(data) {
     if (readySet.has(org)) return true;
     const s = low(it?.status ?? '');
     return s === 'klar' || s === 'ready' || s.includes('klar for');
+
+
+
+
   };
 
   // Kontaktfilter (for select-listen)
@@ -188,6 +192,11 @@ function renderSelect(data) {
     const rowIsPortal = inPortalSet.has(org);
     const rowIsUtvalg = inUtvalgSet.has(org);
     const rowIsReady  = isReady(b);
+
+    // Ekstra sjekk for ready (i tilfelle)
+    if(!rowIsReady){
+      rowIsReady = isThisCompanyInReadyMode(b);
+    }
 
     if (rowIsPortal) sumPortal++;
     if (rowIsUtvalg) sumUtvalg++;
@@ -437,6 +446,8 @@ function renderSelect(data) {
         }
       }
 
+      
+
       // Oppdater global array + lagre hele listen
       gReadybedrifter = Array.from(readyByOrgnr.values());
       try {
@@ -610,5 +621,21 @@ function updateSelectCounterDark(
 }
 
 
-  
-  
+function isThisCompanyInReadyMode(item) {
+  // normaliser til kun siffer (fjerner mellomrom, NO-, etc.)
+  const org = String(getOrgnr(item) ?? "").replace(/\D/g, "");
+  if (!org) return false;
+
+  // Støtt både Set og Array uten å bli omfattende
+  if (globalThis.gReadybedrifter instanceof Set) {
+    return globalThis.gReadybedrifter.has(org);
+  }
+
+  const arr = Array.isArray(globalThis.gReadybedrifter) ? globalThis.gReadybedrifter : [];
+  return arr.some(entry => {
+    const cand = (typeof entry === "object")
+      ? (entry.orgnr ?? entry.org ?? entry.orgNr ?? entry.orgnummer)
+      : entry;
+    return String(cand ?? "").replace(/\D/g, "") === org;
+  });
+}
