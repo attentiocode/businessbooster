@@ -492,4 +492,27 @@ function initFilterselectors() {
   initContactInfoSelectFilter();
   initContactStateSelectFilter();
 
+  initcssIconStyle();
+
+}
+
+function initcssIconStyle() {
+  // --- 0) Injiser CSS én gang ---
+  if (!document.getElementById('brreg-contact-style')) {
+    const style = document.createElement('style');
+    style.id = 'brreg-contact-style';
+    style.textContent = `
+      .icon-btn {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:26px; height:26px; border-radius:6px; margin-right:6px;
+        border:1px solid #e5e7eb; background:#f9fafb;
+        color:#1e3a8a; cursor:pointer; text-decoration:none;
+      }
+      .icon-btn:hover { background:#eef2ff; }
+      .contact-cell { white-space:nowrap; }
+      tr.inportal { background: rgba(60,180,75,0.07); }
+      tr.selected  { background: rgba(0,120,215,0.07); }
+    `;
+    document.head.appendChild(style);
+  }
 }
