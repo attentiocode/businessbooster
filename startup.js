@@ -392,29 +392,38 @@ window.addEventListener('DOMContentLoaded', () => {
   updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
 });
 
-function updateCounter(elementId, newValue, duration = 500) {
+function updateCounter(elementId, newValue, duration = 500, endingValue = "") {
   const el = document.getElementById(elementId);
   if (!el) return;
 
-  // hent dagens tallverdi fra elementet (fallback = 0)
-  const currentValue = parseFloat(el.textContent.replace(/[^\d.-]/g, '')) || 0;
+  // plukk ut tall fra eksisterende tekst (ignorerer evt. tidligere suffix)
+  const currentValue = parseFloat((el.textContent || "").replace(/[^\d.-]/g, "")) || 0;
   const startTime = performance.now();
   const diff = newValue - currentValue;
 
+  // legg til et automatisk mellomrom foran ending hvis det ikke allerede er der
+  const suffix = endingValue ? (/^\s/.test(endingValue) ? endingValue : " " + endingValue) : "";
+
   function animate(now) {
     const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1); // 0 → 1
-    const ease = 1 - Math.pow(1 - progress, 3);       // myk easing
+    const progress = Math.min(elapsed / duration, 1);     // 0 → 1
+    const ease = 1 - Math.pow(1 - progress, 3);           // myk easing
     const current = currentValue + diff * ease;
 
-    // hvis du vil ha heltall
-    el.textContent = Math.round(current).toLocaleString('no-NO');
+    // heltall underveis
+    el.textContent = Math.round(current).toLocaleString("no-NO") + suffix;
 
-    if (progress < 1) requestAnimationFrame(animate);
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      // sørg for nøyaktig sluttverdi
+      el.textContent = Math.round(newValue).toLocaleString("no-NO") + suffix;
+    }
   }
 
   requestAnimationFrame(animate);
 }
+
 
 function getCustomer(){     
   //hente kunder
@@ -446,7 +455,7 @@ function customerResponse(data){
 
       //finne ut hvor mange kunder som har kommet inn i portalen de siste 30 dager
       let newcustomers = getNewCustomersInPortal(customers,30);
-      updateCounter("label-new-customers", newcustomers, 1000);
+      updateCounter("label-new-customers", newcustomers, 1000, " siste 30 dager");
 
    
   
