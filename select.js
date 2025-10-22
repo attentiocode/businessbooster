@@ -390,7 +390,7 @@ function renderSelect(data) {
   if (btnEnrich) {
 
      //hvis n er mer en 1 så deaktiver knappen
-    if (orgnrs.length !== 1) {
+    if (getSelectedOrgnrs().length !== 1){
       btnEnrich.disabled = true;
       btnEnrich.onclick = null;
       btnEnrich.title = "Velg nøyaktig ett selskap for å innhente mer data.";
