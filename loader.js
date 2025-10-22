@@ -16,7 +16,10 @@ const cdnScripts = [
     "https://attentiocode.github.io/businessbooster/preset.js",
     "https://attentiocode.github.io/businessbooster/select.js",
     "https://attentiocode.github.io/businessbooster/group.js",
-    "https://attentiocode.github.io/businessbooster/brreg.js"
+    "https://attentiocode.github.io/businessbooster/brreg.js",
+    "https://attentiocode.github.io/businessbooster/ready.js"
+    
+
     
     
 ];

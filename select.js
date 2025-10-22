@@ -37,11 +37,11 @@ function renderSelect(data) {
   tbody.innerHTML = '';
 
   // --- Initér global ready-liste én gang ---
-  if (!Array.isArray(window.gReadybedrifter)) {
+  if (!Array.isArray(gReadybedrifter)) {
     try {
-      window.gReadybedrifter = JSON.parse(localStorage.getItem('gReadybedrifter') || '[]');
-      if (!Array.isArray(window.gReadybedrifter)) window.gReadybedrifter = [];
-    } catch { window.gReadybedrifter = []; }
+      gReadybedrifter = JSON.parse(localStorage.getItem('gReadybedrifter') || '[]');
+      if (!Array.isArray(gReadybedrifter)) gReadybedrifter = [];
+    } catch { gReadybedrifter = []; }
   }
 
   // --- Hjelpere ---
