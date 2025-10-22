@@ -191,7 +191,7 @@ function renderSelect(data) {
     const org = getOrgnr(b);
     const rowIsPortal = inPortalSet.has(org);
     const rowIsUtvalg = inUtvalgSet.has(org);
-    const rowIsReady  = isReady(b);
+    let rowIsReady  = isReady(b);
 
     // Ekstra sjekk for ready (i tilfelle)
     if(!rowIsReady){
