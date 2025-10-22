@@ -48,65 +48,162 @@ function renderSelect(data) {
   // --- Hjelpere ---
   const val = v => (v == null ? '' : String(v));
   const low = v => val(v).toLowerCase();
-  const fmtDate = (d) => (!d ? '—' : (isNaN(new Date(d)) ? d : new Date(d).toLocaleDateString('no-NO')));
+
+  const fmtDate = (d) => {
+    if (!d) return '—';
+    const dt = new Date(d);
+    return isNaN(dt) ? d : dt.toLocaleDateString('no-NO');
+  };
+
   const fmtAddr = (b) => {
     const a = b?.forretningsadresse || b?.postadresse || {};
     const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
     return [adr, a.postnummer, a.poststed].filter(Boolean).join(', ') || '—';
   };
+
   const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
   const getOrgnr = (obj) =>
     normalizeOrgnr(obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber);
 
-  // Kontaktfelt-hjelpere
+  // Kontaktfelt
   const getEmail = (it) =>
-    String(it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '').trim().replace(/^mailto:/i, '');
+    String(it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '')
+      .trim()
+      .replace(/^mailto:/i, '');
   const isValidEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim());
   const hasEmail = (it) => !!getEmail(it);
+
   const getPhone = (it) =>
     String(it?.mobil ?? it?.mobilnummer ?? it?.telefon ?? it?.telefonnummer ?? it?.phone ?? it?.tlf ?? '').trim();
   const hasPhone = (it) => !!getPhone(it);
+
   const getWeb = (it) =>
-    String(it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ?? it?.web ?? it?.www ??
-      it?.website ?? it?.nettside ?? '').trim();
+    String(it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ??
+      it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? '').trim();
   const hasWeb = (it) => !!getWeb(it);
 
   // Ready-status
+  const readySet = new Set((window.gReadybedrifter || []).map(getOrgnr));
   const isReady = (it) => {
+    if (readySet.has(getOrgnr(it))) return true;
     const s = low(it?.status ?? '');
-    if (s === 'klar' || s === 'ready' || s.includes('klar for')) return true;
-    return (window.gReadybedrifter || []).some(r => getOrgnr(r) === getOrgnr(it));
+    return s === 'klar' || s === 'ready' || s.includes('klar for');
   };
 
-  const readySet = new Set((window.gReadybedrifter || []).map(getOrgnr));
+  // Kontaktfilter (om du bruker egne select-bokser for dette i utvalgsvyen)
+  const passesContactFilter = (item, filterVal) => {
+    if (!filterVal) return true;
+    const email = hasEmail(item), web = hasWeb(item), phone = hasPhone(item);
+    switch (filterVal) {
+      case 'email':        return email;
+      case 'web':          return web;
+      case 'phone':        return phone;
+      case 'email-only':   return email && !web && !phone;
+      case 'web-only':     return web && !email && !phone;
+      case 'phone-only':   return phone && !email && !web;
+      case 'email-web':    return email && web && !phone;
+      case 'email-phone':  return email && phone && !web;
+      case 'web-phone':    return web && phone && !email;
+      case 'all-three':    return email && web && phone;
+      default:             return true;
+    }
+  };
 
-  // --- Render rader ---
-  (Array.isArray(data) ? data : []).forEach((b, i) => {
+  // --- Les filtre ---
+  const searchEl   = document.getElementById('searchSelect');
+  const searchTerm = low(searchEl ? searchEl.value : '');
+
+  const grpSel      = document.getElementById('filterGroupSelectMaster');
+  const rawFilter   = grpSel ? grpSel.value : '';
+  const filterGroup = String(rawFilter || '').trim(); // "" eller spesifikk group-id
+
+  // (valgfritt) egne selectorer for kontakt/state i utvalgsvyen
+  const infoSel     = document.getElementById('select-contact-info-select-filter');
+  const infoFilter  = infoSel ? String(infoSel.value || '') : '';
+
+  const stateSel     = document.getElementById('select-contact-state-select-filter');
+  const stateFilter  = stateSel ? String(stateSel.value || '') : ''; // '', 'portal', 'utvalg', 'ready' (om du bruker den her også)
+
+  // --- Filtrer grunnlag ---
+  let filteredData = Array.isArray(data) ? data.slice() : [];
+
+  // Gruppefilter (BEHOLDT)
+  if (!(filterGroup === '' || filterGroup.toLowerCase() === 'all')) {
+    filteredData = filteredData.filter(b => String(b.group ?? '').trim() === filterGroup);
+  }
+
+  // Tekstsøk
+  if (searchTerm) {
+    filteredData = filteredData.filter(b => {
+      const a   = b?.forretningsadresse || b?.postadresse || {};
+      const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
+      const grp = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
+      return (
+        low(b?.navn).includes(searchTerm) ||
+        val(b?.organisasjonsnummer).includes(searchTerm) ||
+        low(adr).includes(searchTerm) ||
+        val(a?.postnummer).includes(searchTerm) ||
+        low(a?.poststed).includes(searchTerm) ||
+        (grp && (low(grp.name).includes(searchTerm) || low(grp.user).includes(searchTerm)))
+      );
+    });
+  }
+
+  // Kontaktfilter (valgfritt i utvalgsvyen)
+  if (infoFilter) {
+    filteredData = filteredData.filter(b => passesContactFilter(b, infoFilter));
+  }
+
+  // (Valgfritt) stateFilter hvis du også vil støtte her – her regner vi "ready" som i readySet/isReady
+  if (stateFilter) {
+    filteredData = filteredData.filter(b => {
+      const org = getOrgnr(b);
+      if (stateFilter === 'ready') return isReady(b);
+      if (stateFilter === 'utvalg') return (window.gSelectbedrifter || []).some(x => getOrgnr(x) === org);
+      if (stateFilter === 'portal') return (window.gCustomers || []).some(x => getOrgnr(x) === org);
+      return true;
+    });
+  }
+
+  // Rask lookup for popup-lagring
+  const byOrgnr = new Map(filteredData.map(it => [getOrgnr(it), it]));
+
+  // --- Render rader (MED gruppekolonner) ---
+  (filteredData || []).forEach((b, i) => {
     const tr = document.createElement('tr');
     tr.classList.add('default-row');
 
     const org = getOrgnr(b);
-    const rowIsReady = readySet.has(org) || isReady(b);
+    const rowIsReady = isReady(b);
 
     if (rowIsReady) tr.classList.add('ready');
 
     const contactHtml = renderContactIcons(b);
     const checkboxAttrs = rowIsReady ? 'checked disabled' : '';
 
+    const g = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
+
     tr.innerHTML = `
-      <td style="width:40px;"><input type="checkbox" class="selectcheckbox" data-orgnr="${org}" ${checkboxAttrs}></td>
+      <td style="width:40px;">
+        <input type="checkbox" class="selectcheckbox" data-orgnr="${org}" ${checkboxAttrs}>
+      </td>
       <td class="mono" style="font-size:10px;">${org}</td>
       <td style="font-weight:700;font-size:12px;">${b.navn ?? '—'}</td>
       <td style="font-size:11px;">${fmtAddr(b)}</td>
+      <td style="font-size:11px;">${g ? g.name : '—'}</td>
+      <td style="font-size:11px;">${g ? (g.user || '—') : '—'}</td>
       <td style="font-size:11px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
       <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
     `;
 
-    // 🔹 Klikk på rad åpner redigerings-popup (kun hvis ikke klar)
+    // Klikk på rad åpner popup (kun hvis ikke "klar")
     if (!rowIsReady) {
       tr.style.cursor = 'pointer';
       tr.addEventListener('click', (e) => {
-        if (e.target.tagName === 'INPUT') return; // ikke trigge på checkbox
+        // Ikke trigge når man klikker på checkbox eller lenke/ikon
+        const t = e.target;
+        if (t.closest('input[type="checkbox"]')) return;
+        if (t.closest('a')) return;
         openEditPopup(b, org);
       });
     }
@@ -114,7 +211,7 @@ function renderSelect(data) {
     tbody.appendChild(tr);
   });
 
-  // --- Popup (bygges kun én gang) ---
+  // --- Popup bygges én gang ---
   if (!document.getElementById('edit-popup')) {
     const popup = document.createElement('div');
     popup.id = 'edit-popup';
@@ -126,7 +223,7 @@ function renderSelect(data) {
     popup.innerHTML = `
       <div id="edit-popup-content" style="
         background:#1f2937; color:#f9fafb;
-        border-radius:8px; padding:20px; width:320px;
+        border-radius:8px; padding:20px; width:340px;
         font-family:system-ui; box-shadow:0 0 20px rgba(0,0,0,0.3);
       ">
         <h3 style="font-size:16px;margin-bottom:10px;">Rediger kontaktinfo</h3>
@@ -145,9 +242,9 @@ function renderSelect(data) {
     document.body.appendChild(popup);
   }
 
-  // --- Popup funksjon ---
+  // --- Popup logikk ---
   function openEditPopup(item, orgnr) {
-    const popup = document.getElementById('edit-popup');
+    const popup  = document.getElementById('edit-popup');
     const emailEl = document.getElementById('edit-email');
     const phoneEl = document.getElementById('edit-phone');
     const webEl   = document.getElementById('edit-web');
@@ -167,23 +264,31 @@ function renderSelect(data) {
       const newPhone = phoneEl.value.trim();
       const newWeb   = webEl.value.trim();
 
-      // Oppdater i gSelectbedrifter
-      const idx = (gSelectbedrifter || []).findIndex(b => getOrgnr(b) === orgnr);
+      // Oppdater i gSelectbedrifter (hvis selskapet finnes der)
+      const idx = (window.gSelectbedrifter || []).findIndex(b => getOrgnr(b) === orgnr);
       if (idx >= 0) {
-        gSelectbedrifter[idx] = {
-          ...gSelectbedrifter[idx],
+        window.gSelectbedrifter[idx] = {
+          ...window.gSelectbedrifter[idx],
           epostadresse: newEmail,
           telefon: newPhone,
           hjemmeside: newWeb
         };
-        localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter));
+        try { localStorage.setItem('gSelectbedrifter', JSON.stringify(window.gSelectbedrifter)); } catch {}
+      } else {
+        // Hvis ikke i gSelectbedrifter, oppdater local "data"-kilden om ønskelig:
+        const srcIdx = (Array.isArray(data) ? data : []).findIndex(b => getOrgnr(b) === orgnr);
+        if (srcIdx >= 0) {
+          data[srcIdx] = { ...data[srcIdx], epostadresse: newEmail, telefon: newPhone, hjemmeside: newWeb };
+        }
       }
 
       popup.style.display = 'none';
-      renderSelect(gSelectbedrifter);
+      // Re-render fra den kilden du ønsker å vise (her utvalg)
+      renderSelect(window.gSelectbedrifter || data);
     };
   }
 }
+
 
 
 
