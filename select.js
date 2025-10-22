@@ -108,6 +108,7 @@ function renderSelect(data){
   // Sett for state-sjekk
   const inPortalSet  = new Set((gCustomers || []).map(getOrgnr).filter(Boolean));
   const inUtvalgSet  = new Set((gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
+  const readySet     = new Set((window.gReadybedrifter || []).map(getOrgnr).filter(Boolean)); // <- fra gReadybedrifter
 
   // Kontaktfilter
   const passesContactFilter = (item, filterVal) => {
@@ -134,7 +135,7 @@ function renderSelect(data){
     const org = getOrgnr(item);
     if (filterVal === 'portal') return inPortalSet.has(org);
     if (filterVal === 'utvalg') return inUtvalgSet.has(org);
-    if (filterVal === 'ready')  return isReady(item);
+    if (filterVal === 'ready')  return readySet.has(org) || isReady(item);
     return true;
   };
 
@@ -207,17 +208,27 @@ function renderSelect(data){
 
     const g = (gGroupbedrifter || []).find(gr => gr.id == b.group);
 
-    // Tellere (per rad)
     const org = getOrgnr(b);
-    if (inPortalSet.has(org)) sumPortal++;
-    if (inUtvalgSet.has(org)) sumUtvalg++;
-    if (isReady(b))          sumReady++;
-    if (hasEmail(b))         sumEmail++;
-    if (hasWeb(b))           sumWeb++;
-    if (hasPhone(b))         sumPhone++;
+    const rowIsPortal = inPortalSet.has(org);
+    const rowIsUtvalg = inUtvalgSet.has(org);
+    const rowIsReady  = readySet.has(org) || isReady(b); // <- “ready”-deteksjon
+
+    // Tellere
+    if (rowIsPortal) sumPortal++;
+    if (rowIsUtvalg) sumUtvalg++;
+    if (rowIsReady)  sumReady++;
+    if (hasEmail(b)) sumEmail++;
+    if (hasWeb(b))   sumWeb++;
+    if (hasPhone(b)) sumPhone++;
 
     // Kontakt-HTML (egen funksjon)
     const contactHtml = renderContactIcons(b);
+
+    // Checkbox-attributter: ready skal være checked + disabled
+    const checkboxAttrs = rowIsReady ? 'checked disabled' : '';
+
+    // Rad-klasse for ready
+    if (rowIsReady) tr.classList.add('ready');
 
     tr.innerHTML = `
       <td style="width:40px;">
@@ -226,6 +237,7 @@ function renderSelect(data){
           class="selectcheckbox"
           data-orgnr="${b.organisasjonsnummer || ''}"
           id="sel${i}"
+          ${checkboxAttrs}
         />
       </td>
       <td class="mono" style="font-size:10px;">${b.organisasjonsnummer ?? '—'}</td>
@@ -252,7 +264,6 @@ function renderSelect(data){
       sumPhone    // Har telefon
     );
   } else {
-    // Fallback enkel teller
     const counter = document.getElementById("counterlistutvalg");
     if (counter) counter.textContent = `${sumTotal} Stk.`;
   }
@@ -284,7 +295,7 @@ function renderSelect(data){
 
   function getSelectedOrgnrs() {
     return Array.from(tbody.querySelectorAll('.selectcheckbox'))
-      .filter(cb => cb.checked && !cb.disabled)
+      .filter(cb => cb.checked && !cb.disabled) // ready-rader (disabled) blir automatisk ekskludert
       .map(cb => normalizeOrgnr(cb.dataset.orgnr))
       .filter(Boolean);
   }
@@ -345,7 +356,7 @@ function renderSelect(data){
     };
   }
 
-  // --- NY: Send til klar ---
+  // Send til klar (samme logikk som tidligere—setter status, oppdaterer gReadybedrifter + storage)
   if (btnReady) {
     btnReady.onclick = () => {
       const orgnrs = getSelectedOrgnrs();
@@ -354,12 +365,9 @@ function renderSelect(data){
         return;
       }
 
-      // Bygg map for eksisterende ready-entries (unik på orgnr)
-      const readyByOrgnr = new Map(
-        (Array.isArray(window.gReadybedrifter) ? window.gReadybedrifter : []).map(
-          it => [normalizeOrgnr(it.organisasjonsnummer), it]
-        )
-      );
+      const readyByOrgnr = new Map((window.gReadybedrifter || []).map(
+        it => [normalizeOrgnr(it.organisasjonsnummer), it]
+      ));
 
       const ok = [];
       const failed = [];
@@ -378,13 +386,11 @@ function renderSelect(data){
         }
       }
 
-      // Oppdater global array + lagre hele listen
       window.gReadybedrifter = Array.from(readyByOrgnr.values());
       try {
         localStorage.setItem('gReadybedrifter', JSON.stringify(window.gReadybedrifter));
       } catch {}
 
-      // Alert-oppsummering
       const okMsg = ok.length ? `${ok.length} selskap er flyttet til "Klar".` : 'Ingen selskap ble flyttet til "Klar".';
       if (failed.length) {
         const lines = failed.map(it => `- ${it.navn ?? 'Ukjent navn'} (${val(it.organisasjonsnummer) || 'uten orgnr'})`);
@@ -396,13 +402,14 @@ function renderSelect(data){
         alert(okMsg);
       }
 
-      // Re-render (ny state kan påvirke filteret ditt)
+      // Re-render: nå vil de få class "ready" og checkbox disabled + checked
       renderSelect(gSelectbedrifter);
     };
   }
 
   updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
 }
+
 
 
 
