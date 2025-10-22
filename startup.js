@@ -40,6 +40,10 @@ document.getElementById("presetSideButton").addEventListener("click", function()
     document.getElementById("presetTabButton").click();
 });
 
+document.getElementById("groupEmailButton").addEventListener("click", function() {
+    document.getElementById("emailTabButton").click();
+});
+
 
 const fmt = d => d.toISOString().slice(0, 10);
 
