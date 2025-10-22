@@ -48,24 +48,17 @@ function renderSelect(data) {
   // --- Hjelpere ---
   const val = v => (v == null ? '' : String(v));
   const low = v => val(v).toLowerCase();
-
-  const fmtDate = (d) => {
-    if (!d) return '—';
-    const dt = new Date(d);
-    return isNaN(dt) ? d : dt.toLocaleDateString('no-NO');
-  };
-
+  const fmtDate = (d) => (!d ? '—' : (isNaN(new Date(d)) ? d : new Date(d).toLocaleDateString('no-NO')));
   const fmtAddr = (b) => {
     const a = b?.forretningsadresse || b?.postadresse || {};
     const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
     return [adr, a.postnummer, a.poststed].filter(Boolean).join(', ') || '—';
   };
-
   const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
   const getOrgnr = (obj) =>
     normalizeOrgnr(obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber);
 
-  // Kontaktfelt
+  // Kontaktfelt helpers
   const getEmail = (it) =>
     String(it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '')
       .trim()
@@ -82,15 +75,20 @@ function renderSelect(data) {
       it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? '').trim();
   const hasWeb = (it) => !!getWeb(it);
 
+  // Sets for state
+  const inPortalSet = new Set((window.gCustomers || []).map(getOrgnr).filter(Boolean));
+  const inUtvalgSet = new Set((window.gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
+  const readySet    = new Set((window.gReadybedrifter || []).map(getOrgnr).filter(Boolean));
+
   // Ready-status
-  const readySet = new Set((window.gReadybedrifter || []).map(getOrgnr));
   const isReady = (it) => {
-    if (readySet.has(getOrgnr(it))) return true;
+    const org = getOrgnr(it);
+    if (readySet.has(org)) return true;
     const s = low(it?.status ?? '');
     return s === 'klar' || s === 'ready' || s.includes('klar for');
   };
 
-  // Kontaktfilter (om du bruker egne select-bokser for dette i utvalgsvyen)
+  // Kontaktfilter (for select-listen)
   const passesContactFilter = (item, filterVal) => {
     if (!filterVal) return true;
     const email = hasEmail(item), web = hasWeb(item), phone = hasPhone(item);
@@ -115,19 +113,18 @@ function renderSelect(data) {
 
   const grpSel      = document.getElementById('filterGroupSelectMaster');
   const rawFilter   = grpSel ? grpSel.value : '';
-  const filterGroup = String(rawFilter || '').trim(); // "" eller spesifikk group-id
+  const filterGroup = String(rawFilter || '').trim(); // "" eller group-id
 
-  // (valgfritt) egne selectorer for kontakt/state i utvalgsvyen
   const infoSel     = document.getElementById('select-contact-info-select-filter');
   const infoFilter  = infoSel ? String(infoSel.value || '') : '';
 
   const stateSel     = document.getElementById('select-contact-state-select-filter');
-  const stateFilter  = stateSel ? String(stateSel.value || '') : ''; // '', 'portal', 'utvalg', 'ready' (om du bruker den her også)
+  const stateFilter  = stateSel ? String(stateSel.value || '') : ''; // '', 'portal', 'utvalg', 'ready'
 
   // --- Filtrer grunnlag ---
   let filteredData = Array.isArray(data) ? data.slice() : [];
 
-  // Gruppefilter (BEHOLDT)
+  // Gruppefilter
   if (!(filterGroup === '' || filterGroup.toLowerCase() === 'all')) {
     filteredData = filteredData.filter(b => String(b.group ?? '').trim() === filterGroup);
   }
@@ -149,39 +146,56 @@ function renderSelect(data) {
     });
   }
 
-  // Kontaktfilter (valgfritt i utvalgsvyen)
+  // Kontaktfilter
   if (infoFilter) {
     filteredData = filteredData.filter(b => passesContactFilter(b, infoFilter));
   }
 
-  // (Valgfritt) stateFilter hvis du også vil støtte her – her regner vi "ready" som i readySet/isReady
+  // Statefilter (for select-listen)
   if (stateFilter) {
     filteredData = filteredData.filter(b => {
       const org = getOrgnr(b);
-      if (stateFilter === 'ready') return isReady(b);
-      if (stateFilter === 'utvalg') return (window.gSelectbedrifter || []).some(x => getOrgnr(x) === org);
-      if (stateFilter === 'portal') return (window.gCustomers || []).some(x => getOrgnr(x) === org);
+      if (stateFilter === 'ready')  return isReady(b);
+      if (stateFilter === 'utvalg') return inUtvalgSet.has(org);
+      if (stateFilter === 'portal') return inPortalSet.has(org);
       return true;
     });
   }
 
-  // Rask lookup for popup-lagring
+  // --- TELLERE ---
+  let sumTotal   = filteredData.length;
+  let sumPortal  = 0;
+  let sumUtvalg  = 0;
+  let sumReady   = 0;
+  let sumEmail   = 0;
+  let sumWeb     = 0;
+  let sumPhone   = 0;
+
+  // Lookup for handlers
   const byOrgnr = new Map(filteredData.map(it => [getOrgnr(it), it]));
 
-  // --- Render rader (MED gruppekolonner) ---
+  // --- Render rader ---
   (filteredData || []).forEach((b, i) => {
     const tr = document.createElement('tr');
     tr.classList.add('default-row');
 
     const org = getOrgnr(b);
-    const rowIsReady = isReady(b);
+    const rowIsPortal = inPortalSet.has(org);
+    const rowIsUtvalg = inUtvalgSet.has(org);
+    const rowIsReady  = isReady(b);
+
+    if (rowIsPortal) sumPortal++;
+    if (rowIsUtvalg) sumUtvalg++;
+    if (rowIsReady)  sumReady++;
+    if (hasEmail(b)) sumEmail++;
+    if (hasWeb(b))   sumWeb++;
+    if (hasPhone(b)) sumPhone++;
 
     if (rowIsReady) tr.classList.add('ready');
 
+    const g = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
     const contactHtml = renderContactIcons(b);
     const checkboxAttrs = rowIsReady ? 'checked disabled' : '';
-
-    const g = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
 
     tr.innerHTML = `
       <td style="width:40px;">
@@ -196,11 +210,10 @@ function renderSelect(data) {
       <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
     `;
 
-    // Klikk på rad åpner popup (kun hvis ikke "klar")
+    // Åpne popup ved klikk (ikke for ready, og ikke når man klikker på checkbox/lenker)
     if (!rowIsReady) {
       tr.style.cursor = 'pointer';
       tr.addEventListener('click', (e) => {
-        // Ikke trigge når man klikker på checkbox eller lenke/ikon
         const t = e.target;
         if (t.closest('input[type="checkbox"]')) return;
         if (t.closest('a')) return;
@@ -210,6 +223,22 @@ function renderSelect(data) {
 
     tbody.appendChild(tr);
   });
+
+  // --- Oppdater teller / chips ---
+  if (typeof updateSelectCounterDark === 'function') {
+    updateSelectCounterDark(
+      sumTotal,   // Totalt
+      sumPortal,  // I portal
+      sumUtvalg,  // I utvalg
+      sumReady,   // Klar
+      sumEmail,   // Har e-post
+      sumWeb,     // Har nettside
+      sumPhone    // Har telefon
+    );
+  } else {
+    const counter = document.getElementById("counterlistutvalg");
+    if (counter) counter.textContent = `${sumTotal} Stk.`;
+  }
 
   // --- Popup bygges én gang ---
   if (!document.getElementById('edit-popup')) {
@@ -264,7 +293,7 @@ function renderSelect(data) {
       const newPhone = phoneEl.value.trim();
       const newWeb   = webEl.value.trim();
 
-      // Oppdater i gSelectbedrifter (hvis selskapet finnes der)
+      // Oppdater i gSelectbedrifter hvis finnes der
       const idx = (window.gSelectbedrifter || []).findIndex(b => getOrgnr(b) === orgnr);
       if (idx >= 0) {
         window.gSelectbedrifter[idx] = {
@@ -275,7 +304,7 @@ function renderSelect(data) {
         };
         try { localStorage.setItem('gSelectbedrifter', JSON.stringify(window.gSelectbedrifter)); } catch {}
       } else {
-        // Hvis ikke i gSelectbedrifter, oppdater local "data"-kilden om ønskelig:
+        // Fallback: oppdater den lokale data-listen (valgfritt)
         const srcIdx = (Array.isArray(data) ? data : []).findIndex(b => getOrgnr(b) === orgnr);
         if (srcIdx >= 0) {
           data[srcIdx] = { ...data[srcIdx], epostadresse: newEmail, telefon: newPhone, hjemmeside: newWeb };
@@ -283,12 +312,156 @@ function renderSelect(data) {
       }
 
       popup.style.display = 'none';
-      // Re-render fra den kilden du ønsker å vise (her utvalg)
       renderSelect(window.gSelectbedrifter || data);
     };
   }
-}
 
+  // --- Massebehandling UI + handlers ---
+  const bulkBar   = document.getElementById('select-bulk-actions');
+  const bulkCount = document.getElementById('select-bulk-count');
+  const btnRemove = document.getElementById('ba-remove');
+  const btnMove   = document.getElementById('ba-move');
+  const btnEnrich = document.getElementById('ba-enrich');
+
+  // Opprett "Send til klar" hvis den ikke finnes
+  let btnReady = document.getElementById('ba-ready');
+  if (!btnReady && bulkBar) {
+    btnReady = document.createElement('button');
+    btnReady.id = 'ba-ready';
+    btnReady.type = 'button';
+    btnReady.textContent = 'Send til klar';
+    Object.assign(btnReady.style, {
+      padding: '6px 10px',
+      borderRadius: '6px',
+      border: '1px solid #0EA5E9',
+      background: 'transparent',
+      color: '#E5E7EB',
+      cursor: 'pointer'
+    });
+    bulkBar.appendChild(btnReady);
+  }
+
+  function getSelectedOrgnrs() {
+    return Array.from(tbody.querySelectorAll('.selectcheckbox'))
+      .filter(cb => cb.checked && !cb.disabled) // ready-rader (disabled) ekskluderes
+      .map(cb => normalizeOrgnr(cb.dataset.orgnr))
+      .filter(Boolean);
+  }
+
+  function updateBulkUI() {
+    const n = getSelectedOrgnrs().length;
+    if (bulkBar)   bulkBar.style.display = n > 0 ? 'flex' : 'none';
+    if (bulkCount) bulkCount.textContent = `${n} valgt`;
+  }
+
+  tbody.querySelectorAll('.selectcheckbox').forEach(cb => {
+    if (!cb.disabled) cb.addEventListener('change', updateBulkUI);
+  });
+  updateBulkUI();
+
+  // Fjern fra utvalg
+  if (btnRemove) {
+    btnRemove.onclick = () => {
+      const orgnrs = getSelectedOrgnrs();
+      if (!orgnrs.length) return;
+      if (!confirm(`Fjerne ${orgnrs.length} bedrift(er) fra utvalget?`)) return;
+
+      window.gSelectbedrifter = (window.gSelectbedrifter || []).filter(
+        b => !orgnrs.includes(normalizeOrgnr(b.organisasjonsnummer))
+      );
+      try { localStorage.setItem('gSelectbedrifter', JSON.stringify(window.gSelectbedrifter)); } catch(e){}
+
+      renderSelect(window.gSelectbedrifter);
+    };
+  }
+
+  // Flytt til annen gruppe
+  if (btnMove) {
+    btnMove.onclick = async () => {
+      const orgnrs = getSelectedOrgnrs();
+      if (!orgnrs.length) return;
+
+      let groupId = null;
+      if (typeof pickGroupViaDialog === 'function') groupId = await pickGroupViaDialog();
+      else groupId = prompt('Lim inn gruppe-ID som selskapene skal flyttes til:');
+      if (!groupId) return;
+
+      (window.gSelectbedrifter || []).forEach(b => {
+        if (orgnrs.includes(normalizeOrgnr(b.organisasjonsnummer))) b.group = String(groupId);
+      });
+      try { localStorage.setItem('gSelectbedrifter', JSON.stringify(window.gSelectbedrifter)); } catch(e){}
+
+      renderSelect(window.gSelectbedrifter);
+    };
+  }
+
+  // Innhent mer data
+  if (btnEnrich) {
+    btnEnrich.onclick = async () => {
+      const orgnrs = getSelectedOrgnrs();
+      if (!orgnrs.length) return;
+      logCompanyOnce(orgnrs[0], "dataFromProff");
+    };
+  }
+
+  // Send til klar
+  if (btnReady) {
+    btnReady.onclick = () => {
+      const orgnrs = getSelectedOrgnrs();
+      if (!orgnrs.length) {
+        alert('Velg minst ett selskap først.');
+        return;
+      }
+
+      // Map eksisterende ready-entries (unik på orgnr)
+      const readyByOrgnr = new Map(
+        (Array.isArray(window.gReadybedrifter) ? window.gReadybedrifter : []).map(
+          it => [normalizeOrgnr(it.organisasjonsnummer), it]
+        )
+      );
+
+      const ok = [];
+      const failed = [];
+
+      for (const org of orgnrs) {
+        const item = byOrgnr.get(org);
+        if (!item) continue;
+
+        const email = getEmail(item);
+        if (isValidEmail(email)) {
+          const updated = { ...item, status: 'klar' };
+          readyByOrgnr.set(org, updated);
+          ok.push(updated);
+        } else {
+          failed.push(item);
+        }
+      }
+
+      // Oppdater global array + lagre hele listen
+      window.gReadybedrifter = Array.from(readyByOrgnr.values());
+      try {
+        localStorage.setItem('gReadybedrifter', JSON.stringify(window.gReadybedrifter));
+      } catch {}
+
+      const okMsg = ok.length ? `${ok.length} selskap er flyttet til "Klar".` : 'Ingen selskap ble flyttet til "Klar".';
+      if (failed.length) {
+        const lines = failed.map(it => `- ${it.navn ?? 'Ukjent navn'} (${val(it.organisasjonsnummer) || 'uten orgnr'})`);
+        alert(
+          `${okMsg}\n\nDisse ble IKKE overført pga. manglende/ugyldig e-post.\n` +
+          `Legg inn gyldig e-post før flytting:\n\n${lines.join('\n')}`
+        );
+      } else {
+        alert(okMsg);
+      }
+
+      // Re-render (nå vil de få class "ready" + disabled checkbox)
+      renderSelect(window.gSelectbedrifter || data);
+    };
+  }
+
+  // Ev. annen teller
+  updateCounter("label-mailer-sendt", (window.gSelectbedrifter || []).length, 1000);
+}
 
 
 
@@ -435,7 +608,6 @@ function updateSelectCounterDark(
   counter.append(totalEl, emailEl, webEl, phoneEl, readyEl, portalEl);
 }
 
-  
-  
+
   
   
