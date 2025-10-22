@@ -496,6 +496,7 @@ function sendEmailToCompany(orgnr) {
 
     //oppdatere status i gReadybedrifter til "sendt"
     company.status = "EpostSendt";
+    updateCounter("label-mailer-sendt", countReadyAndSendtCostumers(), 1000);
 
 
 }
