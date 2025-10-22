@@ -215,7 +215,7 @@ function renderSelect(data) {
       <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
     `;
 
-    // Åpne popup ved klikk (ikke for ready, og ikke når man klikker på checkbox/lenker)
+    
     if (!rowIsReady) {
       tr.style.cursor = 'pointer';
       tr.addEventListener('click', (e) => {
@@ -286,6 +286,9 @@ function renderSelect(data) {
     const cancel  = document.getElementById('edit-cancel');
     const saveBtn = document.getElementById('edit-save');
 
+    //hvis det er fler en 1 checkbox som er huket av skal knappen document.getElementById('ba-enrich'); være skjult
+
+
     emailEl.value = getEmail(item);
     phoneEl.value = getPhone(item);
     webEl.value   = getWeb(item);
@@ -300,15 +303,15 @@ function renderSelect(data) {
       const newWeb   = webEl.value.trim();
 
       // Oppdater i gSelectbedrifter hvis finnes der
-      const idx = (window.gSelectbedrifter || []).findIndex(b => getOrgnr(b) === orgnr);
+      const idx = (gSelectbedrifter || []).findIndex(b => getOrgnr(b) === orgnr);
       if (idx >= 0) {
-        window.gSelectbedrifter[idx] = {
-          ...window.gSelectbedrifter[idx],
+        gSelectbedrifter[idx] = {
+          ...gSelectbedrifter[idx],
           epostadresse: newEmail,
           telefon: newPhone,
           hjemmeside: newWeb
         };
-        try { localStorage.setItem('gSelectbedrifter', JSON.stringify(window.gSelectbedrifter)); } catch {}
+        try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch {}
       } else {
         // Fallback: oppdater den lokale data-listen (valgfritt)
         const srcIdx = (Array.isArray(data) ? data : []).findIndex(b => getOrgnr(b) === orgnr);
@@ -318,7 +321,7 @@ function renderSelect(data) {
       }
 
       popup.style.display = 'none';
-      renderSelect(window.gSelectbedrifter || data);
+      renderSelect(gSelectbedrifter || data);
     };
   }
 
@@ -388,21 +391,17 @@ function renderSelect(data) {
 
   // Innhent mer data
   if (btnEnrich) {
-
-     //hvis n er mer en 1 så deaktiver knappen
-    if (getSelectedOrgnrs().length !== 1){
-      btnEnrich.disabled = true;
-      btnEnrich.onclick = null;
-      btnEnrich.title = "Velg nøyaktig ett selskap for å innhente mer data.";
-    }else{
-      btnEnrich.disabled = false;
-      btnEnrich.title = "Innhent data fra proff.no";
-    btnEnrich.onclick = async () => {
+      btnEnrich.onclick = async () => {
       const orgnrs = getSelectedOrgnrs();
+      //hvis det er flere en 1 orgnr skal det vises en alert som sier "Velg kun ett selskap om gangen for datahenting."
+      if (orgnrs.length > 1) {
+        alert('Velg kun ett selskap om gangen for datahenting.');
+        return;
+      }
       if (!orgnrs.length) return;
       logCompanyOnce(orgnrs[0], "dataFromProff");
     };
-  }
+  
   }
 
   // Send til klar
@@ -416,7 +415,7 @@ function renderSelect(data) {
 
       // Map eksisterende ready-entries (unik på orgnr)
       const readyByOrgnr = new Map(
-        (Array.isArray(window.gReadybedrifter) ? window.gReadybedrifter : []).map(
+        (Array.isArray(gReadybedrifter) ? gReadybedrifter : []).map(
           it => [normalizeOrgnr(it.organisasjonsnummer), it]
         )
       );
@@ -439,9 +438,9 @@ function renderSelect(data) {
       }
 
       // Oppdater global array + lagre hele listen
-      window.gReadybedrifter = Array.from(readyByOrgnr.values());
+      gReadybedrifter = Array.from(readyByOrgnr.values());
       try {
-        localStorage.setItem('gReadybedrifter', JSON.stringify(window.gReadybedrifter));
+        localStorage.setItem('gReadybedrifter', JSON.stringify(gReadybedrifter));
       } catch {}
 
       const okMsg = ok.length ? `${ok.length} selskap er flyttet til "Klar".` : 'Ingen selskap ble flyttet til "Klar".';
@@ -456,12 +455,12 @@ function renderSelect(data) {
       }
 
       // Re-render (nå vil de få class "ready" + disabled checkbox)
-      renderSelect(window.gSelectbedrifter || data);
+      renderSelect(gSelectbedrifter || data);
     };
   }
 
   // Ev. annen teller
-  updateCounter("label-mailer-sendt", (window.gSelectbedrifter || []).length, 1000);
+  updateCounter("label-mailer-sendt", (gSelectbedrifter || []).length, 1000);
 }
 
 function initContactInfoSelectFilter() {
