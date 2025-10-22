@@ -471,7 +471,7 @@ function renderSelect(data) {
   }
 
   // Ev. annen teller
-  updateCounter("label-mailer-sendt", (gSelectbedrifter || []).length, 1000);
+  updateCounter("label-selected-customers", (gSelectbedrifter || []).length, 1000);
 }
 
 function initContactInfoSelectFilter() {

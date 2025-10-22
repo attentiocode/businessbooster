@@ -381,12 +381,6 @@ try {
   if (g2) gSelectbedrifter = JSON.parse(g2);
 } catch(e) {}
 
-// Kjør når siden er ferdig lastet
-window.addEventListener('DOMContentLoaded', () => {
-
-  // oppdater telle-elementet
-  updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
-});
 
 function updateCounter(elementId, newValue, duration = 500, endingValue = "") {
   const el = document.getElementById(elementId);
