@@ -668,12 +668,7 @@ function updateBrregCounterDark(
     }
 }
   
-function initFilterselectors() {
 
-  initContactInfoFilter();
-  initContactStateFilter();
-
-}
 function initContactInfoFilter() {
   let select = document.getElementById('select-contact-info-filter');
 

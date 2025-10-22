@@ -18,6 +18,15 @@ document.getElementById("select-contact-state-filter").addEventListener('change'
   startBrregList(gBrregbedrifter);
 });
 
+
+
+
+
+
+
+
+
+
 //sideknappene rooting
 document.getElementById("dashboardSideButton").addEventListener("click", function() {
     document.getElementById("dashboardTabButton").click();
@@ -434,6 +443,8 @@ function customerResponse(data){
       let customers = convertCustomerJsonStringsToObjects(jsonStrings);
       gCustomers = customers;
       updateCounter("label-companys-in-portal", gCustomers.length, 1000);
+
+   
   
 }
 
@@ -473,3 +484,12 @@ function convertCustomerJsonStringsToObjects(jsonStrings) {
 updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
 
 
+function initFilterselectors() {
+
+  initContactInfoFilter();
+  initContactStateFilter();
+
+  initContactInfoSelectFilter();
+  initContactStateSelectFilter();
+
+}
