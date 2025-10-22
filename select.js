@@ -71,6 +71,34 @@ function renderSelect(data){
   const inPortalSet = new Set((gCustomers || []).map(getOrgnr).filter(Boolean));
   const inUtvalgSet = new Set((gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
 
+  // "Klar" / "Ready" – robust sjekk + valgfri hook
+  const isReady = (it) => {
+    try {
+      if (typeof window.isCompanyReady === 'function') {
+        const res = window.isCompanyReady(it);
+        if (typeof res === 'boolean') return res;
+      }
+    } catch(e) { /* ignorer */ }
+
+    const flags = [
+      it?.klar, it?.isKlar, it?.klar_for_sending, it?.klarForSending,
+      it?.ready, it?.isReady, it?.readyForSend, it?.ready_for_sending
+    ];
+    // Boolean-flagg?
+    if (flags.some(v => v === true)) return true;
+
+    // Strengbaserte
+    const s = low(it?.status ?? it?.state ?? it?.pipeline ?? '');
+    if (s.includes('klar for') || s === 'klar' || s === 'ready') return true;
+
+    const strFlags = flags
+      .filter(v => typeof v === 'string')
+      .map(v => low(v));
+    if (strFlags.some(t => t === 'klar' || t === 'ready' || t.includes('klar for'))) return true;
+
+    return false;
+  };
+
   const passesContactFilter = (item, filterVal) => {
     if (!filterVal) return true;
     const email = hasEmail(item), web = hasWeb(item), phone = hasPhone(item);
@@ -94,6 +122,7 @@ function renderSelect(data){
     const org = getOrgnr(item);
     if (filterVal === 'portal') return inPortalSet.has(org);
     if (filterVal === 'utvalg') return inUtvalgSet.has(org);
+    if (filterVal === 'ready')  return isReady(item);
     return true;
   };
 
@@ -101,16 +130,16 @@ function renderSelect(data){
   const searchEl   = document.getElementById('searchSelect');
   const searchTerm = low(searchEl ? searchEl.value : '');
 
-  const grpSel     = document.getElementById('filterGroupSelectMaster');
-  const rawFilter  = grpSel ? grpSel.value : '';
+  const grpSel      = document.getElementById('filterGroupSelectMaster');
+  const rawFilter   = grpSel ? grpSel.value : '';
   const filterGroup = String(rawFilter || '').trim();
 
-  // NYE selectorer:
-  const infoSel   = document.getElementById('select-contact-info-select-filter');
-  const infoFilter = infoSel ? String(infoSel.value || '') : '';
+  // NYE selectorer (for select-listen):
+  const infoSel     = document.getElementById('select-contact-info-select-filter');
+  const infoFilter  = infoSel ? String(infoSel.value || '') : '';
 
-  const stateSel   = document.getElementById('select-contact-state-select-filter');
-  const stateFilter = stateSel ? String(stateSel.value || '') : ''; // '', 'portal', 'utvalg'
+  const stateSel     = document.getElementById('select-contact-state-select-filter');
+  const stateFilter  = stateSel ? String(stateSel.value || '') : ''; // '', 'portal', 'utvalg', 'ready'
 
   // --- Filtrer ---
   let filteredData = Array.isArray(data) ? data.slice() : [];
@@ -137,12 +166,12 @@ function renderSelect(data){
     });
   }
 
-  // Kontaktfilter (ny)
+  // Kontaktfilter
   if (infoFilter) {
     filteredData = filteredData.filter(b => passesContactFilter(b, infoFilter));
   }
 
-  // Statefilter (ny)
+  // Statefilter
   if (stateFilter) {
     filteredData = filteredData.filter(b => passesStateFilter(b, stateFilter));
   }
@@ -178,7 +207,6 @@ function renderSelect(data){
       <td style="font-size:11px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
       <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
     `;
-
     tbody.appendChild(tr);
   });
 
@@ -207,7 +235,7 @@ function renderSelect(data){
   });
   updateBulkUI();
 
-  // --- Knapp: Fjern fra utvalg ---
+  // Fjern fra utvalg
   if (btnRemove) {
     btnRemove.onclick = () => {
       const orgnrs = getSelectedOrgnrs();
@@ -223,18 +251,15 @@ function renderSelect(data){
     };
   }
 
-  // --- Knapp: Flytt til annen gruppe ---
+  // Flytt til annen gruppe
   if (btnMove) {
     btnMove.onclick = async () => {
       const orgnrs = getSelectedOrgnrs();
       if (!orgnrs.length) return;
 
       let groupId = null;
-      if (typeof pickGroupViaDialog === 'function') {
-        groupId = await pickGroupViaDialog();
-      } else {
-        groupId = prompt('Lim inn gruppe-ID som selskapene skal flyttes til:');
-      }
+      if (typeof pickGroupViaDialog === 'function') groupId = await pickGroupViaDialog();
+      else groupId = prompt('Lim inn gruppe-ID som selskapene skal flyttes til:');
       if (!groupId) return;
 
       (gSelectbedrifter || []).forEach(b => {
@@ -246,7 +271,7 @@ function renderSelect(data){
     };
   }
 
-  // --- Knapp: Innhent mer data ---
+  // Innhent mer data
   if (btnEnrich) {
     btnEnrich.onclick = async () => {
       const orgnrs = getSelectedOrgnrs();
@@ -257,7 +282,6 @@ function renderSelect(data){
 
   updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
 }
-
 
 
 function initContactInfoSelectFilter() {
