@@ -438,10 +438,10 @@ function updateSelectCounterDark(
 
   const totalEl  = makeChip('Totalt', sumTotal, colors.total);
   const portalEl = makeChip('I portal', sumPortal, colors.portal);
-  const readyEl  = makeChip('Klar', sumReady, colors.ready);
   const emailEl  = makeChip('Har e-post', sumEmail, colors.email);
   const webEl    = makeChip('Har nettside', sumWeb, colors.web);
   const phoneEl  = makeChip('Har telefon', sumPhone, colors.phone);
+  const readyEl  = makeChip('Klar', sumReady, colors.ready);
 
   counter.append(totalEl, portalEl, readyEl, emailEl, webEl, phoneEl);
 }
