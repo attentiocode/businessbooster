@@ -19,14 +19,6 @@ document.getElementById("select-contact-state-filter").addEventListener('change'
 });
 
 
-
-
-
-
-
-
-
-
 //sideknappene rooting
 document.getElementById("dashboardSideButton").addEventListener("click", function() {
     document.getElementById("dashboardTabButton").click();
@@ -362,7 +354,7 @@ async function dataFromBrregToSelect() {
 
   //oppdater teller
   // teller til 1500 over 1 sekund
-  updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
+  updateCounter("label-selected-customers", gSelectbedrifter.length, 1000);
 
   // markere/disablende de som er lagt til
   checkboxes.forEach(cb => {
@@ -517,7 +509,7 @@ function convertCustomerJsonStringsToObjects(jsonStrings) {
 }
 
 updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
-
+updateCounter("label-ready-customers", gReadybedrifter.length, 1000);
 
 function initFilterselectors() {
 
