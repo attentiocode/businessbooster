@@ -133,7 +133,7 @@ function dataFromProff(data){
   `;
 
   // Bygg diff mot gSelectbedrifter (hvis selskapet finnes)
-  const selIdx = (window.gSelectbedrifter || []).findIndex(b => normalizeOrgnr(b?.organisasjonsnummer) === org);
+  const selIdx = (gSelectbedrifter || []).findIndex(b => normalizeOrgnr(b?.organisasjonsnummer) === org);
   const diffEl = document.getElementById('proff-enrich-content');
   const actEl  = document.getElementById('proff-enrich-actions');
 
