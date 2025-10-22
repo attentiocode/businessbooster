@@ -494,6 +494,9 @@ function sendEmailToCompany(orgnr) {
     
     sendDataToZapierWebhook(payload, url);
 
+    //oppdatere status i gReadybedrifter til "sendt"
+    company.status = "EpostSendt";
+
 
 }
 

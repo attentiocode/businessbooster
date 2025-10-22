@@ -508,8 +508,17 @@ function convertCustomerJsonStringsToObjects(jsonStrings) {
   });
 }
 
-updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
+updateCounter("label-selected-customers", gSelectbedrifter.length, 1000);
 updateCounter("label-ready-customers", gReadybedrifter.length, 1000);
+updateCounter("label-mailer-sendt", countReadyAndSendtCostumers(), 1000);
+
+
+
+function countReadyAndSendtCostumers(){
+//telle alle cunder som har status som sendt returner antall
+  return  gSelectbedrifter.filter(b => b.status === 'EpostSendt').length;
+  
+}
 
 function initFilterselectors() {
 
