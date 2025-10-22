@@ -173,6 +173,7 @@ function renderReady(data) {
   
       const g = (gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
       const contactHtml = renderContactIcons(b);
+      const checkboxAttrs = '';
     
   
       tr.innerHTML = `
