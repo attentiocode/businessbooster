@@ -328,6 +328,7 @@ function renderSelect(data) {
   const btnRemove = document.getElementById('ba-remove');
   const btnMove   = document.getElementById('ba-move');
   const btnEnrich = document.getElementById('ba-enrich');
+  btnEnrich.title = "Innhent data fra proff.no";
   const btnReady = document.getElementById('ba-ready');
  
 
@@ -387,11 +388,21 @@ function renderSelect(data) {
 
   // Innhent mer data
   if (btnEnrich) {
+
+     //hvis n er mer en 1 så deaktiver knappen
+    if (orgnrs.length !== 1) {
+      btnEnrich.disabled = true;
+      btnEnrich.onclick = null;
+      btnEnrich.title = "Velg nøyaktig ett selskap for å innhente mer data.";
+    }else{
+      btnEnrich.disabled = false;
+      btnEnrich.title = "Innhent data fra proff.no";
     btnEnrich.onclick = async () => {
       const orgnrs = getSelectedOrgnrs();
       if (!orgnrs.length) return;
       logCompanyOnce(orgnrs[0], "dataFromProff");
     };
+  }
   }
 
   // Send til klar
