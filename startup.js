@@ -445,19 +445,19 @@ function customerResponse(data){
       updateCounter("label-companys-in-portal", gCustomers.length, 1000);
 
       //finne ut hvor mange kunder som har kommet inn i portalen de siste 30 dager
-      let newcustomers = getNewCustomersInPortal(30);
+      let newcustomers = getNewCustomersInPortal(customers,30);
       updateCounter("rosent-mailer-sendt", newcustomers, 1000);
 
    
   
 }
-function getNewCustomersInPortal(days){
+function getNewCustomersInPortal(customers,days){
     const now = new Date();
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     let count = 0;
 
     //dato er lagret i feltet creatdate
-    gCustomers.forEach(customer => {
+    customers.forEach(customer => {
         if (customer && customer.creatdate) {
             const creatDate = new Date(customer.creatdate);
             if (creatDate >= cutoff) {
