@@ -90,7 +90,11 @@ function renderSelect(data) {
   // Kontaktfilter (for select-listen)
   const passesContactFilter = (item, filterVal) => {
     if (!filterVal) return true;
-    const email = hasEmail(item), web = hasWeb(item), phone = hasPhone(item);
+
+    const email = hasEmail(item);
+    const web = hasWeb(item);
+    const phone = hasPhone(item);
+
     switch (filterVal) {
       case 'email':        return email;
       case 'web':          return web;
@@ -102,9 +106,11 @@ function renderSelect(data) {
       case 'email-phone':  return email && phone && !web;
       case 'web-phone':    return web && phone && !email;
       case 'all-three':    return email && web && phone;
+      case 'missing-email': return !email; // 👈 nytt filter for “mangler epost”
       default:             return true;
     }
   };
+
 
   // --- Les filtre ---
   const searchEl   = document.getElementById('searchSelect');
@@ -481,6 +487,7 @@ function initContactInfoSelectFilter() {
   const options = [
     { value: '', label: 'Alle kontakter' },
     { value: 'email', label: 'Har e-post 📧' },
+    { value: 'missing-email', label: 'Mangler e-post 🚫📧' },
     { value: 'web', label: 'Har nettside 🌐' },
     { value: 'phone', label: 'Har telefon 📞' },
     { value: 'email-only', label: 'Kun e-post 📧' },
@@ -537,6 +544,7 @@ function initContactStateSelectFilter(){
     {value:'portal',  label:'Er i Portal'},
     {value:'utvalg',  label:'Er i utvalg'},
     {value:'ready',  label:'Er i klar'},
+    
   ].forEach(({value,label})=>{
     const o=document.createElement('option'); o.value=value; o.textContent=label; sel.appendChild(o);
   });
