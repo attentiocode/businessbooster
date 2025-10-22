@@ -32,7 +32,7 @@ document.getElementById("select-contact-state-select-filter").addEventListener('
 });
 
 
-function renderSelect(data){
+function renderSelect(data) {
   const tbody = document.getElementById('rowlistSelect');
   if (!tbody) return;
   tbody.innerHTML = '';
@@ -48,366 +48,143 @@ function renderSelect(data){
   // --- Hjelpere ---
   const val = v => (v == null ? '' : String(v));
   const low = v => val(v).toLowerCase();
-
-  const fmtDate = (d) => {
-    if (!d) return '—';
-    const dt = new Date(d);
-    return isNaN(dt) ? d : dt.toLocaleDateString('no-NO');
-  };
-
+  const fmtDate = (d) => (!d ? '—' : (isNaN(new Date(d)) ? d : new Date(d).toLocaleDateString('no-NO')));
   const fmtAddr = (b) => {
     const a = b?.forretningsadresse || b?.postadresse || {};
     const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
     return [adr, a.postnummer, a.poststed].filter(Boolean).join(', ') || '—';
   };
-
   const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
   const getOrgnr = (obj) =>
     normalizeOrgnr(obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber);
 
   // Kontaktfelt-hjelpere
-  const hasEmail = (it) =>
-    !!String(it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '').trim();
-  const hasWeb = (it) =>
-    !!String(it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ??
-             it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? '').trim();
-  const hasPhone = (it) =>
-    !!String(it?.mobil ?? it?.mobilnummer ?? it?.telefon ?? it?.telefonnummer ??
-             it?.phone ?? it?.tlf ?? '').trim();
-
-  // E-post helpers
   const getEmail = (it) =>
-    String(it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '')
-      .trim()
-      .replace(/^mailto:/i, '');
+    String(it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '').trim().replace(/^mailto:/i, '');
   const isValidEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim());
+  const hasEmail = (it) => !!getEmail(it);
+  const getPhone = (it) =>
+    String(it?.mobil ?? it?.mobilnummer ?? it?.telefon ?? it?.telefonnummer ?? it?.phone ?? it?.tlf ?? '').trim();
+  const hasPhone = (it) => !!getPhone(it);
+  const getWeb = (it) =>
+    String(it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ?? it?.web ?? it?.www ??
+      it?.website ?? it?.nettside ?? '').trim();
+  const hasWeb = (it) => !!getWeb(it);
 
-  // "Klar"/Ready (robust + valgfri hook)
+  // Ready-status
   const isReady = (it) => {
-    try {
-      if (typeof window.isCompanyReady === 'function') {
-        const res = window.isCompanyReady(it);
-        if (typeof res === 'boolean') return res;
-      }
-    } catch (_) {}
-    const flags = [
-      it?.klar, it?.isKlar, it?.klar_for_sending, it?.klarForSending,
-      it?.ready, it?.isReady, it?.readyForSend, it?.ready_for_sending
-    ];
-    if (flags.some(v => v === true)) return true;
-
-    const s = low(it?.status ?? it?.state ?? it?.pipeline ?? '');
-    if (s.includes('klar for') || s === 'klar' || s === 'ready') return true;
-
-    const strFlags = flags.filter(v => typeof v === 'string').map(low);
-    if (strFlags.some(t => t === 'klar' || t === 'ready' || t.includes('klar for'))) return true;
-
-    return false;
+    const s = low(it?.status ?? '');
+    if (s === 'klar' || s === 'ready' || s.includes('klar for')) return true;
+    return (window.gReadybedrifter || []).some(r => getOrgnr(r) === getOrgnr(it));
   };
 
-  // Sett for state-sjekk
-  const inPortalSet  = new Set((gCustomers || []).map(getOrgnr).filter(Boolean));
-  const inUtvalgSet  = new Set((gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
-  const readySet     = new Set((window.gReadybedrifter || []).map(getOrgnr).filter(Boolean)); // <- fra gReadybedrifter
-
-  // Kontaktfilter
-  const passesContactFilter = (item, filterVal) => {
-    if (!filterVal) return true;
-    const email = hasEmail(item), web = hasWeb(item), phone = hasPhone(item);
-    switch (filterVal) {
-      case 'email':        return email;
-      case 'web':          return web;
-      case 'phone':        return phone;
-      case 'email-only':   return email && !web && !phone;
-      case 'web-only':     return web && !email && !phone;
-      case 'phone-only':   return phone && !email && !web;
-      case 'email-web':    return email && web && !phone;
-      case 'email-phone':  return email && phone && !web;
-      case 'web-phone':    return web && phone && !email;
-      case 'all-three':    return email && web && phone;
-      default:             return true;
-    }
-  };
-
-  // Statefilter
-  const passesStateFilter = (item, filterVal) => {
-    if (!filterVal) return true; // '' = alle selskap
-    const org = getOrgnr(item);
-    if (filterVal === 'portal') return inPortalSet.has(org);
-    if (filterVal === 'utvalg') return inUtvalgSet.has(org);
-    if (filterVal === 'ready')  return readySet.has(org) || isReady(item);
-    return true;
-  };
-
-  // --- Les filtre ---
-  const searchEl   = document.getElementById('searchSelect');
-  const searchTerm = low(searchEl ? searchEl.value : '');
-
-  const grpSel      = document.getElementById('filterGroupSelectMaster');
-  const rawFilter   = grpSel ? grpSel.value : '';
-  const filterGroup = String(rawFilter || '').trim();
-
-  // Nye selectorer (for select-listen)
-  const infoSel     = document.getElementById('select-contact-info-select-filter');
-  const infoFilter  = infoSel ? String(infoSel.value || '') : '';
-
-  const stateSel     = document.getElementById('select-contact-state-select-filter');
-  const stateFilter  = stateSel ? String(stateSel.value || '') : ''; // '', 'portal', 'utvalg', 'ready'
-
-  // --- Filtrer ---
-  let filteredData = Array.isArray(data) ? data.slice() : [];
-
-  // Gruppefilter
-  if (!(filterGroup === '' || filterGroup.toLowerCase() === 'all')) {
-    filteredData = filteredData.filter(b => String(b.group ?? '').trim() === filterGroup);
-  }
-
-  // Tekstsøk
-  if (searchTerm) {
-    filteredData = filteredData.filter(b => {
-      const a   = b?.forretningsadresse || b?.postadresse || {};
-      const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
-      const grp = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
-      return (
-        low(b?.navn).includes(searchTerm) ||
-        val(b?.organisasjonsnummer).includes(searchTerm) ||
-        low(adr).includes(searchTerm) ||
-        val(a?.postnummer).includes(searchTerm) ||
-        low(a?.poststed).includes(searchTerm) ||
-        (grp && (low(grp.name).includes(searchTerm) || low(grp.user).includes(searchTerm)))
-      );
-    });
-  }
-
-  // Kontaktfilter
-  if (infoFilter) {
-    filteredData = filteredData.filter(b => passesContactFilter(b, infoFilter));
-  }
-
-  // Statefilter
-  if (stateFilter) {
-    filteredData = filteredData.filter(b => passesStateFilter(b, stateFilter));
-  }
-
-  // --- TELLERE ---
-  let sumTotal   = filteredData.length;
-  let sumPortal  = 0;
-  let sumUtvalg  = 0;
-  let sumReady   = 0;
-  let sumEmail   = 0;
-  let sumWeb     = 0;
-  let sumPhone   = 0;
-
-  // Rask lookup for handlers
-  const byOrgnr = new Map(filteredData.map(it => [getOrgnr(it), it]));
+  const readySet = new Set((window.gReadybedrifter || []).map(getOrgnr));
 
   // --- Render rader ---
-  (filteredData || []).forEach((b, i) => {
+  (Array.isArray(data) ? data : []).forEach((b, i) => {
     const tr = document.createElement('tr');
     tr.classList.add('default-row');
 
-    const g = (gGroupbedrifter || []).find(gr => gr.id == b.group);
-
     const org = getOrgnr(b);
-    const rowIsPortal = inPortalSet.has(org);
-    const rowIsUtvalg = inUtvalgSet.has(org);
-    const rowIsReady  = readySet.has(org) || isReady(b); // <- “ready”-deteksjon
+    const rowIsReady = readySet.has(org) || isReady(b);
 
-    // Tellere
-    if (rowIsPortal) sumPortal++;
-    if (rowIsUtvalg) sumUtvalg++;
-    if (rowIsReady)  sumReady++;
-    if (hasEmail(b)) sumEmail++;
-    if (hasWeb(b))   sumWeb++;
-    if (hasPhone(b)) sumPhone++;
-
-    // Kontakt-HTML (egen funksjon)
-    const contactHtml = renderContactIcons(b);
-
-    // Checkbox-attributter: ready skal være checked + disabled
-    const checkboxAttrs = rowIsReady ? 'checked disabled' : '';
-
-    // Rad-klasse for ready
     if (rowIsReady) tr.classList.add('ready');
 
+    const contactHtml = renderContactIcons(b);
+    const checkboxAttrs = rowIsReady ? 'checked disabled' : '';
+
     tr.innerHTML = `
-      <td style="width:40px;">
-        <input
-          type="checkbox"
-          class="selectcheckbox"
-          data-orgnr="${b.organisasjonsnummer || ''}"
-          id="sel${i}"
-          ${checkboxAttrs}
-        />
-      </td>
-      <td class="mono" style="font-size:10px;">${b.organisasjonsnummer ?? '—'}</td>
+      <td style="width:40px;"><input type="checkbox" class="selectcheckbox" data-orgnr="${org}" ${checkboxAttrs}></td>
+      <td class="mono" style="font-size:10px;">${org}</td>
       <td style="font-weight:700;font-size:12px;">${b.navn ?? '—'}</td>
       <td style="font-size:11px;">${fmtAddr(b)}</td>
-      <td style="font-size:11px;">${g ? g.name : '—'}</td>
-      <td style="font-size:11px;">${g ? (g.user || '—') : '—'}</td>
       <td style="font-size:11px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
       <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
     `;
 
+    // 🔹 Klikk på rad åpner redigerings-popup (kun hvis ikke klar)
+    if (!rowIsReady) {
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', (e) => {
+        if (e.target.tagName === 'INPUT') return; // ikke trigge på checkbox
+        openEditPopup(b, org);
+      });
+    }
+
     tbody.appendChild(tr);
   });
 
-  // --- 6) Oppdater teller (om funksjonen finnes) ---
-  if (typeof updateSelectCounterDark === 'function') {
-    updateSelectCounterDark(
-      sumTotal,    // Totalt
-      sumEmail,    // Har e-post
-      sumWeb,      // Har nettside
-      sumPhone,    // Har telefon
-      sumReady,    // Klar
-      sumPortal    // I portal
-    );
-  } else {
-    const counter = document.getElementById("counterlistutvalg");
-    if (counter) counter.textContent = `${sumTotal} Stk.`;
+  // --- Popup (bygges kun én gang) ---
+  if (!document.getElementById('edit-popup')) {
+    const popup = document.createElement('div');
+    popup.id = 'edit-popup';
+    popup.style.cssText = `
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,0.5); z-index:9999;
+      align-items:center; justify-content:center;
+    `;
+    popup.innerHTML = `
+      <div id="edit-popup-content" style="
+        background:#1f2937; color:#f9fafb;
+        border-radius:8px; padding:20px; width:320px;
+        font-family:system-ui; box-shadow:0 0 20px rgba(0,0,0,0.3);
+      ">
+        <h3 style="font-size:16px;margin-bottom:10px;">Rediger kontaktinfo</h3>
+        <label style="display:block;margin-bottom:6px;">E-post</label>
+        <input id="edit-email" type="text" style="width:100%;margin-bottom:10px;padding:6px;border-radius:4px;border:1px solid #374151;background:#111827;color:#f9fafb;">
+        <label style="display:block;margin-bottom:6px;">Telefon</label>
+        <input id="edit-phone" type="text" style="width:100%;margin-bottom:10px;padding:6px;border-radius:4px;border:1px solid #374151;background:#111827;color:#f9fafb;">
+        <label style="display:block;margin-bottom:6px;">Nettside</label>
+        <input id="edit-web" type="text" style="width:100%;margin-bottom:14px;padding:6px;border-radius:4px;border:1px solid #374151;background:#111827;color:#f9fafb;">
+        <div style="text-align:right;">
+          <button id="edit-cancel" style="margin-right:8px;background:#374151;color:#fff;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;">Avbryt</button>
+          <button id="edit-save" style="background:#2563eb;color:#fff;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;">Lagre</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(popup);
   }
 
-  // --- Massebehandling UI + handlers ---
-  const bulkBar   = document.getElementById('select-bulk-actions');
-  const bulkCount = document.getElementById('select-bulk-count');
-  const btnRemove = document.getElementById('ba-remove');
-  const btnMove   = document.getElementById('ba-move');
-  const btnEnrich = document.getElementById('ba-enrich');
+  // --- Popup funksjon ---
+  function openEditPopup(item, orgnr) {
+    const popup = document.getElementById('edit-popup');
+    const emailEl = document.getElementById('edit-email');
+    const phoneEl = document.getElementById('edit-phone');
+    const webEl   = document.getElementById('edit-web');
+    const cancel  = document.getElementById('edit-cancel');
+    const saveBtn = document.getElementById('edit-save');
 
-  // Opprett "Send til klar" hvis den ikke finnes
-  let btnReady = document.getElementById('ba-ready');
-  if (!btnReady && bulkBar) {
-    btnReady = document.createElement('button');
-    btnReady.id = 'ba-ready';
-    btnReady.type = 'button';
-    btnReady.textContent = 'Send til klar';
-    Object.assign(btnReady.style, {
-      padding: '6px 10px',
-      borderRadius: '6px',
-      border: '1px solid #0EA5E9',
-      background: 'transparent',
-      color: '#E5E7EB',
-      cursor: 'pointer'
-    });
-    bulkBar.appendChild(btnReady);
-  }
+    emailEl.value = getEmail(item);
+    phoneEl.value = getPhone(item);
+    webEl.value   = getWeb(item);
 
-  function getSelectedOrgnrs() {
-    return Array.from(tbody.querySelectorAll('.selectcheckbox'))
-      .filter(cb => cb.checked && !cb.disabled) // ready-rader (disabled) blir automatisk ekskludert
-      .map(cb => normalizeOrgnr(cb.dataset.orgnr))
-      .filter(Boolean);
-  }
+    popup.style.display = 'flex';
 
-  function updateBulkUI() {
-    const n = getSelectedOrgnrs().length;
-    if (bulkBar)   bulkBar.style.display = n > 0 ? 'flex' : 'none';
-    if (bulkCount) bulkCount.textContent = `${n} valgt`;
-  }
+    cancel.onclick = () => popup.style.display = 'none';
 
-  tbody.querySelectorAll('.selectcheckbox').forEach(cb => {
-    if (!cb.disabled) cb.addEventListener('change', updateBulkUI);
-  });
-  updateBulkUI();
+    saveBtn.onclick = () => {
+      const newEmail = emailEl.value.trim();
+      const newPhone = phoneEl.value.trim();
+      const newWeb   = webEl.value.trim();
 
-  // Fjern fra utvalg
-  if (btnRemove) {
-    btnRemove.onclick = () => {
-      const orgnrs = getSelectedOrgnrs();
-      if (!orgnrs.length) return;
-      if (!confirm(`Fjerne ${orgnrs.length} bedrift(er) fra utvalget?`)) return;
+      // Oppdater i gSelectbedrifter
+      const idx = (gSelectbedrifter || []).findIndex(b => getOrgnr(b) === orgnr);
+      if (idx >= 0) {
+        gSelectbedrifter[idx] = {
+          ...gSelectbedrifter[idx],
+          epostadresse: newEmail,
+          telefon: newPhone,
+          hjemmeside: newWeb
+        };
+        localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter));
+      }
 
-      gSelectbedrifter = (gSelectbedrifter || []).filter(
-        b => !orgnrs.includes(normalizeOrgnr(b.organisasjonsnummer))
-      );
-      try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
-
+      popup.style.display = 'none';
       renderSelect(gSelectbedrifter);
     };
   }
-
-  // Flytt til annen gruppe
-  if (btnMove) {
-    btnMove.onclick = async () => {
-      const orgnrs = getSelectedOrgnrs();
-      if (!orgnrs.length) return;
-
-      let groupId = null;
-      if (typeof pickGroupViaDialog === 'function') groupId = await pickGroupViaDialog();
-      else groupId = prompt('Lim inn gruppe-ID som selskapene skal flyttes til:');
-      if (!groupId) return;
-
-      (gSelectbedrifter || []).forEach(b => {
-        if (orgnrs.includes(normalizeOrgnr(b.organisasjonsnummer))) b.group = String(groupId);
-      });
-      try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
-
-      renderSelect(gSelectbedrifter);
-    };
-  }
-
-  // Innhent mer data
-  if (btnEnrich) {
-    btnEnrich.onclick = async () => {
-      const orgnrs = getSelectedOrgnrs();
-      if (!orgnrs.length) return;
-      logCompanyOnce(orgnrs[0], "dataFromProff");
-    };
-  }
-
-  // Send til klar (samme logikk som tidligere—setter status, oppdaterer gReadybedrifter + storage)
-  if (btnReady) {
-    btnReady.onclick = () => {
-      const orgnrs = getSelectedOrgnrs();
-      if (!orgnrs.length) {
-        alert('Velg minst ett selskap først.');
-        return;
-      }
-
-      const readyByOrgnr = new Map((window.gReadybedrifter || []).map(
-        it => [normalizeOrgnr(it.organisasjonsnummer), it]
-      ));
-
-      const ok = [];
-      const failed = [];
-
-      for (const org of orgnrs) {
-        const item = byOrgnr.get(org);
-        if (!item) continue;
-
-        const email = getEmail(item);
-        if (isValidEmail(email)) {
-          const updated = { ...item, status: 'klar' };
-          readyByOrgnr.set(org, updated);
-          ok.push(updated);
-        } else {
-          failed.push(item);
-        }
-      }
-
-      window.gReadybedrifter = Array.from(readyByOrgnr.values());
-      try {
-        localStorage.setItem('gReadybedrifter', JSON.stringify(window.gReadybedrifter));
-      } catch {}
-
-      const okMsg = ok.length ? `${ok.length} selskap er flyttet til "Klar".` : 'Ingen selskap ble flyttet til "Klar".';
-      if (failed.length) {
-        const lines = failed.map(it => `- ${it.navn ?? 'Ukjent navn'} (${val(it.organisasjonsnummer) || 'uten orgnr'})`);
-        alert(
-          `${okMsg}\n\nDisse ble IKKE overført pga. manglende/ugyldig e-post.\n` +
-          `Legg inn gyldig e-post før flytting:\n\n${lines.join('\n')}`
-        );
-      } else {
-        alert(okMsg);
-      }
-
-      // Re-render: nå vil de få class "ready" og checkbox disabled + checked
-      renderSelect(gSelectbedrifter);
-    };
-  }
-
-  updateCounter("label-mailer-sendt", gSelectbedrifter.length, 1000);
 }
+
 
 
 function initContactInfoSelectFilter() {
