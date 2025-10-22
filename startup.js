@@ -444,8 +444,35 @@ function customerResponse(data){
       gCustomers = customers;
       updateCounter("label-companys-in-portal", gCustomers.length, 1000);
 
+      //finne ut hvor mange kunder som har kommet inn i portalen de siste 30 dager
+      let newcustomers = getNewCustomersInPortal(30);
+      updateCounter("rosent-mailer-sendt", newcustomers, 1000);
+
    
   
+}
+function getNewCustomersInPortal(days){
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    let count = 0;
+
+    gCustomers.forEach(customer => {
+        if (customer.invitasjon && Array.isArray(customer.invitasjon)) {
+            customer.invitasjon.forEach(invite => {
+                if (invite.dato) {
+                    const inviteDate = new Date(invite.dato);
+                    if (inviteDate >= cutoff && inviteDate <= now) {
+                        count++;
+                    }
+                }
+            });
+        }
+    });
+
+    //oppdater teller
+    updateCounter("label-new-companys-in-portal", count, 1000);
+
+    return count;
 }
 
 function convertCustomerJsonStringsToObjects(jsonStrings) {
