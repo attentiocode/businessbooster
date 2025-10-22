@@ -328,24 +328,8 @@ function renderSelect(data) {
   const btnRemove = document.getElementById('ba-remove');
   const btnMove   = document.getElementById('ba-move');
   const btnEnrich = document.getElementById('ba-enrich');
-
-  // Opprett "Send til klar" hvis den ikke finnes
-  let btnReady = document.getElementById('ba-ready');
-  if (!btnReady && bulkBar) {
-    btnReady = document.createElement('button');
-    btnReady.id = 'ba-ready';
-    btnReady.type = 'button';
-    btnReady.textContent = 'Send til klar';
-    Object.assign(btnReady.style, {
-      padding: '6px 10px',
-      borderRadius: '6px',
-      border: '1px solid #0EA5E9',
-      background: 'transparent',
-      color: '#E5E7EB',
-      cursor: 'pointer'
-    });
-    bulkBar.appendChild(btnReady);
-  }
+  const btnReady = document.getElementById('ba-ready');
+ 
 
   function getSelectedOrgnrs() {
     return Array.from(tbody.querySelectorAll('.selectcheckbox'))
