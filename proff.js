@@ -73,8 +73,7 @@ function dataFromProff(data){
         <div class="proff-section" style="padding:12px;border:1px solid #374151;border-radius:8px;background:#111827;color:#E5E7EB;">
           <div style="font-weight:600;margin-bottom:6px;">Ingen treff</div>
           <div style="opacity:0.85;">
-            Vi fant ingen data for dette selskapet i Proff akkurat nå. Prøv igjen senere,
-            kontroller organisasjonsnummeret, eller søk manuelt på proff.no.
+            Vi fant ingen data for dette selskapet i Proff akkurat nå. Prøv igjen senere.
           </div>
         </div>
       `;
