@@ -623,7 +623,7 @@ function updateSelectCounterDark(
 
 function isThisCompanyInReadyMode(item) {
   // normaliser til kun siffer (fjerner mellomrom, NO-, etc.)
-  const org = String(getOrgnr(item) ?? "").replace(/\D/g, "");
+  const org = String(item?.organisasjonsnummer ?? item?.orgnr ?? item?.orgNr ?? item?.OrganizationNumber ?? '').replace(/\D/g, '');
   if (!org) return false;
 
   // Støtt både Set og Array uten å bli omfattende
