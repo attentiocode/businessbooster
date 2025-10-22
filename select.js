@@ -31,7 +31,6 @@ document.getElementById("select-contact-state-select-filter").addEventListener('
   renderSelect(gSelectbedrifter);
 });
 
-
 function renderSelect(data) {
   const tbody = document.getElementById('rowlistSelect');
   if (!tbody) return;
@@ -227,13 +226,14 @@ function renderSelect(data) {
   // --- Oppdater teller / chips ---
   if (typeof updateSelectCounterDark === 'function') {
     updateSelectCounterDark(
-      sumTotal,   // Totalt
-      sumPortal,  // I portal
-      sumUtvalg,  // I utvalg
-      sumReady,   // Klar
-      sumEmail,   // Har e-post
-      sumWeb,     // Har nettside
-      sumPhone    // Har telefon
+      sumTotal,
+      sumEmail,
+      sumWeb,
+      sumPhone,
+      sumReady,    
+      sumPortal,  
+      sumUtvalg,  
+
     );
   } else {
     const counter = document.getElementById("counterlistutvalg");
@@ -463,8 +463,6 @@ function renderSelect(data) {
   updateCounter("label-mailer-sendt", (window.gSelectbedrifter || []).length, 1000);
 }
 
-
-
 function initContactInfoSelectFilter() {
   let select = document.getElementById('select-contact-info-select-filter');
 
@@ -553,7 +551,8 @@ function updateSelectCounterDark(
   sumWeb = 0,
   sumPhone = 0,
   sumReady = 0,
-  sumPortal = 0
+  sumPortal = 0,
+  sumUtvalg = 0
 ) 
 
 
