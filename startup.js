@@ -456,22 +456,17 @@ function getNewCustomersInPortal(days){
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     let count = 0;
 
+    //dato er lagret i feltet creatdate
     gCustomers.forEach(customer => {
-        if (customer.invitasjon && Array.isArray(customer.invitasjon)) {
-            customer.invitasjon.forEach(invite => {
-                if (invite.dato) {
-                    const inviteDate = new Date(invite.dato);
-                    if (inviteDate >= cutoff && inviteDate <= now) {
-                        count++;
-                    }
-                }
-            });
+        if (customer && customer.creatdate) {
+            const creatDate = new Date(customer.creatdate);
+            if (creatDate >= cutoff) {
+                count++;
+            }
         }
     });
 
-    //oppdater teller
-    updateCounter("label-new-companys-in-portal", count, 1000);
-
+    
     return count;
 }
 
