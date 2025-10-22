@@ -482,7 +482,7 @@ function renderReady(data) {
         return;
     }
 
-    let emailBody = getEmailBody(company,type);
+    let emailBody = getEmailBody(company,null);
     let subject = `Kort om hvordan Innkjøps-gruppen kan gi dere bedre innkjøpsbetingelser og lavere kostnader.`;
 
     // skal sende til https://hooks.zapier.com/hooks/catch/24993663/uragru1/
