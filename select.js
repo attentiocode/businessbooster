@@ -255,13 +255,12 @@ function renderSelect(data){
   // --- 6) Oppdater teller (om funksjonen finnes) ---
   if (typeof updateSelectCounterDark === 'function') {
     updateSelectCounterDark(
-      sumTotal,   // Totalt
-      sumPortal,  // I portal
-      sumUtvalg,  // I utvalg
-      sumReady,   // Klar
-      sumEmail,   // Har e-post
-      sumWeb,     // Har nettside
-      sumPhone    // Har telefon
+      sumTotal,    // Totalt
+      sumEmail,    // Har e-post
+      sumWeb,      // Har nettside
+      sumPhone,    // Har telefon
+      sumReady,    // Klar
+      sumPortal    // I portal
     );
   } else {
     const counter = document.getElementById("counterlistutvalg");
@@ -411,9 +410,6 @@ function renderSelect(data){
 }
 
 
-
-
-
 function initContactInfoSelectFilter() {
   let select = document.getElementById('select-contact-info-select-filter');
 
@@ -498,12 +494,15 @@ function initContactStateSelectFilter(){
 
 function updateSelectCounterDark(
   sumTotal = 0,
-  sumPortal = 0,
-  sumReady = 0,
   sumEmail = 0,
   sumWeb = 0,
-  sumPhone = 0
-) {
+  sumPhone = 0,
+  sumReady = 0,
+  sumPortal = 0
+) 
+
+
+{
   const counter = document.getElementById('counterlistselect');
   if (!counter) return;
 
@@ -546,13 +545,12 @@ function updateSelectCounterDark(
   };
 
   const totalEl  = makeChip('Totalt', sumTotal, colors.total);
-  const portalEl = makeChip('I portal', sumPortal, colors.portal);
   const emailEl  = makeChip('Har e-post', sumEmail, colors.email);
   const webEl    = makeChip('Har nettside', sumWeb, colors.web);
   const phoneEl  = makeChip('Har telefon', sumPhone, colors.phone);
   const readyEl  = makeChip('Klar', sumReady, colors.ready);
-
-  counter.append(totalEl, portalEl, readyEl, emailEl, webEl, phoneEl);
+  const portalEl = makeChip('I portal', sumPortal, colors.portal);
+  counter.append(totalEl, emailEl, webEl, phoneEl, readyEl, portalEl);
 }
 
   
