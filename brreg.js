@@ -816,65 +816,39 @@ async function fetchAllIndustries(opts = {}) {
 // Global variabel der resultatet lagres
 window.allIndustriCodeandName = [];
 
-/**
- * Hent alle bransjer (SN – SSB KLASS id=6) og lagre i allIndustriCodeandName.
- * Kall denne fra din eksisterende funksjon.
- *
- * @param {Object} [opts]
- * @param {string|Date} [opts.date=new Date()]  - Dato koden skal være gyldig på (YYYY-MM-DD eller Date)
- * @param {"nb"|"nn"|"en"} [opts.language="nb"] - Språk for navn
- * @returns {Promise<Array<{code:string,name:string}>>}
- */
-async function fetchAndStoreIndustries(opts = {}) {
-  const {
-    date = new Date(),
-    language = "nb"
-  } = opts;
-
-  // ISO-dato uten tidsone-drift
-  const isoDate = (typeof date === "string")
+// Henter næringskoder på valgt nivå (default 2 = divisjoner)
+async function fetchIndustriesLevel(level = 2, { date = new Date(), language = "nb" } = {}) {
+  const iso = typeof date === "string"
     ? date
     : new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
-  const params = new URLSearchParams({ date: isoDate, language });
-  const url = `https://data.ssb.no/api/klass/v1/classifications/6/codesAt.json?${params}`;
+  const qs = new URLSearchParams({ date: iso, language, selectLevel: String(level) });
+  const url = `https://data.ssb.no/api/klass/v1/classifications/6/codesAt.json?${qs}`;
 
   const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Klarte ikke hente bransjer (KLASS ${res.status}): ${txt || res.statusText}`);
-  }
+  if (!res.ok) throw new Error(`KLASS ${res.status}: ${await res.text()}`);
 
   const data = await res.json();
-  // Kun kode + navn (enkelt og lett)
-  const items = (data.codes || []).map(c => ({ code: c.code, name: c.name }));
-
-  // Lagre i global variabel
-  window.allIndustriCodeandName = items;
-
-  return items;
-}
-async function fetchIndustriesLevel(level = 2, { date = new Date(), language = "nb" } = {}) {
-  const iso = typeof date === "string" ? date
-    : new Date(date.getTime() - date.getTimezoneOffset()*60000).toISOString().slice(0,10);
-
-  const qs = new URLSearchParams({ date: iso, language, selectLevel: String(level) });
-  const res = await fetch(`https://data.ssb.no/api/klass/v1/classifications/6/codesAt.json?${qs}`, {
-    headers: { Accept: "application/json" }
-  });
-  if (!res.ok) throw new Error(`Feil ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  return (data.codes || []).map(c => ({ code: c.code, name: c.name, level: Number(c.level), parentCode: c.parentCode || null }));
+  return (data.codes || []).map(c => ({
+    code: c.code,
+    name: c.name,
+    level: Number(c.level),
+    parentCode: c.parentCode || null
+  }));
 }
 
-
+// Kall denne fra din eksisterende flyt
 async function getAllallIndustri() {
   try {
-    const divisions = await fetchIndustriesLevel(2); // evt. { date: "2024-12-31", language: "nb" }
-    // Nå ligger dataene i window.allIndustriCodeandName
-    console.log(divisions, "bransjer lastet");
-    // ... gjør det du vil videre
+    const divisions = await fetchIndustriesLevel(2, { language: "nb" }); // evt. date: "2024-12-31"
+    // Lagre kun kode + navn i ønsket array
+    window.allIndustriCodeandName = divisions.map(({ code, name }) => ({ code, name }));
+    console.log(`${allIndustriCodeandName.length} bransjer (divisjoner) lastet`);
+    return window.allIndustriCodeandName;
   } catch (err) {
     console.error("Feil ved henting av bransjer:", err);
+    window.allIndustriCodeandName = [];
+    return [];
   }
 }
+
