@@ -420,33 +420,51 @@ function startBrregList(data) {
   // --- 3) Filtrer data (preset + kontakt + state) ---
   let filteredData = data;
   if (preset) {
-    const { industries = [], dateFrom, dateTo } = preset;
-    const fromDt = dateFrom ? new Date(dateFrom) : null;
-    const toDt   = dateTo   ? new Date(dateTo)   : null;
+    // HJELPERE (legg disse over filteret)
+      const digits = (s) => String(s ?? "").replace(/\D/g, "");   // behold kun siffer
+      const low    = (s) => String(s ?? "").toLowerCase();
 
-    filteredData = data.filter((item) => {
-      let include = true;
-
-      // Bransje
-      if (industries.length > 0) {
-        const industryTxt = ((item.naeringskode1?.beskrivelse ?? '') || (item.bransje ?? '')).toLowerCase();
-        include = industries.some((ind) => industryTxt.includes(String(ind).toLowerCase()));
+      /** Hent valgt kode fra et industry-element:
+       *  - "41 – Oppføring ..."  -> "41"
+       *  - "41.200"              -> "41200"
+       *  - "41"                  -> "41"
+       */
+      function extractSelectedCode(sel) {
+        const first = String(sel).split(/[–-]/)[0].trim(); // alt før '–' eller '-'
+        return digits(first);
       }
 
-      // Dato
-      if (include && (fromDt || toDt)) {
-        const regDateRaw = item.registreringsdatoEnhetsregisteret || item.registreringsdatoForetaksregisteret;
-        if (!regDateRaw) return false;
-        const regDate = new Date(regDateRaw);
-        if (fromDt && regDate < fromDt) include = false;
-        if (toDt && regDate > toDt)     include = false;
-      }
+      // --- FILTER ---
+      filteredData = data.filter((item) => {
+        // Start optimistisk
+        let include = true;
 
-      if (include) include = passesContactFilter(item, contactFilter);
-      if (include) include = passesStateFilter(item, stateFilter);
+        // ===== Bransje =====
+        if (industries && industries.length > 0) {
+          // Normaliser itemets næringskode + navn
+          const itemCodeDigits = digits(item?.naeringskode1?.kode); // "41.000" -> "41000"
+          const itemName = low(item?.naeringskode1?.beskrivelse ?? item?.bransje ?? "");
 
-      return include;
-    });
+          // Trekk i gjennom alle valgte bransjer og se om minst én matcher
+          include = industries.some((ind) => {
+            const selCodeDigits = extractSelectedCode(ind);
+
+            // 1) Kode-prefiks: "41" matcher "41.000", "41.200", etc.
+            if (selCodeDigits && itemCodeDigits.startsWith(selCodeDigits)) return true;
+
+            // 2) Fallback: navnesøk hvis industries inneholder tekst
+            return itemName.includes(low(ind));
+          });
+
+          if (!include) return false; // tidlig stopp for ytelse
+        }
+
+        // ===== (legg evt. andre filter under her) =====
+        // if (...) { ... }
+        // if (!include) return false;
+
+        return include;
+      });
   } else {
     // Ingen preset: filtrer på kontakt/state hvis satt
     filteredData = data.filter((item) =>
