@@ -60,7 +60,7 @@ async function Getlistairtable(baseId,tableId,body,id,public){
 
 }
 
-async function POSTairtable(baseId,tableId,body,id){
+async function POSTairtable(baseId,tableId,body,id,item=null){
     let token = MemberStack.getToken();
     let response = await fetch(`https://expoapi-zeta.vercel.app/api/row?baseId=${baseId}&tableId=${tableId}&token=${token}`, {
        method: "POST",
@@ -73,7 +73,7 @@ async function POSTairtable(baseId,tableId,body,id){
         throw new Error(`HTTP-feil! status: ${response.status} - ${response.statusText}`);
         }else {
         let data = await response.json();
-        apireturn({success: true, data: data, id: id});
+        apireturn({success: true, data: data, id: id, item: item});
       }
 }
     
