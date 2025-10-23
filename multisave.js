@@ -1,6 +1,4 @@
-// Lager et Airtable-kompatibelt data-array basert på orgnr-listen
 function creatSaveCompatibleList(orgnrList) {
-    // Felter slik de finnes i CSV/Airtable (eksakt stavemåte)
     const AIRTABLE_FIELDS = [
       "orgnr",
       "navn",
@@ -23,7 +21,6 @@ function creatSaveCompatibleList(orgnrList) {
       "group",
     ];
   
-    // Vanlige alias vi ser i company-objekt
     const ALIASES = {
       orgnr: ["organisasjonsnummer", "orgnr", "orgNr", "OrganizationNumber"],
       navn: ["navn", "name", "Navn", "Name"],
@@ -34,6 +31,56 @@ function creatSaveCompatibleList(orgnrList) {
   
     const normalizeOrgnr = (val) =>
       String(val || "").replace(/\D/g, "").padStart(9, "0");
+  
+    function primitiveToString(v) {
+      if (v === null || v === undefined) return "";
+      if (typeof v === "boolean") return v ? "true" : "false";
+      if (typeof v === "number") return String(v);
+      return String(v);
+    }
+  
+    // Kritisk: sørger for at verdien blir string eller boolean (aldri array)
+    function sanitizeForAirtable(val) {
+      if (val === null || val === undefined) return undefined;
+  
+      // Behold rene booleans som boolean
+      if (typeof val === "boolean") return val;
+  
+      // Tall -> string
+      if (typeof val === "number") return String(val);
+  
+      // Array -> flat map til primitive strenger, filtrer tomt, uniq, join
+      if (Array.isArray(val)) {
+        const flat = val
+          .flat(Infinity)
+          .map((x) => primitiveToString(x).trim())
+          .filter((x) => x.length > 0);
+        const uniq = [...new Set(flat)];
+        const joined = uniq.join(", ");
+        return joined || undefined;
+      }
+  
+      // Objekt -> prøv å hente primitive verdier og join; fallback JSON
+      if (typeof val === "object") {
+        const prims = Object.values(val)
+          .filter((x) => ["string", "number", "boolean"].includes(typeof x))
+          .map((x) => primitiveToString(x).trim())
+          .filter((x) => x.length > 0);
+  
+        if (prims.length > 0) return prims.join(" ");
+  
+        try {
+          const j = JSON.stringify(val);
+          return j === "{}" ? undefined : j;
+        } catch {
+          return undefined;
+        }
+      }
+  
+      // Strenger
+      const s = String(val).trim();
+      return s.length ? s : undefined;
+    }
   
     function getCaseInsensitive(obj, key) {
       if (!obj || !key) return undefined;
@@ -48,7 +95,6 @@ function creatSaveCompatibleList(orgnrList) {
       return undefined;
     }
   
-    // "a_b_c" -> obj.a?.b?.c (case-insensitivt pr. ledd)
     function getNested(obj, fieldPath) {
       if (!obj || !fieldPath.includes("_")) return undefined;
       const parts = fieldPath.split("_");
@@ -97,7 +143,6 @@ function creatSaveCompatibleList(orgnrList) {
     list.forEach((orgnr) => {
       const normalizedQueryOrgnr = normalizeOrgnr(orgnr);
   
-      // Finn company i gReadybedrifter
       const company = (typeof gReadybedrifter !== "undefined" ? gReadybedrifter : []).find((b) => {
         const bOrgnr = normalizeOrgnr(
           b?.organisasjonsnummer ?? b?.orgnr ?? b?.orgNr ?? b?.OrganizationNumber ?? ""
@@ -110,7 +155,7 @@ function creatSaveCompatibleList(orgnrList) {
       const record = {};
   
       for (const field of AIRTABLE_FIELDS) {
-        let val = getValue(company, field);
+        let raw = getValue(company, field);
   
         if (field === "orgnr") {
           const fromCompany =
@@ -119,26 +164,28 @@ function creatSaveCompatibleList(orgnrList) {
             company?.orgNr ??
             company?.OrganizationNumber ??
             normalizedQueryOrgnr;
-          val = normalizeOrgnr(fromCompany);
+          raw = normalizeOrgnr(fromCompany);
         }
   
-        if (field === "status" && (val == null || val === "")) {
-          val = "Klar for utsendelse";
+        if (field === "status" && (raw == null || raw === "")) {
+          raw = "Klar for utsendelse";
         }
   
-        if (val != null && val !== "") {
+        const val = sanitizeForAirtable(raw);
+  
+        // Kun legg inn felt hvis verdien er string eller boolean og ikke tom
+        if (typeof val === "boolean" || (typeof val === "string" && val.length > 0)) {
           record[field] = val;
         }
       }
   
-      // sikkerhet: alltid med orgnr
-      if (!record.orgnr) record.orgnr = normalizedQueryOrgnr;
+      if (!("orgnr" in record)) record.orgnr = normalizedQueryOrgnr;
   
       data.push(record);
     });
   
     return data;
-}
+  }
   
 
 function startMultisaveProcess(orgnrList) {
