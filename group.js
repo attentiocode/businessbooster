@@ -40,7 +40,7 @@ function openGroupDialog() {
   editIndex = null;
   document.getElementById('dialogTitle').innerText = 'Ny gruppe';
   document.getElementById('groupName').value = '';
-  document.getElementById('groupUser').value = '';
+  document.getElementById('groupUser').value = userName || '';
   document.getElementById('groupDesc').value = '';
   document.getElementById('groupDialog').showModal();
 }

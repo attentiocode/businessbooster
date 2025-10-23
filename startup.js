@@ -4,6 +4,7 @@ let gReadybedrifter = JSON.parse(localStorage.getItem('gReadybedrifter') || '[]'
 let gGroupbedrifter = JSON.parse(localStorage.getItem('gGroupbedrifter') || '[]');
 let gCustomers = [];
 let userid = null;
+let userName = null;
 
 
 document.getElementById("select-field-preset").addEventListener('change', (e) => {
