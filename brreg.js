@@ -469,7 +469,7 @@ function startBrregList(data) {
   }
 
   // Ingen preset: filtrer på kontakt/state hvis satt
-  filteredData = data.filter((item) =>
+  filteredData = filteredData.filter((item) =>
     passesContactFilter(item, contactFilter) && passesStateFilter(item, stateFilter)
   );
   
