@@ -39,7 +39,7 @@ cdnScripts.reduce((promise, script) => {
             userid = member.airtableid;
 
             const lableusername = document.getElementById("lableusername");
-            lableusername.innerText = member.firstName;
+            lableusername.innerText = member.navn || "";
 
             //trykk på knappen mainpagetabbutton
             document.getElementById("mainpagetabbutton").click();
