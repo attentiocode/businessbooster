@@ -854,12 +854,25 @@ async function fetchAndStoreIndustries(opts = {}) {
 
   return items;
 }
+async function fetchIndustriesLevel(level = 2, { date = new Date(), language = "nb" } = {}) {
+  const iso = typeof date === "string" ? date
+    : new Date(date.getTime() - date.getTimezoneOffset()*60000).toISOString().slice(0,10);
+
+  const qs = new URLSearchParams({ date: iso, language, selectLevel: String(level) });
+  const res = await fetch(`https://data.ssb.no/api/klass/v1/classifications/6/codesAt.json?${qs}`, {
+    headers: { Accept: "application/json" }
+  });
+  if (!res.ok) throw new Error(`Feil ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return (data.codes || []).map(c => ({ code: c.code, name: c.name, level: Number(c.level), parentCode: c.parentCode || null }));
+}
+
 
 async function getAllallIndustri() {
   try {
-    await fetchAndStoreIndustries(); // evt. { date: "2024-12-31", language: "nb" }
+    const divisions = await fetchIndustriesLevel(2); // evt. { date: "2024-12-31", language: "nb" }
     // Nå ligger dataene i window.allIndustriCodeandName
-    console.log(allIndustriCodeandName.length, "bransjer lastet");
+    console.log(divisions, "bransjer lastet");
     // ... gjør det du vil videre
   } catch (err) {
     console.error("Feil ved henting av bransjer:", err);
