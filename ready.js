@@ -275,15 +275,15 @@ function renderReady(data) {
         const newWeb   = webEl.value.trim();
   
         // Oppdater i gSelectbedrifter hvis finnes der
-        const idx = (gSelectbedrifter || []).findIndex(b => getOrgnr(b) === orgnr);
+        const idx = (gReadybedrifter || []).findIndex(b => getOrgnr(b) === orgnr);
         if (idx >= 0) {
-          gSelectbedrifter[idx] = {
-            ...gSelectbedrifter[idx],
+            gReadybedrifter[idx] = {
+            ...gReadybedrifter[idx],
             epostadresse: newEmail,
             telefon: newPhone,
             hjemmeside: newWeb
           };
-          try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch {}
+          try { localStorage.setItem('gReadybedrifter', JSON.stringify(gReadybedrifter)); } catch {}
         } else {
           // Fallback: oppdater den lokale data-listen (valgfritt)
           const srcIdx = (Array.isArray(data) ? data : []).findIndex(b => getOrgnr(b) === orgnr);
@@ -293,7 +293,7 @@ function renderReady(data) {
         }
   
         popup.style.display = 'none';
-        renderSelect(gSelectbedrifter || data);
+        renderReady(gReadybedrifter || data);
       };
     }
   
