@@ -161,6 +161,7 @@ function renderReady(data) {
       const org = getOrgnr(b);
       const rowIsPortal = inPortalSet.has(org);
       let rowIsReady  = isReady(b);
+      let isSendt = false;
   
       
   
@@ -190,7 +191,7 @@ function renderReady(data) {
       `;
   
       
-      if (!rowIsReady) {
+      if (!isSendt) {
         tr.style.cursor = 'pointer';
         tr.addEventListener('click', (e) => {
           const t = e.target;
