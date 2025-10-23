@@ -420,6 +420,7 @@ function startBrregList(data) {
   // --- 3) Filtrer data (preset + kontakt + state) ---
   let filteredData = data;
   if (preset) {
+      const industries = Array.isArray(preset.industries) ? preset.industries : [];
     // HJELPERE (legg disse over filteret)
       const digits = (s) => String(s ?? "").replace(/\D/g, "");   // behold kun siffer
       const low    = (s) => String(s ?? "").toLowerCase();
