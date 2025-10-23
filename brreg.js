@@ -882,6 +882,9 @@ async function getAllallIndustri() {
     window.allIndustriCodeandName = divisions.map(({ code, name }) => ({ code, name }));
     console.log(`${allIndustriCodeandName.length} bransjer (divisjoner) lastet`);
 
+    //sorter på navn
+    window.allIndustriCodeandName.sort((a,b) => a.name.localeCompare(b.name));
+    
     // ⬇️ virker nå fordi vi eksponerte den globalt i IIFE
     window.loadIndustriesInselector(window.allIndustriCodeandName);
     return window.allIndustriCodeandName;
