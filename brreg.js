@@ -10,19 +10,65 @@ function startOfWeek(d){
 function endOfWeek(d){
   const s=startOfWeek(d); const e=new Date(s); e.setDate(e.getDate()+6); return e;
 }
+
+
 function rangeFor(period){
-  const now=new Date(); now.setHours(0,0,0,0);
-  let from=now, to=now;
-  if(period==='today'){ from=now; to=now; }
-  else if(period==='this_week'){ from=startOfWeek(now); to=endOfWeek(now); }
-  else if(period==='last_week'){ const s=startOfWeek(now); s.setDate(s.getDate()-7); const e=new Date(s); e.setDate(e.getDate()+6); from=s; to=e; }
-  else if(period==='this_month'){ const s=new Date(now.getFullYear(),now.getMonth(),1); const e=new Date(now.getFullYear(),now.getMonth()+1,0); from=s; to=e; }
-  else if(period==='last_month'){ const s=new Date(now.getFullYear(),now.getMonth()-1,1); const e=new Date(now.getFullYear(),now.getMonth(),0); from=s; to=e; }
-  else if(period==='last_7'){ const s=new Date(now); s.setDate(s.getDate()-6); from=s; to=now; }
-  else if(period==='last_30'){ const s=new Date(now); s.setDate(s.getDate()-29); from=s; to=now; }
-  else { /* custom -> behold inputs */ }
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  let from = new Date(now), to = new Date(now);
+
+  if (period === 'today') {
+    from = now; to = now;
+  } else if (period === 'this_week') {
+    from = startOfWeek(now); to = endOfWeek(now);
+  } else if (period === 'last_week') {
+    const s = startOfWeek(now); s.setDate(s.getDate()-7);
+    const e = new Date(s); e.setDate(e.getDate()+6);
+    from = s; to = e;
+  } else if (period === 'this_month') {
+    from = new Date(now.getFullYear(), now.getMonth(), 1);
+    to   = new Date(now.getFullYear(), now.getMonth()+1, 0);
+  } else if (period === 'last_month') {
+    from = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    to   = new Date(now.getFullYear(), now.getMonth(), 0);
+  } else if (period === 'last_7') {
+    from = new Date(now); from.setDate(now.getDate()-6);
+    to = now;
+  } else if (period === 'last_30') {
+    from = new Date(now); from.setDate(now.getDate()-29);
+    to = now;
+  } else if (period === 'ytd') {
+    from = new Date(now.getFullYear(), 0, 1);
+    to   = now; // hittil i år => til i dag
+  } else if (period === 'this_year') {
+    from = new Date(now.getFullYear(), 0, 1);
+    to   = new Date(now.getFullYear(), 11, 31);
+  } else if (period === 'last_year') {
+    const y = now.getFullYear() - 1;
+    from = new Date(y, 0, 1);
+    to   = new Date(y, 11, 31);
+  } else if (period === 'last_5_years') {
+    const startYear = now.getFullYear() - 4; // inkl. i år
+    from = new Date(startYear, 0, 1);
+    to   = now; // “siste 5 år” t.o.m. i dag
+  } else if (period === 'last_10_years') {
+    const startYear = now.getFullYear() - 9;
+    from = new Date(startYear, 0, 1);
+    to   = now;
+  } else if (period?.startsWith('year:')) {
+    const y = parseInt(period.split(':')[1], 10);
+    if (!isNaN(y)) {
+      from = new Date(y, 0, 1);
+      to   = new Date(y, 11, 31);
+    }
+  } else {
+    // 'none' eller 'custom' → la kallende kode håndtere egne inputfelt
+    return null;
+  }
+
   return { fra: d2str(from), til: d2str(to) };
 }
+
 
 const elPeriod = document.getElementById('brregPeriod');
 const elFrom   = document.getElementById('brregFrom');
@@ -34,10 +80,12 @@ const elStatus = document.getElementById('brregStatus');
 
 // Default: Denne uken
 (function initDefaults(){
+  /*
   const r = rangeFor('this_week');
   elPeriod.value = 'this_week';
   elFrom.value = r.fra; elTo.value = r.til;
   elFrom.disabled = false; elTo.disabled = false;
+  */
 })();
 
 function setDatesDisabled(disabled) {
