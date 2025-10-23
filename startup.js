@@ -299,7 +299,7 @@ function pickGroupViaDialog() {
       if (select.value === '__new__') {
         // Valider og opprett gruppe
         const name = (document.getElementById('ng_name').value || '').trim();
-        const user = (document.getElementById('ng_user').value || '').trim();
+        const user = (userName || document.getElementById('ng_user').value || '').trim();
         const desc = (document.getElementById('ng_desc').value || '').trim();
         if (!name || !user) { alert('Fyll inn Gruppnavn og Brukernavn.'); return; }
         const id = newGroupId();
