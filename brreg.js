@@ -811,7 +811,26 @@ async function fetchAllIndustries(opts = {}) {
     parentCode: c.parentCode || null,
   }));
 }
+// Henter næringskoder fra SSB/KLASS på valgt nivå (level 1=seksjoner, 2=divisjoner)
+async function fetchIndustriesLevel(level = 2, { date = new Date(), language = "nb" } = {}) {
+  const iso = typeof date === "string"
+    ? date
+    : new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
+  const qs = new URLSearchParams({ date: iso, language, selectLevel: String(level) });
+  const url = `https://data.ssb.no/api/klass/v1/classifications/6/codesAt.json?${qs}`;
+
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`KLASS ${res.status}: ${await res.text()}`);
+
+  const data = await res.json();
+  return (data.codes || []).map(c => ({
+    code: c.code,
+    name: c.name,
+    level: Number(c.level),
+    parentCode: c.parentCode || null
+  }));
+}
 
 // Global variabel der resultatet lagres
 window.allIndustriCodeandName = [];
@@ -836,14 +855,15 @@ async function fetchIndustriesLevel(level = 2, { date = new Date(), language = "
     parentCode: c.parentCode || null
   }));
 }
-
-// Kall denne fra din eksisterende flyt
+// Kall denne fra din flyt når du vil fylle selector
 async function getAllallIndustri() {
   try {
-    const divisions = await fetchIndustriesLevel(2, { language: "nb" }); // evt. date: "2024-12-31"
-    // Lagre kun kode + navn i ønsket array
+    const divisions = await fetchIndustriesLevel(2, { language: "nb" }); // evt. {date:"2024-12-31"}
     window.allIndustriCodeandName = divisions.map(({ code, name }) => ({ code, name }));
     console.log(`${allIndustriCodeandName.length} bransjer (divisjoner) lastet`);
+
+    // ⬇️ virker nå fordi vi eksponerte den globalt i IIFE
+    window.loadIndustriesInselector(window.allIndustriCodeandName);
     return window.allIndustriCodeandName;
   } catch (err) {
     console.error("Feil ved henting av bransjer:", err);
@@ -851,4 +871,6 @@ async function getAllallIndustri() {
     return [];
   }
 }
+
+
 

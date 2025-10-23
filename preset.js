@@ -9,6 +9,42 @@
       // 🔔 Send ut signal når presets endres
       window.dispatchEvent(new Event("presetsUpdated"));
     };
+
+    // Fyll bransje-select med "CODE – NAME" som label og CODE som value
+    function loadIndustriesInselector(list) {
+      // Forventet listeformat: [{ code: "01", name: "Jordbruk …" }, ...]
+      const selectEl = document.getElementById("industries");
+      const selectedList = document.getElementById("selectedList");
+      const selectedCount = document.getElementById("selectedCount");
+
+      if (!selectEl) return;
+
+      // Bevar tidligere utvalg (sammenligner på value = code)
+      const prevSelected = new Set(Array.from(selectEl.selectedOptions).map(o => o.value));
+
+      // Tøm og bygg på nytt
+      selectEl.innerHTML = "";
+
+      // Sorter etter kode (naturlig/tekstlig sort funker fint her)
+      const items = Array.isArray(list) ? [...list] : [];
+      items.sort((a, b) => String(a.code).localeCompare(String(b.code), "nb"));
+
+      // Lag options
+      for (const it of items) {
+        const opt = document.createElement("option");
+        opt.value = String(it.code);                          // bare kode i value
+        opt.textContent = `${it.code} – ${it.name}`;          // "kode – navn" i label
+        opt.selected = prevSelected.has(opt.value);           // gjenvelg tidligere
+        selectEl.appendChild(opt);
+      }
+
+      // Fyr "change" for å oppdatere chips og teller
+      selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    // ⬇️ NYTT: gjør tilgjengelig for kode utenfor IIFE
+    window.loadIndustriesInselector = loadIndustriesInselector;
+
   
     function getSelectedValues(selectEl) {
       return Array.from(selectEl.selectedOptions).map(o => o.value);
