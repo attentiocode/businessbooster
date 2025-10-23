@@ -27,7 +27,7 @@
 
       // Sorter etter kode (naturlig/tekstlig sort funker fint her)
       const items = Array.isArray(list) ? [...list] : [];
-      items.sort((a, b) => String(a.code).localeCompare(String(b.code), "nb"));
+      //items.sort((a, b) => String(a.code).localeCompare(String(b.code), "nb"));
 
       // Lag options
       for (const it of items) {
