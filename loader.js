@@ -50,6 +50,10 @@ cdnScripts.reduce((promise, script) => {
             //  
             initFilterselectors();
 
+            //
+            initIndustries();
+
+
         }else{
             console.log("Member is NOT logged in");
             //trykk på knappen logintabbutton

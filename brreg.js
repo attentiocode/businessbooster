@@ -780,4 +780,55 @@ function initContactStateFilter(){
   });
 }
 
+/**
+ * Hent alle bransjer (næringskoder) fra SSB KLASS.
+ * Bruker klassifikasjon 6: "Standard for næringsgruppering (SN)".
+ * @param {Object} [opts]
+ * @param {string|Date} [opts.date=new Date()]  - Hvilken dato kodene skal være gyldige på (YYYY-MM-DD eller Date)
+ * @param {"nb"|"nn"|"en"} [opts.language="nb"] - Språk for navn
+ * @param {number|null} [opts.level=null]       - Begrens til nivå (1..5). Null = alle nivå.
+ * @returns {Promise<Array<{code:string,name:string,level:number,parentCode?:string}>>}
+ */
+export async function fetchAllIndustries(opts = {}) {
+  const {
+    date = new Date(),
+    language = "nb",
+    level = null,
+  } = opts;
 
+  const d = typeof date === "string"
+    ? date
+    : new Date(date.getTime() - date.getTimezoneOffset()*60000) // unngå tz-drift
+        .toISOString().slice(0,10);
+
+  const params = new URLSearchParams({ date: d, language });
+  if (level) params.set("selectLevel", String(level));
+
+  // KLASS-id 6 = Standard for næringsgruppering (SN)
+  const url = `https://data.ssb.no/api/klass/v1/classifications/6/codesAt.json?${params.toString()}`;
+
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) {
+    const txt = await res.text().catch(()=>"");
+    throw new Error(`KLASS-feil ${res.status}: ${txt || res.statusText}`);
+  }
+
+  const data = await res.json(); // { name, classificationId, codes: [...] }
+  // Normaliser utvalgte felt
+  return (data.codes || []).map(c => ({
+    code: c.code,
+    name: c.name,
+    level: Number(c.level),
+    parentCode: c.parentCode || null
+  }));
+}
+
+async function initIndustries() {
+  try {
+    const allNow = await fetchAllIndustries();
+    //loadIndustriesInselector(allNow);  // kjører etter at alt er hentet
+    console.log('Hentet bransjer fra SSB KLASS:', allNow);
+  } catch (err) {
+    console.error('Klarte ikke hente bransjer', err);
+  }
+}
