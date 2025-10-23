@@ -213,7 +213,7 @@ function renderReady(data) {
         sumPortal
       );
     } else {
-      const counter = document.getElementById("counterlistutvalg");
+      const counter = document.getElementById("counterlistready");
       if (counter) counter.textContent = `${sumTotal} Stk.`;
     }
   
@@ -379,11 +379,8 @@ function renderReady(data) {
 
         //start funksjonen startEmailProcess med de valgte orgnr
         startEmailProcess(orgnrs);
-        
         }
-  
-        
-  
+
     }
   
     // Ev. annen teller
