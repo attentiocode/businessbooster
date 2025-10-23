@@ -204,8 +204,8 @@ function renderReady(data) {
     });
   
     // --- Oppdater teller / chips ---
-    if (typeof updateSelectCounterDark === 'function') {
-      updateSelectCounterDark(
+    if (typeof updateReadyCounterDark === 'function') {
+        updateReadyCounterDark(
         sumTotal,
         sumEmail,
         sumWeb,
@@ -400,7 +400,7 @@ function renderReady(data) {
   
   
   {
-    const counter = document.getElementById('counterlistselect');
+    const counter = document.getElementById('counterlistready');
     if (!counter) return;
   
     counter.innerHTML = '';
@@ -671,4 +671,4 @@ function getEmailBody(company, type) {
       { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]
     ));
   }
-  
+
