@@ -51,7 +51,7 @@ cdnScripts.reduce((promise, script) => {
             initFilterselectors();
 
             //
-            initIndustries();
+            getAllallIndustri();
 
 
         }else{

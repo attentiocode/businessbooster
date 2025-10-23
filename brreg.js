@@ -780,55 +780,88 @@ function initContactStateFilter(){
   });
 }
 
-/**
- * Hent alle bransjer (næringskoder) fra SSB KLASS.
- * Bruker klassifikasjon 6: "Standard for næringsgruppering (SN)".
- * @param {Object} [opts]
- * @param {string|Date} [opts.date=new Date()]  - Hvilken dato kodene skal være gyldige på (YYYY-MM-DD eller Date)
- * @param {"nb"|"nn"|"en"} [opts.language="nb"] - Språk for navn
- * @param {number|null} [opts.level=null]       - Begrens til nivå (1..5). Null = alle nivå.
- * @returns {Promise<Array<{code:string,name:string,level:number,parentCode?:string}>>}
- */
-export async function fetchAllIndustries(opts = {}) {
+
+// bransjer.js
+
+// Hent alle næringskoder (SN) fra SSB KLASS
+async function fetchAllIndustries(opts = {}) {
   const {
-    date = new Date(),
-    language = "nb",
-    level = null,
+    date = new Date(),   // "YYYY-MM-DD" eller Date
+    language = "nb",     // "nb" | "nn" | "en"
+    level = null,        // 1..5 eller null for alle nivå
   } = opts;
 
-  const d = typeof date === "string"
+  const isoDate = typeof date === "string"
     ? date
-    : new Date(date.getTime() - date.getTimezoneOffset()*60000) // unngå tz-drift
-        .toISOString().slice(0,10);
+    : new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
-  const params = new URLSearchParams({ date: d, language });
+  const params = new URLSearchParams({ date: isoDate, language });
   if (level) params.set("selectLevel", String(level));
 
-  // KLASS-id 6 = Standard for næringsgruppering (SN)
-  const url = `https://data.ssb.no/api/klass/v1/classifications/6/codesAt.json?${params.toString()}`;
+  // KLASS id=6 → Standard for næringsgruppering (SN)
+  const url = `https://data.ssb.no/api/klass/v1/classifications/6/codesAt.json?${params}`;
+  const res  = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`KLASS ${res.status}: ${await res.text()}`);
 
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) {
-    const txt = await res.text().catch(()=>"");
-    throw new Error(`KLASS-feil ${res.status}: ${txt || res.statusText}`);
-  }
-
-  const data = await res.json(); // { name, classificationId, codes: [...] }
-  // Normaliser utvalgte felt
+  const data = await res.json();
   return (data.codes || []).map(c => ({
     code: c.code,
     name: c.name,
     level: Number(c.level),
-    parentCode: c.parentCode || null
+    parentCode: c.parentCode || null,
   }));
 }
 
-async function initIndustries() {
+
+// Global variabel der resultatet lagres
+window.allIndustriCodeandName = [];
+
+/**
+ * Hent alle bransjer (SN – SSB KLASS id=6) og lagre i allIndustriCodeandName.
+ * Kall denne fra din eksisterende funksjon.
+ *
+ * @param {Object} [opts]
+ * @param {string|Date} [opts.date=new Date()]  - Dato koden skal være gyldig på (YYYY-MM-DD eller Date)
+ * @param {"nb"|"nn"|"en"} [opts.language="nb"] - Språk for navn
+ * @returns {Promise<Array<{code:string,name:string}>>}
+ */
+async function fetchAndStoreIndustries(opts = {}) {
+  const {
+    date = new Date(),
+    language = "nb"
+  } = opts;
+
+  // ISO-dato uten tidsone-drift
+  const isoDate = (typeof date === "string")
+    ? date
+    : new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+  const params = new URLSearchParams({ date: isoDate, language });
+  const url = `https://data.ssb.no/api/klass/v1/classifications/6/codesAt.json?${params}`;
+
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Klarte ikke hente bransjer (KLASS ${res.status}): ${txt || res.statusText}`);
+  }
+
+  const data = await res.json();
+  // Kun kode + navn (enkelt og lett)
+  const items = (data.codes || []).map(c => ({ code: c.code, name: c.name }));
+
+  // Lagre i global variabel
+  window.allIndustriCodeandName = items;
+
+  return items;
+}
+
+async function getAllallIndustri() {
   try {
-    const allNow = await fetchAllIndustries();
-    //loadIndustriesInselector(allNow);  // kjører etter at alt er hentet
-    console.log('Hentet bransjer fra SSB KLASS:', allNow);
+    await fetchAndStoreIndustries(); // evt. { date: "2024-12-31", language: "nb" }
+    // Nå ligger dataene i window.allIndustriCodeandName
+    console.log(allIndustriCodeandName.length, "bransjer lastet");
+    // ... gjør det du vil videre
   } catch (err) {
-    console.error('Klarte ikke hente bransjer', err);
+    console.error("Feil ved henting av bransjer:", err);
   }
 }
