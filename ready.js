@@ -445,7 +445,6 @@ function renderReady(data) {
     const emailEl  = makeChip('Har e-post', sumEmail, colors.email);
     const webEl    = makeChip('Har nettside', sumWeb, colors.web);
     const phoneEl  = makeChip('Har telefon', sumPhone, colors.phone);
-    const readyEl  = makeChip('Klar', sumReady, colors.ready);
     const portalEl = makeChip('I portal', sumPortal, colors.portal);
     counter.append(totalEl, emailEl, webEl, phoneEl, portalEl);
   }
