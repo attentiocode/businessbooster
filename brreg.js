@@ -466,12 +466,13 @@ function startBrregList(data) {
 
         return include;
       });
-  } else {
-    // Ingen preset: filtrer på kontakt/state hvis satt
-    filteredData = data.filter((item) =>
-      passesContactFilter(item, contactFilter) && passesStateFilter(item, stateFilter)
-    );
   }
+
+  // Ingen preset: filtrer på kontakt/state hvis satt
+  filteredData = data.filter((item) =>
+    passesContactFilter(item, contactFilter) && passesStateFilter(item, stateFilter)
+  );
+  
 
   // --- 4) Sortering ---
   filteredData.sort((a, b) => {
