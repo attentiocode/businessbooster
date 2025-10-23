@@ -32,7 +32,7 @@
       // Lag options
       for (const it of items) {
         const opt = document.createElement("option");
-        opt.value = String(it.code);                          // bare kode i value
+        opt.value = `${it.code} – ${it.name}`;                 // kode – navn i value
         opt.textContent = `${it.code} – ${it.name}`;          // "kode – navn" i label
         opt.selected = prevSelected.has(opt.value);           // gjenvelg tidligere
         selectEl.appendChild(opt);
