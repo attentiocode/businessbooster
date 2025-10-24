@@ -276,16 +276,19 @@ function maketimerunnerObjects(companyes) {
         for (var i = 0; i < steppCount; i++) {
 
             let daystepp = email_series['stepp' + (i + 1)];
+            //må også legge til dato og tid for når eposten skal sendes
             const nextSteppDate = new Date();
-            nextSteppDate.setDate(nextSteppDate.getDate() + daystepp);
+            nextSteppDate.setDate(nextSteppDate.getDate() + parseInt(daystepp || 0));
+
+
 
             let emailBody = getEmailBody(company,null);
             let subject = eval('subject' + (i + 1));
 
 
             let timerunnerObject = {
-                when: nextSteppDate.toISOString().split('T')[0],
-                externalId: company.organisasjonsnummer,
+                when: nextSteppDate.toISOString(),
+                externalId: company.orgnr || '',
                 hookUrl: "https://hooks.zapier.com/hooks/catch/24993663/uragru1/",
                 method: "POST",
                 payload: {
