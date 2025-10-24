@@ -17,7 +17,7 @@ var emailbody4 = "";
 var emailbody5 = "";
 
 
-function sendEmailToCompany(company) {
+function sendEmailToCompany(company, totalRows, uploadedRows) {
    
    if (!company || !company.orgnr) {
         console.error("Invalid company data:", company);
@@ -39,15 +39,11 @@ function sendEmailToCompany(company) {
 
     //sende til zapier
     let url = "https://hooks.zapier.com/hooks/catch/24993663/uragru1/"
-    
-    //sendDataToZapierWebhook(payload, url);
-
-    //er det er epostforløp som ligger forand så lag alle fremtidige stepp
-    makeNextEmailStepForCompany(company);
-
-    //oppdatere status i gReadybedrifter til "sendt"
-    company.status = "EpostSendt";
+    sendDataToZapierWebhook(payload, url);
     updateCounter("label-mailer-sendt", countReadyAndSendtCostumers(), 1000);
+
+    //oppdater status i UI
+    statusProcessing("Mailer sendt",totalRows, uploadedRows)
 
 
 }

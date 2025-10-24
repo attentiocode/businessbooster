@@ -219,7 +219,7 @@ function startMultisaveProcess(orgnrList) {
     const data = creatSaveCompatibleList(orgnrList);
   
     // Post til Airtable
-    multisaveAirtable(data, baseid, tabelid, "postToBoosterDB","Booster DB ");
+    multisaveAirtable(data, baseid, tabelid, "postToBoosterDB","Booster lagring ");
 }
   
 function multiReturnfromAirtable(payload) {
@@ -230,14 +230,21 @@ function multiReturnfromAirtable(payload) {
     //opprette hele epostforløpet i timerunner db
     makeNextSteppInTimeRunner(cleanerData);
 
-/*
+    
+
+
     //sende eposter til hver bedrift basert på responsen fra Airtable med en loop og liten tidsforsinkelse på 100ms mellom hver
     cleanerData.forEach((company, index) => {
+
+         //oppdatere status i gReadybedrifter til "sendt"
+        company.status = "EpostSendt";
+
+        //tidsforsink mailutsending
         setTimeout(() => {
-            sendEmailToCompany(company);
+            sendEmailToCompany(company, cleanerData.length, index + 1);
         }, index * 100); // 100ms mellom hver
     });
-*/
+
 }
 
 function makeNextSteppInTimeRunner(companyes){
@@ -248,7 +255,7 @@ function makeNextSteppInTimeRunner(companyes){
     //starte multisav i timrunnerdb
     const baseid = "appISWcEA5QICIlzP";
     const tabelid = "tblldBMExI1U4yMNI";
-    multisaveAirtable(timerunnerObjects, baseid, tabelid, "postToTimeRunnerDB","Timerunner epostforløp ");
+    multisaveAirtable(timerunnerObjects, baseid, tabelid, "postToTimeRunnerDB","Epostforløp lagring ");
 
 }
 

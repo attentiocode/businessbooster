@@ -376,11 +376,12 @@ function renderReady(data) {
         });
 
         try { localStorage.setItem('gReadybedrifter', JSON.stringify(gReadybedrifter)); } catch(e){}
-        renderReady(gReadybedrifter);
+        
 
         //start massesendeprosess og lagring i db
         startMultisaveProcess(orgnrs);
-        
+        renderReady(gReadybedrifter);
+
         }
 
     }
