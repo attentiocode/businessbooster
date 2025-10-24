@@ -266,7 +266,8 @@ function makeNextSteppInTimeRunner(companyes){
         status: onobject.status,
         external_databaseId: onobject.external_databaseId,
         external_tableId: onobject.external_tableId,
-        external_rawId: onobject.external_rawId
+        external_rawId: onobject.external_rawId,
+        payload: JSON.stringify(onobject.payload)
     };
 
     
