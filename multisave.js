@@ -276,3 +276,17 @@ async function POSTairtableMulti(baseId, tableId, body) {
         }
     });
 }
+
+function statusProcessing(totalRows, uploadedRows) {
+    const statusElement = document.getElementById("multisave-status");
+    console.log("Status oppdatering:", { totalRows, uploadedRows });
+    /*
+    if (!statusElement) return;
+
+    if (uploadedRows >= totalRows) {
+        statusElement.innerText = `Ferdig! Lastet opp ${uploadedRows} av ${totalRows} rader.`;
+    } else {
+        statusElement.innerText = `Laster opp... ${uploadedRows} av ${totalRows} rader lastet opp.`;
+    }
+        */
+}
