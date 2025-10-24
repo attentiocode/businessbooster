@@ -28,7 +28,7 @@ function sendEmailToCompany(company) {
     let subject = subject1;
 
     const payload = {
-        orgnr: orgnr,
+        orgnr: company.orgnr || '',
         navn: company.navn || '',
         epost: company.epostadresse || '',
         telefon: company.telefon || '',
@@ -40,7 +40,7 @@ function sendEmailToCompany(company) {
     //sende til zapier
     let url = "https://hooks.zapier.com/hooks/catch/24993663/uragru1/"
     
-    sendDataToZapierWebhook(payload, url);
+    //sendDataToZapierWebhook(payload, url);
 
     //er det er epostforløp som ligger forand så lag alle fremtidige stepp
     makeNextEmailStepForCompany(company);
