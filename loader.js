@@ -19,8 +19,9 @@ const cdnScripts = [
     "https://attentiocode.github.io/businessbooster/brreg.js",
     "https://attentiocode.github.io/businessbooster/ready.js",
     "https://attentiocode.github.io/businessbooster/emailloop.js",
-    "https://attentiocode.github.io/businessbooster/multisave.js"
-    
+    "https://attentiocode.github.io/businessbooster/multisave.js",
+    "https://attentiocode.github.io/businessbooster/emailsending.js"
+
 ];
 
 // Laste inn alle skriptene sekvensielt
