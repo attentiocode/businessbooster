@@ -4,8 +4,20 @@ let stepp3 = 60;
 let stepp4 = 90;
 let stepp5 = 120;
 
+let subject1 = "Slik kan Innkjøps-gruppen hjelpe dere med bedre innkjøpsbetingelser";
+let subject2 = "Har dere vurdert Innkjøps-gruppen for bedre innkjøpsbetingelser?";
+let subject3 = "Få bedre innkjøpsbetingelser med Innkjøps-gruppen";
+let subject4 = "Siste sjanse til å forbedre innkjøpsbetingelsene deres";
+let subject5 = "Avsluttende tilbud: Forbedre innkjøpsbetingelsene deres i dag";
 
-function sendEmailToCompany(company,stepp) {
+let emailbody1 = "";
+let emailbody2 = "";
+let emailbody3 = "";
+let emailbody4 = "";
+let emailbody5 = "";
+
+
+function sendEmailToCompany(company) {
    
    if (!company || !company.organisasjonsnummer) {
         console.error("Invalid company data:", company);

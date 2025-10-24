@@ -230,7 +230,7 @@ function multiReturnfromAirtable(payload) {
     //sende eposter til hver bedrift basert på responsen fra Airtable med en loop og liten tidsforsinkelse på 100ms mellom hver
     cleanerData.forEach((company, index) => {
         setTimeout(() => {
-            sendEmailToCompany(company,1);
+            sendEmailToCompany(company);
         }, index * 100); // 100ms mellom hver
     });
 
