@@ -219,7 +219,7 @@ function startMultisaveProcess(orgnrList) {
     const data = creatSaveCompatibleList(orgnrList);
   
     // Post til Airtable
-    multisaveAirtable(data, baseid, tabelid);
+    multisaveAirtable(data, baseid, tabelid, "postToBoosterDB");
 }
   
 function multiReturnfromAirtable(payload) {
@@ -227,12 +227,78 @@ function multiReturnfromAirtable(payload) {
     let cleanerData = cleanReturnfromAirtable(payload)
     console.log("Multisave fullført med respons:", cleanerData);
 
+    //opprette hele epostforløpet i timerunner db
+    makeNextSteppInTimeRunner(cleanerData);
+
+/*
     //sende eposter til hver bedrift basert på responsen fra Airtable med en loop og liten tidsforsinkelse på 100ms mellom hver
     cleanerData.forEach((company, index) => {
         setTimeout(() => {
             sendEmailToCompany(company);
         }, index * 100); // 100ms mellom hver
     });
+*/
+}
+
+function makeNextSteppInTimeRunner(companyes){
+
+    let timerunnerObjects = maketimerunnerObjects(companyes);
+    console.log("Timerunner objekter som skal lagres:", timerunnerObjects);
+
+    //starte multisav i timrunnerdb
+
+
+}
+
+function maketimerunnerObjects(companyes) {
+    
+    const baseid = "appEUYGzpBtxB0fFe";
+    const tabelid = "tblpbfAQUiinho1LD";
+    let timerunnerObjects = [];
+
+    companyes.forEach(company => {
+
+        let email_series = company.email_series ? JSON.parse(company.email_series) : {};
+        let steppCount = Object.keys(email_series).filter(key => key.startsWith('stepp')).length;
+        for (var i = 0; i < steppCount; i++) {
+
+            let daystepp = email_series['stepp' + (i + 1)];
+            const nextSteppDate = new Date();
+            nextSteppDate.setDate(nextSteppDate.getDate() + daystepp);
+
+            let emailBody = getEmailBody(company,null);
+            let subject = eval('subject' + (i + 1));
+
+
+            let timerunnerObject = {
+                when: nextSteppDate.toISOString().split('T')[0],
+                externalId: company.organisasjonsnummer,
+                hookUrl: "https://hooks.zapier.com/hooks/catch/24993663/uragru1/",
+                method: "POST",
+                payload: {
+                    orgnr: company.orgnr || '',
+                    navn: company.navn || '',
+                    epost: company.epostadresse || '',
+                    telefon: company.telefon || '',
+                    hjemmeside: company.hjemmeside || '',
+                    emailBody: emailBody,
+                    subject: subject
+                },
+                title: `Epost steg ${i + 1} til ${company.navn || company.organisasjonsnummer}`,
+                description: `Automatisk epost steg ${i + 1}}`,
+                customerId:company.orgnr,
+                status: "pending",
+                external_databaseId: baseid,
+                external_tableId: tabelid,
+                external_rawId: company.id || ''
+            };
+            timerunnerObjects.push(timerunnerObject);
+
+        }
+
+    });
+
+    return timerunnerObjects;
 
 }
 
@@ -256,7 +322,7 @@ function cleanReturnfromAirtable(payload) {
     return rows; // <- ren array med rad-objekter
 }
 
-async function multisaveAirtable(data, baseid, tabelid) {
+async function multisaveAirtable(data, baseid, tabelid, returid) {
     const batchSize = 10;
     const totalRows = data.length;
     let uploadedRows = 0;
@@ -288,12 +354,20 @@ async function multisaveAirtable(data, baseid, tabelid) {
     try {
         statusProcessing(totalRows, uploadedRows);
         await processBatches();
+
+        if(returid === "postToBoosterDB"){
         multiReturnfromAirtable({ success: true, data: allResponses});
+        }else if(returid === "postToTimeRunnerDB"){
+        
+        }
+
+
     } catch (error) {
         console.error("Prosesseringen ble stoppet på grunn av en feil:", error);
         statusProcessing(totalRows, uploadedRows);
     }
 }
+
 
 async function POSTairtableMulti(baseId, tableId, body) {
     return new Promise(async (resolve, reject) => {
@@ -330,6 +404,7 @@ async function POSTairtableMulti(baseId, tableId, body) {
         }
     });
 }
+
 
 function statusProcessing(totalRows, uploadedRows) {
     const statusElement = document.getElementById("ready-bulk-status");
