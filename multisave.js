@@ -19,6 +19,7 @@ function creatSaveCompatibleList(orgnrList) {
       "aktivitet",
       "status",
       "group",
+      "email_series", // <- vi fyller denne under
     ];
   
     const ALIASES = {
@@ -39,17 +40,31 @@ function creatSaveCompatibleList(orgnrList) {
       return String(v);
     }
   
+    // --- NYTT: bygg JSON-streng for email_series fra globale stepp1..5 ---
+    function buildEmailSeriesJSON() {
+      const obj = {};
+      for (let i = 1; i <= 5; i++) {
+        const key = "stepp" + i;
+        const val = globalThis?.[key]; // funker i både browser og node
+        if (val !== undefined && val !== null && String(val).trim() !== "") {
+          obj[key] = val;
+        }
+      }
+      // returner undefined hvis vi ikke har noe å lagre
+      if (Object.keys(obj).length === 0) return undefined;
+      try {
+        return JSON.stringify(obj);
+      } catch {
+        return undefined;
+      }
+    }
+    // ---------------------------------------------------------------
+  
     // Kritisk: sørger for at verdien blir string eller boolean (aldri array)
     function sanitizeForAirtable(val) {
       if (val === null || val === undefined) return undefined;
-  
-      // Behold rene booleans som boolean
       if (typeof val === "boolean") return val;
-  
-      // Tall -> string
       if (typeof val === "number") return String(val);
-  
-      // Array -> flat map til primitive strenger, filtrer tomt, uniq, join
       if (Array.isArray(val)) {
         const flat = val
           .flat(Infinity)
@@ -59,16 +74,12 @@ function creatSaveCompatibleList(orgnrList) {
         const joined = uniq.join(", ");
         return joined || undefined;
       }
-  
-      // Objekt -> prøv å hente primitive verdier og join; fallback JSON
       if (typeof val === "object") {
         const prims = Object.values(val)
           .filter((x) => ["string", "number", "boolean"].includes(typeof x))
           .map((x) => primitiveToString(x).trim())
           .filter((x) => x.length > 0);
-  
         if (prims.length > 0) return prims.join(" ");
-  
         try {
           const j = JSON.stringify(val);
           return j === "{}" ? undefined : j;
@@ -76,8 +87,6 @@ function creatSaveCompatibleList(orgnrList) {
           return undefined;
         }
       }
-  
-      // Strenger
       const s = String(val).trim();
       return s.length ? s : undefined;
     }
@@ -101,12 +110,13 @@ function creatSaveCompatibleList(orgnrList) {
       let cur = obj;
       for (const part of parts) {
         if (!cur) return undefined;
-  
         if (cur[part] != null && cur[part] !== "") {
           cur = cur[part];
           continue;
         }
-        const key = Object.keys(cur).find((k) => k.toLowerCase() === part.toLowerCase());
+        const key = Object.keys(cur).find(
+          (k) => k.toLowerCase() === part.toLowerCase()
+        );
         if (key && cur[key] != null && cur[key] !== "") cur = cur[key];
         else return undefined;
       }
@@ -140,15 +150,25 @@ function creatSaveCompatibleList(orgnrList) {
     const data = [];
     const list = Array.isArray(orgnrList) ? orgnrList : [];
   
+    // Forberedt én gang per kall
+    const emailSeriesJson = buildEmailSeriesJSON();
+  
     list.forEach((orgnr) => {
       const normalizedQueryOrgnr = normalizeOrgnr(orgnr);
   
-      const company = (typeof gReadybedrifter !== "undefined" ? gReadybedrifter : []).find((b) => {
-        const bOrgnr = normalizeOrgnr(
-          b?.organisasjonsnummer ?? b?.orgnr ?? b?.orgNr ?? b?.OrganizationNumber ?? ""
+      const company =
+        (typeof gReadybedrifter !== "undefined" ? gReadybedrifter : []).find(
+          (b) => {
+            const bOrgnr = normalizeOrgnr(
+              b?.organisasjonsnummer ??
+                b?.orgnr ??
+                b?.orgNr ??
+                b?.OrganizationNumber ??
+                ""
+            );
+            return bOrgnr === normalizedQueryOrgnr;
+          }
         );
-        return bOrgnr === normalizedQueryOrgnr;
-      });
   
       if (!company) return;
   
@@ -171,9 +191,14 @@ function creatSaveCompatibleList(orgnrList) {
           raw = "Klar for utsendelse";
         }
   
+        // --- NYTT: tving email_series til å bruke den ferdige JSON-strengen ---
+        if (field === "email_series") {
+          raw = emailSeriesJson; // kan være undefined hvis ingen stepp* er satt
+        }
+        // ----------------------------------------------------------------------
+  
         const val = sanitizeForAirtable(raw);
   
-        // Kun legg inn felt hvis verdien er string eller boolean og ikke tom
         if (typeof val === "boolean" || (typeof val === "string" && val.length > 0)) {
           record[field] = val;
         }
@@ -201,6 +226,13 @@ function multiReturnfromAirtable(payload) {
     
     let cleanerData = cleanReturnfromAirtable(payload)
     console.log("Multisave fullført med respons:", cleanerData);
+
+    //sende eposter til hver bedrift basert på responsen fra Airtable med en loop og liten tidsforsinkelse på 100ms mellom hver
+    cleanerData.forEach((company, index) => {
+        setTimeout(() => {
+            sendEmailToCompany(company,1);
+        }, index * 100); // 100ms mellom hver
+    });
 
 }
 

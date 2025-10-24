@@ -1,19 +1,14 @@
+let stepp1 = 14; //dager til neste steg
+let stepp2 = 30;
+let stepp3 = 60;
+let stepp4 = 90;
+let stepp5 = 120;
 
 
-
-
-
-
-
-function sendEmailToCompany(orgnr) {
+function sendEmailToCompany(company,stepp) {
    
-    const company = (gReadybedrifter || []).find(b => {
-        const bOrgnr = String(b.organisasjonsnummer || b.orgnr || b.orgNr || b.OrganizationNumber || '').replace(/\D/g, '').padStart(9, '0');
-        return bOrgnr === orgnr;
-    });
-
-    if (!company) {
-        console.error(`Fant ikke bedrift med org.nr: ${orgnr}`);
+   if (!company || !company.organisasjonsnummer) {
+        console.error("Invalid company data:", company);
         return;
     }
 
@@ -34,6 +29,10 @@ function sendEmailToCompany(orgnr) {
     let url = "https://hooks.zapier.com/hooks/catch/24993663/uragru1/"
     
     sendDataToZapierWebhook(payload, url);
+
+    //er det er epostforløp som ligger forand så lag alle fremtidige stepp
+    let daystepp = stepp1 || 14;
+    makeNextEmailStepForCompany(company,daystepp);
 
     //oppdatere status i gReadybedrifter til "sendt"
     company.status = "EpostSendt";
@@ -199,5 +198,27 @@ function escapeHtml(s) {
     return String(s || '').replace(/[&<>"']/g, m => (
       { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]
     ));
+}
+
+function makeNextEmailStepForCompany(company,daystepp) {
+    if (!company) return;
+
+    const nextSteppDate = new Date();
+    nextSteppDate.setDate(nextSteppDate.getDate() + daystepp);
+
+    const nextEmailStep = {
+        organisasjonsnummer: company.organisasjonsnummer,
+        navn: company.navn || '',
+        epostadresse: company.epostadresse || '',
+        telefon: company.telefon || '',
+        hjemmeside: company.hjemmeside || '',
+        status: "KlarForEpost",
+        nesteEpostDato: nextSteppDate.toISOString().split('T')[0],
+        steggNr: (company.steggNr || 1) + 1
+    };
+
+    gReadybedrifter.push(nextEmailStep);
+    updateCounter("label-mailer-klare", countReadyAndSendtCostumers(), 1000);
+ 
 }
 
