@@ -248,7 +248,13 @@ function makeNextSteppInTimeRunner(companyes){
     //starte multisav i timrunnerdb
     const baseid = "appISWcEA5QICIlzP";
     const tabelid = "tblldBMExI1U4yMNI";
-    multisaveAirtable(data, baseid, tabelid, "postToTimeRunnerDB","Timerunner epostforløp ");
+    //multisaveAirtable(data, baseid, tabelid, "postToTimeRunnerDB","Timerunner epostforløp ");
+
+    //som test kjører vi bare en linje fo å sjekke om det funker
+    let onobject = JSON.stringify(timerunnerObjects[0]);
+
+    
+    POSTairtable(baseid,tabelid,onobject,id,item=null)
 
 }
 
