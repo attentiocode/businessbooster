@@ -219,7 +219,7 @@ function startMultisaveProcess(orgnrList) {
     const data = creatSaveCompatibleList(orgnrList);
   
     // Post til Airtable
-    multisaveAirtable(data, baseid, tabelid, "postToBoosterDB");
+    multisaveAirtable(data, baseid, tabelid, "postToBoosterDB","Booster DB ");
 }
   
 function multiReturnfromAirtable(payload) {
@@ -248,7 +248,7 @@ function makeNextSteppInTimeRunner(companyes){
     //starte multisav i timrunnerdb
     const baseid = "appISWcEA5QICIlzP";
     const tabelid = "tblldBMExI1U4yMNI";
-    multisaveAirtable(data, baseid, tabelid, "postToTimeRunnerDB");
+    multisaveAirtable(data, baseid, tabelid, "postToTimeRunnerDB","Timerunner epostforløp ");
 
 }
 
@@ -329,7 +329,7 @@ function cleanReturnfromAirtable(payload) {
     return rows; // <- ren array med rad-objekter
 }
 
-async function multisaveAirtable(data, baseid, tabelid, returid) {
+async function multisaveAirtable(data, baseid, tabelid, returid,lable) {
     const batchSize = 10;
     const totalRows = data.length;
     let uploadedRows = 0;
@@ -354,12 +354,12 @@ async function multisaveAirtable(data, baseid, tabelid, returid) {
             await sendBatch(batch);
         }
 
-        statusProcessing(totalRows, uploadedRows);
+        statusProcessing(lable,totalRows, uploadedRows);
         console.log("Alle rader er ferdig prosessert.");
     };
 
     try {
-        statusProcessing(totalRows, uploadedRows);
+        statusProcessing(lable,totalRows, uploadedRows);
         await processBatches();
 
         if(returid === "postToBoosterDB"){
@@ -371,7 +371,7 @@ async function multisaveAirtable(data, baseid, tabelid, returid) {
 
     } catch (error) {
         console.error("Prosesseringen ble stoppet på grunn av en feil:", error);
-        statusProcessing(totalRows, uploadedRows);
+        statusProcessing(lable,totalRows, uploadedRows);
     }
 }
 
@@ -413,16 +413,16 @@ async function POSTairtableMulti(baseId, tableId, body) {
 }
 
 
-function statusProcessing(totalRows, uploadedRows) {
+function statusProcessing(title,totalRows, uploadedRows) {
     const statusElement = document.getElementById("ready-bulk-status");
-    console.log("Status oppdatering:", { totalRows, uploadedRows });
-    
+    statusElement.style.display = "block";
+
     if (!statusElement) return;
 
     if (uploadedRows >= totalRows) {
-        statusElement.innerText = `Ferdig! Lastet opp ${uploadedRows} av ${totalRows} rader.`;
+        statusElement.innerText = title + `Ferdig! ${uploadedRows} av ${totalRows} .`;
     } else {
-        statusElement.innerText = `Laster opp... ${uploadedRows} av ${totalRows} rader lastet opp.`;
+        statusElement.innerText = title + `Sender... ${uploadedRows} av ${totalRows}.`;
     }
         
 }
