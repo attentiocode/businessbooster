@@ -251,7 +251,7 @@ function makeNextSteppInTimeRunner(companyes){
     //multisaveAirtable(data, baseid, tabelid, "postToTimeRunnerDB","Timerunner epostforløp ");
 
     //som test kjører vi bare en linje fo å sjekke om det funker
-    let onobject = JSON.stringify({externalId:"testid"});
+    let onobject = JSON.stringify(timerunnerObjects[0]);
 
     
     POSTairtable("appISWcEA5QICIlzP","tblldBMExI1U4yMNI",onobject,"test",null);
