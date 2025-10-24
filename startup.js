@@ -233,7 +233,7 @@ document.getElementById("selectmastercheckbox").addEventListener("change", funct
 });
 
 document.getElementById("readymastercheckbox").addEventListener("change", function() {
-  const container = document.getElementById("rowlistRady");
+  const container = document.getElementById("rowlistReady");
   const checkboxes = container.querySelectorAll(".selectcheckbox")
   checkboxes.forEach(cb => {
     // kun de som ikke er disabled
