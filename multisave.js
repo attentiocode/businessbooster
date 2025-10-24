@@ -305,7 +305,7 @@ function maketimerunnerObjects(companyes) {
 
             let timerunnerObject = {
                 when: nextSteppDate.toISOString(),
-                externalId: company.orgnr || '',
+                externalId: company.navn || '',
                 hookUrl: "https://hooks.zapier.com/hooks/catch/24993663/uragru1/",
                 method: "POST",
                 payload: JSON.stringify({
