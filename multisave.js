@@ -246,8 +246,15 @@ function makeNextSteppInTimeRunner(companyes){
     console.log("Timerunner objekter som skal lagres:", timerunnerObjects);
 
     //starte multisav i timrunnerdb
+    const baseid = "appISWcEA5QICIlzP";
+    const tabelid = "tblldBMExI1U4yMNI";
+    multisaveAirtable(data, baseid, tabelid, "postToTimeRunnerDB");
 
+}
 
+function multiReturnFromTimeRunnerAirtable(payload) {
+    let cleanerData = cleanReturnfromAirtable(payload)
+    console.log("Timerunner multisave fullført med respons:", cleanerData);
 }
 
 function maketimerunnerObjects(companyes) {
@@ -358,7 +365,7 @@ async function multisaveAirtable(data, baseid, tabelid, returid) {
         if(returid === "postToBoosterDB"){
         multiReturnfromAirtable({ success: true, data: allResponses});
         }else if(returid === "postToTimeRunnerDB"){
-        
+        multiReturnFromTimeRunnerAirtable({ success: true, data: allResponses});
         }
 
 
