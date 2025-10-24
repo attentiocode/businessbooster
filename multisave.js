@@ -197,7 +197,8 @@ function startMultisaveProcess(orgnrList) {
     multisaveAirtable(data, baseid, tabelid);
 }
   
-function returnfromAirtable(data) {
+function multiReturnfromAirtable(data) {
+    console.log("Multisave fullført med respons:", data);
 
 }
 
@@ -233,11 +234,10 @@ async function multisaveAirtable(data, baseid, tabelid) {
     try {
         statusProcessing(totalRows, uploadedRows);
         await processBatches();
-        multiimportRespond({ success: true, data: allResponses});
+        multiReturnfromAirtable({ success: true, data: allResponses});
     } catch (error) {
         console.error("Prosesseringen ble stoppet på grunn av en feil:", error);
         statusProcessing(totalRows, uploadedRows);
-        multiimportRespond({ success: false, error: error.message});
     }
 }
 
