@@ -232,7 +232,7 @@ document.getElementById("selectmastercheckbox").addEventListener("change", funct
     
 });
 
-document.getElementById("radymastercheckbox").addEventListener("change", function() {
+document.getElementById("readymastercheckbox").addEventListener("change", function() {
   const container = document.getElementById("rowlistRady");
   const checkboxes = container.querySelectorAll(".selectcheckbox")
   checkboxes.forEach(cb => {
