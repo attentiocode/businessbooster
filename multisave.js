@@ -344,7 +344,7 @@ async function multisaveAirtable(data, baseid, tabelid, returid,lable) {
             const response = await POSTairtableMulti(baseid, tabelid, batch);
             uploadedRows += batch.length;
 
-            statusProcessing(totalRows, uploadedRows);
+            statusProcessing(lable,totalRows, uploadedRows);
             allResponses.push(response);
         } catch (error) {
             console.error("Feil ved sending av batch:", error);
