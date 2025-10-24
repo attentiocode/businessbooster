@@ -424,9 +424,9 @@ function statusProcessing(title,totalRows, uploadedRows) {
     if (!statusElement) return;
 
     if (uploadedRows >= totalRows) {
-        statusElement.innerText = title + `Ferdig! ${uploadedRows} av ${totalRows} .`;
+        statusElement.innerText = `Ferdig! ${uploadedRows} av ${totalRows} ${title}.`;
     } else {
-        statusElement.innerText = title + `Sender... ${uploadedRows} av ${totalRows}.`;
+        statusElement.innerText = `${uploadedRows} av ${totalRows} ${title}...`;
     }
         
 }
