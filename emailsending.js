@@ -31,8 +31,7 @@ function sendEmailToCompany(company,stepp) {
     sendDataToZapierWebhook(payload, url);
 
     //er det er epostforløp som ligger forand så lag alle fremtidige stepp
-    let daystepp = stepp1 || 14;
-    makeNextEmailStepForCompany(company,daystepp);
+    makeNextEmailStepForCompany(company);
 
     //oppdatere status i gReadybedrifter til "sendt"
     company.status = "EpostSendt";
@@ -200,7 +199,7 @@ function escapeHtml(s) {
     ));
 }
 
-function makeNextEmailStepForCompany(company,daystepp) {
+function makeNextEmailStepForCompany(company) {
     if (!company) return;
 
     const nextSteppDate = new Date();
