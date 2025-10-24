@@ -251,10 +251,25 @@ function makeNextSteppInTimeRunner(companyes){
     //multisaveAirtable(data, baseid, tabelid, "postToTimeRunnerDB","Timerunner epostforløp ");
 
     //som test kjører vi bare en linje fo å sjekke om det funker
-    let onobject = JSON.stringify(timerunnerObjects[0]);
+
+
+    let onobject = timerunnerObjects[0];
+
+    //fjerne fra onobject: when,payload, feltet for testing
+    let testobject = {
+        title: onobject.title,
+        description: onobject.description,
+        externalId: onobject.externalId,
+        method: onobject.method,
+        customerId: onobject.customerId,
+        status: onobject.status,
+        external_databaseId: onobject.external_databaseId,
+        external_tableId: onobject.external_tableId,
+        external_rawId: onobject.external_rawId
+    };
 
     
-    POSTairtable("appISWcEA5QICIlzP","tblldBMExI1U4yMNI",onobject,"test",null);
+    POSTairtable("appISWcEA5QICIlzP","tblldBMExI1U4yMNI",JSON.stringify(testobject),"test",null);
 
 }
 
