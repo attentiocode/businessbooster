@@ -185,12 +185,11 @@ function creatSaveCompatibleList(orgnrList) {
     });
   
     return data;
-  }
+}
   
-
 function startMultisaveProcess(orgnrList) {
-    const baseid = "apphYxX1bX4Yt1F6I";
-    const tabelid = "tbl9f3Y6b1f3bK3zE";
+    const baseid = "appEUYGzpBtxB0fFe";
+    const tabelid = "tblpbfAQUiinho1LD";
   
     const data = creatSaveCompatibleList(orgnrList);
   
@@ -198,12 +197,9 @@ function startMultisaveProcess(orgnrList) {
     multisaveAirtable(data, baseid, tabelid);
 }
   
-
 function returnfromAirtable(data) {
 
 }
-
-
 
 async function multisaveAirtable(data, baseid, tabelid) {
     const batchSize = 10;

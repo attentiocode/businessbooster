@@ -232,6 +232,32 @@ document.getElementById("selectmastercheckbox").addEventListener("change", funct
     
 });
 
+document.getElementById("radymastercheckbox").addEventListener("change", function() {
+  const container = document.getElementById("rowlistRady");
+  const checkboxes = container.querySelectorAll(".selectcheckbox")
+  checkboxes.forEach(cb => {
+    // kun de som ikke er disabled
+    if (!cb.disabled){
+    cb.checked = this.checked;
+    }
+  });
+
+  //hvis det er mer en 1 checkbox som er valgt så gjør maassbehandling synlig
+  const bulkBar   = document.getElementById('ready-bulk-actions');
+  const checkboxesChecked = container.querySelectorAll(".selectcheckbox:checked");
+  if (checkboxesChecked.length > 0){
+    bulkBar.style.display = "flex";
+    const bulkCount = document.getElementById('ready-bulk-count');
+    //finne ut hvor mange chackboxer som er checked i listen med id rowlistSelect
+    const checkedCount = checkboxes.length;
+    bulkCount.textContent = `${checkedCount} valgt`;
+
+  }else{
+    bulkBar.style.display = "none";
+  }
+  
+});
+
 function ruteresponse(data,responseid){
 
     if(responseid==="dataFromProff"){
