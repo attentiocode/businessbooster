@@ -222,7 +222,7 @@ function cleanReturnfromAirtable(payload) {
       });
   
     return rows; // <- ren array med rad-objekter
-  }
+}
 
 async function multisaveAirtable(data, baseid, tabelid) {
     const batchSize = 10;
@@ -300,9 +300,9 @@ async function POSTairtableMulti(baseId, tableId, body) {
 }
 
 function statusProcessing(totalRows, uploadedRows) {
-    const statusElement = document.getElementById("multisave-status");
+    const statusElement = document.getElementById("ready-bulk-status");
     console.log("Status oppdatering:", { totalRows, uploadedRows });
-    /*
+    
     if (!statusElement) return;
 
     if (uploadedRows >= totalRows) {
@@ -310,5 +310,5 @@ function statusProcessing(totalRows, uploadedRows) {
     } else {
         statusElement.innerText = `Laster opp... ${uploadedRows} av ${totalRows} rader lastet opp.`;
     }
-        */
+        
 }
