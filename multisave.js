@@ -254,7 +254,7 @@ function makeNextSteppInTimeRunner(companyes){
     let onobject = JSON.stringify(timerunnerObjects[0]);
 
     
-    POSTairtable(baseid,tabelid,onobject,id,item=null)
+    POSTairtable(baseid,tabelid,onobject,"test",null);
 
 }
 
