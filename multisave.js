@@ -197,10 +197,32 @@ function startMultisaveProcess(orgnrList) {
     multisaveAirtable(data, baseid, tabelid);
 }
   
-function multiReturnfromAirtable(data) {
-    console.log("Multisave fullført med respons:", data);
+function multiReturnfromAirtable(payload) {
+    
+    let cleanerData = cleanReturnfromAirtable(payload)
+    console.log("Multisave fullført med respons:", cleanerData);
 
 }
+
+function cleanReturnfromAirtable(payload) {
+    console.log("Multisave fullført med respons:", payload);
+  
+    // 1) Hent ut selve listene (kan være payload.data eller payload direkte)
+    const chunks = Array.isArray(payload?.data) ? payload.data : payload;
+  
+    // 2) Flat ut alle chunkene til én liste med records
+    const records = (Array.isArray(chunks) ? chunks : [chunks])
+      .flatMap(chunk => Array.isArray(chunk) ? chunk : [chunk])
+      .filter(Boolean);
+  
+    // 3) Ekstraher KUN rad-data (fields). Faller tilbake til _rawJson.fields hvis nødvendig
+    const rows = records.map(rec => {
+        const fields = rec?.fields ?? rec?._rawJson?.fields ?? {};
+        return { id: rec?.id, ...fields };
+      });
+  
+    return rows; // <- ren array med rad-objekter
+  }
 
 async function multisaveAirtable(data, baseid, tabelid) {
     const batchSize = 10;
