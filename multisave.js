@@ -257,6 +257,7 @@ function makeNextSteppInTimeRunner(companyes){
 
     //fjerne fra onobject: when,payload, feltet for testing
     let testobject = {
+        when: onobject.when,
         title: onobject.title,
         description: onobject.description,
         externalId: onobject.externalId,
