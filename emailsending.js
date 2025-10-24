@@ -19,13 +19,13 @@ var emailbody5 = "";
 
 function sendEmailToCompany(company) {
    
-   if (!company || !company.organisasjonsnummer) {
+   if (!company || !company.orgnr) {
         console.error("Invalid company data:", company);
         return;
     }
 
     let emailBody = getEmailBody(company,null);
-    let subject = `Kort om hvordan Innkjøps-gruppen kan gi dere bedre innkjøpsbetingelser og lavere kostnader.`;
+    let subject = subject1;
 
     const payload = {
         orgnr: orgnr,
@@ -214,6 +214,10 @@ function escapeHtml(s) {
 function makeNextEmailStepForCompany(company) {
     if (!company) return;
 
+    let email_series = company.email_series;
+    console.log("email_series:", email_series);
+
+    /*
     const nextSteppDate = new Date();
     nextSteppDate.setDate(nextSteppDate.getDate() + daystepp);
 
@@ -230,6 +234,6 @@ function makeNextEmailStepForCompany(company) {
 
     gReadybedrifter.push(nextEmailStep);
     updateCounter("label-mailer-klare", countReadyAndSendtCostumers(), 1000);
- 
+ */
 }
 
