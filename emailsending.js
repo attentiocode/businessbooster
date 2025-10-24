@@ -1,20 +1,20 @@
-let stepp1 = 14; //dager til neste steg
-let stepp2 = 30;
-let stepp3 = 60;
-let stepp4 = 90;
-let stepp5 = 120;
+var stepp1 = 14; //dager til neste steg
+var stepp2 = 30;
+var stepp3 = 60;
+var stepp4 = 90;
+var stepp5 = 120;
 
-let subject1 = "Slik kan Innkjøps-gruppen hjelpe dere med bedre innkjøpsbetingelser";
-let subject2 = "Har dere vurdert Innkjøps-gruppen for bedre innkjøpsbetingelser?";
-let subject3 = "Få bedre innkjøpsbetingelser med Innkjøps-gruppen";
-let subject4 = "Siste sjanse til å forbedre innkjøpsbetingelsene deres";
-let subject5 = "Avsluttende tilbud: Forbedre innkjøpsbetingelsene deres i dag";
+var subject1 = "Slik kan Innkjøps-gruppen hjelpe dere med bedre innkjøpsbetingelser";
+var subject2 = "Har dere vurdert Innkjøps-gruppen for bedre innkjøpsbetingelser?";
+var subject3 = "Få bedre innkjøpsbetingelser med Innkjøps-gruppen";
+var subject4 = "Siste sjanse til å forbedre innkjøpsbetingelsene deres";
+var subject5 = "Avsluttende tilbud: Forbedre innkjøpsbetingelsene deres i dag";
 
-let emailbody1 = "";
-let emailbody2 = "";
-let emailbody3 = "";
-let emailbody4 = "";
-let emailbody5 = "";
+var emailbody1 = "";
+var emailbody2 = "";
+var emailbody3 = "";
+var emailbody4 = "";
+var emailbody5 = "";
 
 
 function sendEmailToCompany(company) {
