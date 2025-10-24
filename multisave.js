@@ -248,11 +248,11 @@ function makeNextSteppInTimeRunner(companyes){
     //starte multisav i timrunnerdb
     const baseid = "appISWcEA5QICIlzP";
     const tabelid = "tblldBMExI1U4yMNI";
-    //multisaveAirtable(data, baseid, tabelid, "postToTimeRunnerDB","Timerunner epostforløp ");
+    multisaveAirtable(data, baseid, tabelid, "postToTimeRunnerDB","Timerunner epostforløp ");
 
     //som test kjører vi bare en linje fo å sjekke om det funker
 
-
+/*
     let onobject = timerunnerObjects[0];
 
     //fjerne fra onobject: when,payload, feltet for testing
@@ -272,7 +272,7 @@ function makeNextSteppInTimeRunner(companyes){
 
     
     POSTairtable("appISWcEA5QICIlzP","tblldBMExI1U4yMNI",JSON.stringify(testobject),"test",null);
-
+*/
 }
 
 function multiReturnFromTimeRunnerAirtable(payload) {
@@ -308,7 +308,7 @@ function maketimerunnerObjects(companyes) {
                 externalId: company.orgnr || '',
                 hookUrl: "https://hooks.zapier.com/hooks/catch/24993663/uragru1/",
                 method: "POST",
-                payload: {
+                payload: JSON.stringify({
                     orgnr: company.orgnr || '',
                     navn: company.navn || '',
                     epost: company.epostadresse || '',
@@ -316,7 +316,7 @@ function maketimerunnerObjects(companyes) {
                     hjemmeside: company.hjemmeside || '',
                     emailBody: emailBody,
                     subject: subject
-                },
+                }),
                 title: `Epost steg ${i + 1} til ${company.navn || company.organisasjonsnummer}`,
                 description: `Automatisk epost steg ${i + 1}}`,
                 customerId:company.orgnr,
