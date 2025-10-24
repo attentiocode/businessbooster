@@ -1,8 +1,8 @@
-var stepp1 = 14; //dager til neste steg
-var stepp2 = 30;
-var stepp3 = 60;
-var stepp4 = 90;
-var stepp5 = 120;
+var stepp1 = 1; //dager til neste steg
+var stepp2 = 2;
+var stepp3 = 3;
+var stepp4 = 4;
+var stepp5 = 5;
 
 var subject1 = "Slik kan Innkjøps-gruppen hjelpe dere med bedre innkjøpsbetingelser";
 var subject2 = "Har dere vurdert Innkjøps-gruppen for bedre innkjøpsbetingelser?";

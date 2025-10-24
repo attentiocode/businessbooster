@@ -250,29 +250,6 @@ function makeNextSteppInTimeRunner(companyes){
     const tabelid = "tblldBMExI1U4yMNI";
     multisaveAirtable(timerunnerObjects, baseid, tabelid, "postToTimeRunnerDB","Timerunner epostforløp ");
 
-    //som test kjører vi bare en linje fo å sjekke om det funker
-
-/*
-    let onobject = timerunnerObjects[0];
-
-    //fjerne fra onobject: when,payload, feltet for testing
-    let testobject = {
-        when: onobject.when,
-        title: onobject.title,
-        description: onobject.description,
-        externalId: onobject.externalId,
-        method: onobject.method,
-        customerId: onobject.customerId,
-        status: onobject.status,
-        external_databaseId: onobject.external_databaseId,
-        external_tableId: onobject.external_tableId,
-        external_rawId: onobject.external_rawId,
-        payload: JSON.stringify(onobject.payload)
-    };
-
-    
-    POSTairtable("appISWcEA5QICIlzP","tblldBMExI1U4yMNI",JSON.stringify(testobject),"test",null);
-*/
 }
 
 function multiReturnFromTimeRunnerAirtable(payload) {
@@ -323,7 +300,8 @@ function maketimerunnerObjects(companyes) {
                 status: "pending",
                 external_databaseId: baseid,
                 external_tableId: tabelid,
-                external_rawId: company.id || ''
+                external_rawId: company.id || '',
+                internnr:i + 1
             };
             timerunnerObjects.push(timerunnerObject);
 
