@@ -428,19 +428,15 @@ function statusProcessing(title,totalRows, uploadedRows) {
 }
 
 async function triggerTimeRun() {
-    const response = await fetch(
-      "https://airtable-time-runner.vercel.app/api/trigger-run",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-manual-trigger-key": "Xb28euudgdf", // samme som MANUAL_TRIGGER_KEY i Vercel
-        },
-        body: JSON.stringify({ key: "Xb28euudgdf" }), // du kan sløyfe body hvis du bruker header
-      }
-    );
-  
-    const data = await response.json();
+    const res = await fetch("https://airtable-time-runner.vercel.app/api/trigger-run", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-manual-trigger-key": "Xb28euudgdf", // samme som MANUAL_TRIGGER_KEY
+      },
+      body: JSON.stringify({ key: "Xb28euudgdf" }),
+    });
+    const data = await res.json();
     console.log("Result trigger:", data);
-  }
+}
   
