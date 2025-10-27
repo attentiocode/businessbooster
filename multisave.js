@@ -230,8 +230,6 @@ function multiReturnfromAirtable(payload) {
     //opprette hele epostforløpet i timerunner db
     makeNextSteppInTimeRunner(cleanerData);
 
-    
-
 }
 
 function makeNextSteppInTimeRunner(companyes){
@@ -271,10 +269,15 @@ function maketimerunnerObjects(companyes) {
         for (var i = 0; i < steppCount; i++) {
 
             let daystepp = email_series['stepp' + (i + 1)];
-            //må også legge til dato og tid for når eposten skal sendes
             const nextSteppDate = new Date();
-            nextSteppDate.setDate(nextSteppDate.getDate() + parseInt(daystepp || 0));
-
+            
+            if (daystepp == 0) {
+              // Spol 10 minutter tilbake fra nå
+              nextSteppDate.setMinutes(nextSteppDate.getMinutes() - 10);
+            } else {
+              // Legg til antall dager frem i tid
+              nextSteppDate.setDate(nextSteppDate.getDate() + parseInt(daystepp || 0));
+            }
 
 
             let emailBody = getEmailBody(company,null);
@@ -380,7 +383,6 @@ async function multisaveAirtable(data, baseid, tabelid, returid,lable) {
     }
 }
 
-
 async function POSTairtableMulti(baseId, tableId, body) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -416,7 +418,6 @@ async function POSTairtableMulti(baseId, tableId, body) {
         }
     });
 }
-
 
 function statusProcessing(title,totalRows, uploadedRows) {
     const statusElement = document.getElementById("ready-bulk-status");
