@@ -232,19 +232,6 @@ function multiReturnfromAirtable(payload) {
 
     
 
-
-    //sende eposter til hver bedrift basert på responsen fra Airtable med en loop og liten tidsforsinkelse på 100ms mellom hver
-    cleanerData.forEach((company, index) => {
-
-         //oppdatere status i gReadybedrifter til "sendt"
-        company.status = "EpostSendt";
-
-        //tidsforsink mailutsending
-        setTimeout(() => {
-            sendEmailToCompany(company, cleanerData.length, index + 1);
-        }, index * 100); // 100ms mellom hver
-    });
-
 }
 
 function makeNextSteppInTimeRunner(companyes){
@@ -261,7 +248,9 @@ function makeNextSteppInTimeRunner(companyes){
 
 function multiReturnFromTimeRunnerAirtable(payload) {
     let cleanerData = cleanReturnfromAirtable(payload)
-    console.log("Timerunner multisave fullført med respons:", cleanerData);
+    
+    //trigg timerunner til å sende de første epostene
+    triggerTimeRun();
 }
 
 function maketimerunnerObjects(companyes) {
@@ -437,3 +426,21 @@ function statusProcessing(title,totalRows, uploadedRows) {
     }
         
 }
+
+async function triggerTimeRun() {
+    const response = await fetch(
+      "https://airtable-time-runner.vercel.app/api/trigger-run",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-manual-trigger-key": "Xb28euudgdf", // samme som MANUAL_TRIGGER_KEY i Vercel
+        },
+        body: JSON.stringify({ key: "Xb28euudgdf" }), // du kan sløyfe body hvis du bruker header
+      }
+    );
+  
+    const data = await response.json();
+    console.log("Result trigger:", data);
+  }
+  

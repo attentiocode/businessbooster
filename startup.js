@@ -37,6 +37,11 @@ document.getElementById("groupEmailButton").addEventListener("click", function()
     document.getElementById("emailTabButton").click();
 });
 
+document.getElementById("testtrigger").addEventListener("click", function() {
+  //test
+  triggerTimeRun();
+});
+
 
 const fmt = d => d.toISOString().slice(0, 10);
 
