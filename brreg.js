@@ -408,12 +408,14 @@ function startBrregList(data) {
   // Sett for rask state-sjekk
   const inPortalSet = new Set((gCustomers || []).map(getOrgnr).filter(Boolean));
   const selectedSet = new Set((gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
+  const prosessSet  = new Set((gProsessertBedrifter || []).map(getOrgnr).filter(Boolean));
 
   const passesStateFilter = (item, filterVal) => {
     if (!filterVal) return true; // alle selskap
     const org = getOrgnr(item);
     if (filterVal === 'portal') return inPortalSet.has(org);
     if (filterVal === 'utvalg') return selectedSet.has(org);
+    if (filterVal === 'prosess') return prosessSet.has(org);
     return true;
   };
 
@@ -810,6 +812,7 @@ function initContactStateFilter(){
     {value:'',        label:'Alle selskap'},
     {value:'portal',  label:'Er i Portal'},
     {value:'utvalg',  label:'Er i utvalg'},
+    {value:'prosess', label:'Er i epostløp'},
   ].forEach(({value,label})=>{
     const o=document.createElement('option'); o.value=value; o.textContent=label; sel.appendChild(o);
   });
