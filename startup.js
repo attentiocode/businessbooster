@@ -20,7 +20,6 @@ document.getElementById("select-contact-state-filter").addEventListener('change'
   startBrregList(gBrregbedrifter);
 });
 
-
 //sideknappene rooting
 document.getElementById("dashboardSideButton").addEventListener("click", function() {
     document.getElementById("dashboardTabButton").click();
@@ -42,7 +41,6 @@ document.getElementById("testtrigger").addEventListener("click", function() {
   //test
   triggerTimeRun();
 });
-
 
 const fmt = d => d.toISOString().slice(0, 10);
 
@@ -414,7 +412,6 @@ try {
   if (g2) gSelectbedrifter = JSON.parse(g2);
 } catch(e) {}
 
-
 function updateCounter(elementId, newValue, duration = 500, endingValue = "") {
   const el = document.getElementById(elementId);
   if (!el) return;
@@ -446,7 +443,6 @@ function updateCounter(elementId, newValue, duration = 500, endingValue = "") {
 
   requestAnimationFrame(animate);
 }
-
 
 function getCustomer(){     
   //hente kunder

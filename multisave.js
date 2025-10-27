@@ -228,6 +228,8 @@ function multiReturnfromAirtable(payload) {
     console.log("Multisave fullført med respons:", cleanerData);
 
     gProsessertBedrifter = cleanerData;
+    //lagre lokalt
+    localStorage.setItem("prosessertBedrifter", JSON.stringify(gProsessertBedrifter));
 
     //opprette hele epostforløpet i timerunner db
     makeNextSteppInTimeRunner(cleanerData);
