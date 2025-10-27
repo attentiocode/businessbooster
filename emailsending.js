@@ -1,4 +1,4 @@
-var stepp1 = 1; //dager til neste steg
+var stepp1 = 0; //dager til neste steg
 var stepp2 = 2;
 var stepp3 = 3;
 var stepp4 = 4;

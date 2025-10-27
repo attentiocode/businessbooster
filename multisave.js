@@ -239,7 +239,7 @@ function makeNextSteppInTimeRunner(companyes){
     let timerunnerObjects = maketimerunnerObjects(companyes);
     console.log("Timerunner objekter som skal lagres:", timerunnerObjects);
 
-    //starte multisav i timrunnerdb
+    //starte multisave i timrunnerdb
     const baseid = "appISWcEA5QICIlzP";
     const tabelid = "tblldBMExI1U4yMNI";
     multisaveAirtable(timerunnerObjects, baseid, tabelid, "postToTimeRunnerDB","Epostforløp lagring ");
