@@ -2,6 +2,7 @@ let gBrregbedrifter = JSON.parse(localStorage.getItem('gBrregbedrifter') || '[]'
 let gSelectbedrifter = JSON.parse(localStorage.getItem('gSelectbedrifter') || '[]');
 let gReadybedrifter = JSON.parse(localStorage.getItem('gReadybedrifter') || '[]');
 let gGroupbedrifter = JSON.parse(localStorage.getItem('gGroupbedrifter') || '[]');
+let gProsessertBedrifter = JSON.parse(localStorage.getItem('gProsessertBedrifter') || '[]');
 let gCustomers = [];
 let userid = null;
 let userName = null;

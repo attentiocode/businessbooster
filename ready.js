@@ -104,6 +104,13 @@ function renderReady(data) {
   
     // --- Filtrer grunnlag ---
     let filteredData = Array.isArray(data) ? data.slice() : [];
+
+
+    //filtrer vekk bedrifter som har status "EpostStartet"
+    filteredData = filteredData.filter(b => {
+      const s = low(b?.status ?? '');
+      return s !== 'epoststartet' && s !== 'emailstarted';
+    });
   
     // Gruppefilter
     if (!(filterGroup === '' || filterGroup.toLowerCase() === 'all')) {
@@ -259,8 +266,6 @@ function renderReady(data) {
       const saveBtn = document.getElementById('edit-save');
   
       //hvis det er fler en 1 checkbox som er huket av skal knappen document.getElementById('ba-enrich'); være skjult
-  
-  
       emailEl.value = getEmail(item);
       phoneEl.value = getPhone(item);
       webEl.value   = getWeb(item);

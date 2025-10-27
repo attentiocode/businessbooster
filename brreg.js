@@ -505,6 +505,7 @@ function startBrregList(data) {
 
   let sumTotal    = filteredData.length;
   let sumInPortal = 0;
+  let sumInProsess = 0;
   let sumSelected = 0;
   let sumEmail    = 0;
   let sumWeb      = 0;
@@ -518,6 +519,7 @@ function startBrregList(data) {
     const isInPortal     = inPortalSet.has(org);
     const isAlreadySel   = selectedSet.has(org);
     const alreadySelected = (gSelectbedrifter || []).find(b => getOrgnr(b) === org);
+    const isInProsess = (gProsessertBedrifter || []).find(b => getOrgnr(b) === org);
 
     let item = rawItem;
     let g = null;
@@ -526,6 +528,10 @@ function startBrregList(data) {
     if (isInPortal) {
       sumInPortal++;
       tr.classList.add('inportal');
+    }else if(isInProsess){
+      // Bedrift er i prosessering så deaktiver valg
+      sumInProsess++;
+      tr.classList.add('inprosess');
     } else if (isAlreadySel && alreadySelected) {
       sumSelected++;
       tr.classList.add('selected');
@@ -552,7 +558,7 @@ function startBrregList(data) {
       : '—';
 
     const contactHtml  = renderContactIcons(item);
-    const checkboxAttrs = (isInPortal || isAlreadySel) ? 'disabled checked' : '';
+    const checkboxAttrs = (isInPortal || isAlreadySel || isInProsess) ? 'disabled checked' : '';
 
     const statusHtml = isInPortal
       ? `<strong>Er registrert i portal</strong>`
@@ -578,7 +584,7 @@ function startBrregList(data) {
 
   // --- 6) Oppdater teller ---
   updateBrregCounterDark(
-    sumTotal, sumInPortal, sumSelected, !!preset, sumEmail, sumWeb, sumPhone
+    sumTotal, sumInPortal, sumInProsess, sumSelected, !!preset, sumEmail, sumWeb, sumPhone
   );
 
   // --- 7) Massebehandling (bulk selection) ---
@@ -646,6 +652,7 @@ sentToSelectButton.addEventListener("click", function() {
 function updateBrregCounterDark(
     sumTotal = 0,
     sumInPortal = 0,
+    sumInProsess = 0,
     sumSelected = 0,
     preset = false,
     sumEmail = 0,
@@ -690,6 +697,7 @@ function updateBrregCounterDark(
     const colors = {
       total:   { bg: '#1E3A8A1A', text: '#93C5FD', border: '#1E3A8A40' },
       portal:  { bg: '#064E3B33', text: '#6EE7B7', border: '#10B98140' },
+      prosess: { bg: '#78350F33', text: '#FDBA74', border: '#F9731640' },
       selected:{ bg: '#1E40AF33', text: '#93C5FD', border: '#3B82F640' },
       email:   { bg: '#312E8122', text: '#A78BFA', border: '#7C3AED40' }, // lilla
       web:     { bg: '#07598533', text: '#38BDF8', border: '#0EA5E940' }, // cyan
@@ -699,12 +707,13 @@ function updateBrregCounterDark(
     // --- Legg til elementene ---
     const totalEl    = makeChip('Totalt', sumTotal, colors.total);
     const portalEl   = makeChip('I portal', sumInPortal, colors.portal);
+    const prosessEl   = makeChip('I epostløp', sumInProsess, colors.prosess);
     const selectedEl = makeChip('Valgt', sumSelected, colors.selected);
     const emailEl    = makeChip('Har e-post', sumEmail, colors.email);
     const webEl      = makeChip('Har nettside', sumWeb, colors.web);
     const phoneEl    = makeChip('Har telefon', sumPhone, colors.phone);
   
-    counter.append(totalEl, portalEl, selectedEl, emailEl, webEl, phoneEl);
+    counter.append(totalEl, portalEl, prosessEl, selectedEl, emailEl, webEl, phoneEl);
   
     if (preset) {
       const suffix = document.createElement('span');
@@ -875,6 +884,7 @@ async function fetchIndustriesLevel(level = 2, { date = new Date(), language = "
     parentCode: c.parentCode || null
   }));
 }
+
 // Kall denne fra din flyt når du vil fylle selector
 async function getAllallIndustri() {
   try {
@@ -884,7 +894,7 @@ async function getAllallIndustri() {
 
     //sorter på navn
     window.allIndustriCodeandName.sort((a,b) => a.name.localeCompare(b.name));
-    
+
     // ⬇️ virker nå fordi vi eksponerte den globalt i IIFE
     window.loadIndustriesInselector(window.allIndustriCodeandName);
     return window.allIndustriCodeandName;

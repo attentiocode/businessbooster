@@ -227,6 +227,8 @@ function multiReturnfromAirtable(payload) {
     let cleanerData = cleanReturnfromAirtable(payload)
     console.log("Multisave fullført med respons:", cleanerData);
 
+    gProsessertBedrifter = cleanerData;
+
     //opprette hele epostforløpet i timerunner db
     makeNextSteppInTimeRunner(cleanerData);
 
@@ -249,7 +251,6 @@ function multiReturnFromTimeRunnerAirtable(payload) {
     
     //Trigg time runner for å plukke opp nye jobber
     triggerTimeRun();
-   
      
 }
 
