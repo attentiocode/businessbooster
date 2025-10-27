@@ -247,12 +247,9 @@ function makeNextSteppInTimeRunner(companyes){
 function multiReturnFromTimeRunnerAirtable(payload) {
     let cleanerData = cleanReturnfromAirtable(payload)
     
-    //lag en tidsforsinkelse på 20 sek
-    setTimeout(() => {
-        console.log("Timerunner lagring fullført med respons:", cleanerData);
-        //trigger time runner
-        triggerTimeRun();
-    }, 10000);
+    //Trigg time runner for å plukke opp nye jobber
+    triggerTimeRun();
+   
      
 }
 
