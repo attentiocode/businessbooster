@@ -560,11 +560,20 @@ function startBrregList(data) {
     const contactHtml  = renderContactIcons(item);
     const checkboxAttrs = (isInPortal || isAlreadySel || isInProsess) ? 'disabled checked' : '';
 
-    const statusHtml = isInPortal
-      ? `<strong>Er registrert i portal</strong>`
-      : (isAlreadySel
-          ? `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`
-          : 'Brreg');
+    const statusHtml = "";
+    
+    if(isInPortal){
+      statusHtml = `<strong>Er registrert i portal</strong>`;
+
+    }else if(isInProsess){
+      statusHtml = `<strong>Er i epostløp</strong>`;
+    
+    }else if (isAlreadySel){
+
+      statusHtml = `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`;
+    } else {
+      statusHtml = 'Brreg';
+    }
 
     tr.innerHTML = `
       <td style="width:40px;">
