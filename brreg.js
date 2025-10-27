@@ -560,7 +560,7 @@ function startBrregList(data) {
     const contactHtml  = renderContactIcons(item);
     const checkboxAttrs = (isInPortal || isAlreadySel || isInProsess) ? 'disabled checked' : '';
 
-    const statusHtml = "";
+    let statusHtml = "";
     
     if(isInPortal){
       statusHtml = `<strong>Er registrert i portal</strong>`;
