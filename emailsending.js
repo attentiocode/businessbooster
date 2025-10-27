@@ -1,4 +1,4 @@
-var stepp1 = 0; //dager til neste steg
+var stepp1 = 0; //Første utsending
 var stepp2 = 2;
 var stepp3 = 3;
 var stepp4 = 4;
@@ -44,7 +44,6 @@ function sendEmailToCompany(company, totalRows, uploadedRows) {
 
     //oppdater status i UI
     statusProcessing("Mailer sendt",totalRows, uploadedRows)
-
 
 }
 

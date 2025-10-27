@@ -249,8 +249,13 @@ function makeNextSteppInTimeRunner(companyes){
 function multiReturnFromTimeRunnerAirtable(payload) {
     let cleanerData = cleanReturnfromAirtable(payload)
     
-    //trigg timerunner til å sende de første epostene
-    triggerTimeRun();
+    //lag en tidsforsinkelse på 20 sek
+    setTimeout(() => {
+        console.log("Timerunner lagring fullført med respons:", cleanerData);
+        //trigger time runner
+        triggerTimeRun();
+    }, 10000);
+     
 }
 
 function maketimerunnerObjects(companyes) {
