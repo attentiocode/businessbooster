@@ -242,7 +242,7 @@ function multiReturnfromAirtable(payload) {
 
     
     //lagre lokalt
-    localStorage.setItem("prosessertBedrifter", JSON.stringify(gProsessertBedrifter));
+    localStorage.setItem("gProsessertBedrifter", JSON.stringify(gProsessertBedrifter));
 
     //oppdater UI
     updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
