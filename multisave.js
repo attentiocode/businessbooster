@@ -227,9 +227,25 @@ function multiReturnfromAirtable(payload) {
     let cleanerData = cleanReturnfromAirtable(payload)
     console.log("Multisave fullført med respons:", cleanerData);
 
-    gProsessertBedrifter = cleanerData;
+    //legge til alle rader i cleanerData inn i gProsessertBedrifter slett de gamle om de eksisterer
+    cleanerData.forEach(row => {
+        //sjekke om orgnr finnes i gProsessertBedrifter
+        let existingIndex = gProsessertBedrifter.findIndex(bedrift => bedrift.orgnr === row.orgnr);
+        if(existingIndex !== -1){
+            //oppdatere eksisterende rad
+            gProsessertBedrifter[existingIndex] = row;
+        }else{
+            //legge til ny rad
+            gProsessertBedrifter.push(row);
+        }
+    });
+
+    
     //lagre lokalt
     localStorage.setItem("prosessertBedrifter", JSON.stringify(gProsessertBedrifter));
+
+    //oppdater UI
+    updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
 
     //opprette hele epostforløpet i timerunner db
     makeNextSteppInTimeRunner(cleanerData);
