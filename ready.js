@@ -98,12 +98,6 @@ function renderReady(data) {
   
     // --- Filtrer grunnlag ---
     let filteredData = Array.isArray(data) ? data.slice() : [];
-
-    //filtrer vekk bedrifter som har status "EpostStartet"
-    filteredData = filteredData.filter(b => {
-      const s = low(b?.status ?? '');
-      return s !== 'epoststartet' && s !== 'emailstarted';
-    });
   
     // Gruppefilter
     if (!(filterGroup === '' || filterGroup.toLowerCase() === 'all')) {
