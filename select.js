@@ -599,16 +599,7 @@ function updateSelectCounterDark(
     return el;
   };
 
-  const colors = {
-    total:   { bg: '#1E3A8A1A', text: '#93C5FD', border: '#1E3A8A40' }, // blå
-    portal:  { bg: '#064E3B33', text: '#6EE7B7', border: '#10B98140' }, // grønn
-    inProsess: { bg: '#78350F33', text: '#FBBF24', border: '#D9770640' }, // oransje
-    ready:   { bg: '#78350F33', text: '#FACC15', border: '#CA8A0440' }, // gul
-    utvalg:  { bg: '#1E40AF33', text: '#93C5FD', border: '#3B82F640' }, // lys blå
-    email:   { bg: '#312E8122', text: '#A78BFA', border: '#7C3AED40' }, // lilla
-    web:     { bg: '#07598533', text: '#38BDF8', border: '#0EA5E940' }, // cyan
-    phone:   { bg: '#14532D33', text: '#4ADE80', border: '#22C55E40' }  // grønn
-  };
+  let colors = colorsPalett;
 
   const totalEl  = makeChip('Totalt', sumTotal, colors.total);
   const portalEl = makeChip('I portal', sumPortal, colors.portal);

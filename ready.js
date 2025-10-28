@@ -96,15 +96,8 @@ function renderReady(data) {
     const rawFilter   = grpSel ? grpSel.value : '';
     const filterGroup = String(rawFilter || '').trim(); // "" eller group-id
   
-    const infoSel     = document.getElementById('select-contact-info-ready-filter');
-    const infoFilter  = infoSel ? String(infoSel.value || '') : '';
-  
-    const stateSel     = document.getElementById('select-contact-state-ready-filter');
-    const stateFilter  = stateSel ? String(stateSel.value || '') : ''; // '', 'portal', 'utvalg', 'ready'
-  
     // --- Filtrer grunnlag ---
     let filteredData = Array.isArray(data) ? data.slice() : [];
-
 
     //filtrer vekk bedrifter som har status "EpostStartet"
     filteredData = filteredData.filter(b => {
@@ -134,22 +127,6 @@ function renderReady(data) {
       });
     }
   
-    // Kontaktfilter
-    if (infoFilter) {
-      filteredData = filteredData.filter(b => passesContactFilter(b, infoFilter));
-    }
-  
-    // Statefilter (for select-listen)
-    if (stateFilter) {
-      filteredData = filteredData.filter(b => {
-        const org = getOrgnr(b);
-        if (stateFilter === 'ready')  return isReady(b);
-        if (stateFilter === 'utvalg') return inUtvalgSet.has(org);
-        if (stateFilter === 'portal') return inPortalSet.has(org);
-        return true;
-      });
-    }
-  
     // --- TELLERE ---
     let sumTotal   = filteredData.length;
     let sumPortal  = 0;
@@ -167,7 +144,6 @@ function renderReady(data) {
   
       const org = getOrgnr(b);
       const rowIsPortal = inPortalSet.has(org);
-      let rowIsReady  = isReady(b);
       let isSendt = false;
   
       
@@ -215,10 +191,11 @@ function renderReady(data) {
     if (typeof updateReadyCounterDark === 'function') {
         updateReadyCounterDark(
         sumTotal,
+        sumPortal,
         sumEmail,
         sumWeb,
         sumPhone,  
-        sumPortal
+        
       );
     } else {
       const counter = document.getElementById("counterlistready");
@@ -398,12 +375,13 @@ function renderReady(data) {
 
 
 
-  function updateReadyCounterDark(
+  function updateReadyCounterDark( 
     sumTotal = 0,
+    sumPortal = 0,
     sumEmail = 0,
     sumWeb = 0,
     sumPhone = 0,
-    sumPortal = 0,
+    
   ) 
   
   
@@ -439,21 +417,14 @@ function renderReady(data) {
       return el;
     };
   
-    const colors = {
-      total:   { bg: '#1E3A8A1A', text: '#93C5FD', border: '#1E3A8A40' }, // blå
-      portal:  { bg: '#064E3B33', text: '#6EE7B7', border: '#10B98140' }, // grønn
-      utvalg:  { bg: '#1E40AF33', text: '#93C5FD', border: '#3B82F640' }, // lys blå
-      ready:   { bg: '#78350F33', text: '#FACC15', border: '#CA8A0440' }, // gul
-      email:   { bg: '#312E8122', text: '#A78BFA', border: '#7C3AED40' }, // lilla
-      web:     { bg: '#07598533', text: '#38BDF8', border: '#0EA5E940' }, // cyan
-      phone:   { bg: '#14532D33', text: '#4ADE80', border: '#22C55E40' }  // grønn
-    };
+    let colors = colorsPalett;
   
     const totalEl  = makeChip('Totalt', sumTotal, colors.total);
+    const portalEl = makeChip('I portal', sumPortal, colors.portal);
     const emailEl  = makeChip('Har e-post', sumEmail, colors.email);
     const webEl    = makeChip('Har nettside', sumWeb, colors.web);
     const phoneEl  = makeChip('Har telefon', sumPhone, colors.phone);
-    const portalEl = makeChip('I portal', sumPortal, colors.portal);
+    
     counter.append(totalEl, emailEl, webEl, phoneEl, portalEl);
   }
 
