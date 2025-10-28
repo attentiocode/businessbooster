@@ -544,7 +544,6 @@ function initContactStateSelectFilter(){
     {value:'ready',  label:'Klar for utsending'},
     {value:'utvalg',  label:'Er i utvalg'},
     
-    
   ].forEach(({value,label})=>{
     const o=document.createElement('option'); o.value=value; o.textContent=label; sel.appendChild(o);
   });
@@ -583,6 +582,8 @@ function updateSelectCounterDark(
     color: '#E5E7EB'
   });
 
+  let colors = colorsPalett;
+
   const makeChip = (label, value, colors) => {
     const el = document.createElement('span');
     el.textContent = `${label}: ${value} stk.`;
@@ -598,7 +599,7 @@ function updateSelectCounterDark(
     return el;
   };
 
-  let colors = colorsPalett;
+  
 
   const totalEl  = makeChip('Totalt', sumTotal, colors.total);
   const portalEl = makeChip('I portal', sumPortal, colors.portal);
@@ -611,7 +612,6 @@ function updateSelectCounterDark(
   
   counter.append(totalEl, portalEl, inProcessEl,readyEl, emailEl, webEl, phoneEl );
 }
-
 
 function isThisCompanyInReadyMode(item) {
   // normaliser til kun siffer (fjerner mellomrom, NO-, etc.)
