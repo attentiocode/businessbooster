@@ -401,6 +401,8 @@ function renderReady(data) {
       fontWeight: '500',
       color: '#E5E7EB'
     });
+
+    let colors = colorsPalett;
   
     const makeChip = (label, value, colors) => {
       const el = document.createElement('span');
@@ -417,7 +419,7 @@ function renderReady(data) {
       return el;
     };
   
-    let colors = colorsPalett;
+   
   
     const totalEl  = makeChip('Totalt', sumTotal, colors.total);
     const portalEl = makeChip('I portal', sumPortal, colors.portal);

@@ -603,7 +603,7 @@ function updateSelectCounterDark(
 
   const totalEl  = makeChip('Totalt', sumTotal, colors.total);
   const portalEl = makeChip('I portal', sumPortal, colors.portal);
-  const inProcessEl = makeChip('I epostløp', sumInProsess, colors.inProsess);
+  const inProcessEl = makeChip('I epostløp', sumInProsess, colors.Prosess);
   const readyEl  = makeChip('Klar', sumReady, colors.ready);
   const utvalgEl = makeChip('I utvalg', sumUtvalg, colors.utvalg);
   const emailEl  = makeChip('Har e-post', sumEmail, colors.email);
