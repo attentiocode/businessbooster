@@ -8,10 +8,11 @@ document.getElementById("tabSelectButton").addEventListener("click", () => {
 
 
 function startSelection(data) {
-   
-    renderSelect(data);
+
+  renderSelect(data);
+
 }
-      
+
 
 //når søkefeltet med id searchSelect endres skal renderSelect kjøres med gSelectbedrifter som inndata
 document.getElementById("searchSelect").addEventListener("input", () => {
@@ -76,18 +77,9 @@ function renderSelect(data) {
 
   // Sets for state
   const inPortalSet = new Set((gCustomers || []).map(getOrgnr).filter(Boolean));
+  const inReadySet    = new Set((gReadybedrifter || []).map(getOrgnr).filter(Boolean));
   const inUtvalgSet = new Set((gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
-  const readySet    = new Set((gReadybedrifter || []).map(getOrgnr).filter(Boolean));
   const isInProsessSet = new Set((gProsessertBedrifter || []).map(getOrgnr).filter(Boolean));
-
-  // Ready-status
-  const isReady = (it) => {
-    const org = getOrgnr(it);
-    if (readySet.has(org)) return true;
-    const s = low(it?.status ?? '');
-    return s === 'klar' || s === 'ready' || s.includes('klar for');
-
-  };
 
   // Kontaktfilter (for select-listen)
   const passesContactFilter = (item, filterVal) => {
@@ -112,7 +104,6 @@ function renderSelect(data) {
       default:             return true;
     }
   };
-
 
   // --- Les filtre ---
   const searchEl   = document.getElementById('searchSelect');
@@ -162,7 +153,7 @@ function renderSelect(data) {
   if (stateFilter) {
     filteredData = filteredData.filter(b => {
       const org = getOrgnr(b);
-      if (stateFilter === 'ready')  return isReady(b);
+      if (stateFilter === 'ready')  return inReadySet.has(org);
       if (stateFilter === 'utvalg') return inUtvalgSet.has(org);
       if (stateFilter === 'portal') return inPortalSet.has(org);
       if (stateFilter === 'prosess') return isInProsessSet.has(org);
@@ -192,7 +183,7 @@ function renderSelect(data) {
     const rowIsPortal = inPortalSet.has(org);
     const rowIsInProsess = isInProsessSet.has(org);
     const rowIsUtvalg = inUtvalgSet.has(org);
-    let rowIsReady  = isReady(b);
+    let rowIsReady  = inReadySet.has(org);
 
     // Ekstra sjekk for ready (i tilfelle)
     if(!rowIsReady){
@@ -226,7 +217,6 @@ function renderSelect(data) {
       <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
     `;
 
-    
     if (!rowIsReady) {
       tr.style.cursor = 'pointer';
       tr.addEventListener('click', (e) => {
@@ -246,8 +236,8 @@ function renderSelect(data) {
       sumTotal,
       sumPortal,
       sumInProsess,
-      sumUtvalg,
       sumReady,
+      sumUtvalg,
       sumEmail,
       sumWeb,
       sumPhone,
