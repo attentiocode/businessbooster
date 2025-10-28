@@ -78,7 +78,7 @@ function renderSelect(data) {
   const inPortalSet = new Set((gCustomers || []).map(getOrgnr).filter(Boolean));
   const inUtvalgSet = new Set((gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
   const readySet    = new Set((gReadybedrifter || []).map(getOrgnr).filter(Boolean));
-  const isInProsessSet = new Set((gInProcessCompanies || []).map(getOrgnr).filter(Boolean));
+  const isInProsessSet = new Set((gProsessertBedrifter || []).map(getOrgnr).filter(Boolean));
 
   // Ready-status
   const isReady = (it) => {
