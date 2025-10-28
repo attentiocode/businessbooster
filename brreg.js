@@ -729,8 +729,8 @@ function updateBrregCounterDark(
     const totalEl    = makeChip('Totalt', sumTotal, colors.total);
     const portalEl   = makeChip('I portal', sumInPortal, colors.portal);
     const prosessEl   = makeChip('I epostløp', sumInProsess, colors.prosess);
-    const readyEl    = makeChip('Klar for utvalg', sumInReady, colors.ready);
-    const selectedEl = makeChip('Valgt', sumSelected, colors.selected);
+    const readyEl    = makeChip('Klar for utsending', sumInReady, colors.ready);
+    const selectedEl = makeChip('I utvalg', sumSelected, colors.selected);
     const emailEl    = makeChip('Har e-post', sumEmail, colors.email);
     const webEl      = makeChip('Har nettside', sumWeb, colors.web);
     const phoneEl    = makeChip('Har telefon', sumPhone, colors.phone);
