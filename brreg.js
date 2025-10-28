@@ -813,6 +813,7 @@ function initContactStateFilter(){
     {value:'',        label:'Alle selskap'},
     {value:'portal',  label:'Er i Portal'},
     {value:'utvalg',  label:'Er i utvalg'},
+    {value:'ready',    label:'Klar for utsending'},
     {value:'prosess', label:'Er i epostløp'},
   ].forEach(({value,label})=>{
     const o=document.createElement('option'); o.value=value; o.textContent=label; sel.appendChild(o);

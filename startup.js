@@ -558,9 +558,11 @@ function countReadyAndSendtCostumers(){
 
 function initFilterselectors() {
 
+  //brreg list filters
   initContactInfoFilter();
   initContactStateFilter();
 
+  //select list filters
   initContactInfoSelectFilter();
   initContactStateSelectFilter();
 

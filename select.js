@@ -542,7 +542,7 @@ function initContactStateSelectFilter(){
     {value:'portal',  label:'Er i Portal'},
     {value:'prosess',  label:'Er i epostløp'},
     {value:'utvalg',  label:'Er i utvalg'},
-    {value:'ready',  label:'Er i klar'},
+    {value:'ready',  label:'Klar for utsending'},
     
   ].forEach(({value,label})=>{
     const o=document.createElement('option'); o.value=value; o.textContent=label; sel.appendChild(o);
@@ -553,6 +553,7 @@ function initContactStateSelectFilter(){
 }
 
 function updateSelectCounterDark(
+
   sumTotal = 0,
   sumPortal = 0,
   sumInProsess = 0,
@@ -561,11 +562,8 @@ function updateSelectCounterDark(
   sumEmail = 0,
   sumWeb = 0,
   sumPhone = 0,
-  
-  
-  
-) 
 
+) 
 
 {
   const counter = document.getElementById('counterlistselect');
