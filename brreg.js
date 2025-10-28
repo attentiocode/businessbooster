@@ -697,6 +697,8 @@ function updateBrregCounterDark(
       color: '#E5E7EB'
     });
   
+    let colors = colorsPalett;
+    
     // --- Chip generator ---
     const makeChip = (label, value, colors) => {
       const el = document.createElement('span');
@@ -713,7 +715,7 @@ function updateBrregCounterDark(
       return el;
     };
   
-    let colors = colorsPalett;
+   
   
     // --- Legg til elementene ---
     const totalEl    = makeChip('Totalt', sumTotal, colors.total);
@@ -823,8 +825,6 @@ function initContactStateFilter(){
   });
 }
 
-
-// bransjer.js
 
 // Hent alle næringskoder (SN) fra SSB KLASS
 async function fetchAllIndustries(opts = {}) {

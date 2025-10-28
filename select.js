@@ -540,9 +540,10 @@ function initContactStateSelectFilter(){
   [
     {value:'',        label:'Alle selskap'},
     {value:'portal',  label:'Er i Portal'},
+    {value:'ready',  label:'Klar for utsending'},
     {value:'prosess',  label:'Er i epostløp'},
     {value:'utvalg',  label:'Er i utvalg'},
-    {value:'ready',  label:'Klar for utsending'},
+    
     
   ].forEach(({value,label})=>{
     const o=document.createElement('option'); o.value=value; o.textContent=label; sel.appendChild(o);
