@@ -538,15 +538,15 @@ function startBrregList(data) {
       // Bedrift er i prosessering så deaktiver valg
       sumInProsess++;
       tr.classList.add('inprosess');
-    } else if (isAlreadySel && alreadySelected) {
+    } else if (isReady) {
+      sumReady++;
+      tr.classList.add('selected');
+      item = isReady;
+    }else if (isAlreadySel && alreadySelected) {
       sumSelected++;
       tr.classList.add('selected');
       item = alreadySelected;
       g = (gGroupbedrifter || []).find((gr) => gr.id == item.group);
-    }else if (isReady) {
-      sumReady++;
-      tr.classList.add('selected');
-      item = isReady;
     }
 
     if (hasEmail(item)) sumEmail++;
