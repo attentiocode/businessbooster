@@ -75,10 +75,10 @@ function renderSelect(data) {
   const hasWeb = (it) => !!getWeb(it);
 
   // Sets for state
-  const inPortalSet = new Set((window.gCustomers || []).map(getOrgnr).filter(Boolean));
+  const inPortalSet = new Set((gCustomers || []).map(getOrgnr).filter(Boolean));
   const inUtvalgSet = new Set((gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
-  const readySet    = new Set((window.gReadybedrifter || []).map(getOrgnr).filter(Boolean));
-  const isInProsessSet = new Set((window.gInProcessCompanies || []).map(getOrgnr).filter(Boolean));
+  const readySet    = new Set((gReadybedrifter || []).map(getOrgnr).filter(Boolean));
+  const isInProsessSet = new Set((gInProcessCompanies || []).map(getOrgnr).filter(Boolean));
 
   // Ready-status
   const isReady = (it) => {
@@ -628,7 +628,6 @@ function updateSelectCounterDark(
   const emailEl  = makeChip('Har e-post', sumEmail, colors.email);
   const webEl    = makeChip('Har nettside', sumWeb, colors.web);
   const phoneEl  = makeChip('Har telefon', sumPhone, colors.phone);
-  
   
   counter.append(totalEl, portalEl, inProcessEl,readyEl, emailEl, webEl, phoneEl );
 }

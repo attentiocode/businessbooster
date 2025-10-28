@@ -572,7 +572,7 @@ function startBrregList(data) {
     
     }else if (isAlreadySel){
 
-      statusHtml = `<strong>Utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`;
+      statusHtml = `<strong>Er i utvalg</strong><span style="opacity:0.8;">${g?.name ? ` - ${g.name}` : ''}</span>`;
     } else {
       statusHtml = 'Brreg';
     }
