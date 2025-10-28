@@ -540,8 +540,8 @@ function initContactStateSelectFilter(){
   [
     {value:'',        label:'Alle selskap'},
     {value:'portal',  label:'Er i Portal'},
-    {value:'ready',  label:'Klar for utsending'},
     {value:'prosess',  label:'Er i epostløp'},
+    {value:'ready',  label:'Klar for utsending'},
     {value:'utvalg',  label:'Er i utvalg'},
     
     
