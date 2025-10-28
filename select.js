@@ -78,6 +78,7 @@ function renderSelect(data) {
   const inPortalSet = new Set((window.gCustomers || []).map(getOrgnr).filter(Boolean));
   const inUtvalgSet = new Set((gSelectbedrifter || []).map(getOrgnr).filter(Boolean));
   const readySet    = new Set((window.gReadybedrifter || []).map(getOrgnr).filter(Boolean));
+  const isInProsessSet = new Set((window.gInProcessCompanies || []).map(getOrgnr).filter(Boolean));
 
   // Ready-status
   const isReady = (it) => {
@@ -85,9 +86,6 @@ function renderSelect(data) {
     if (readySet.has(org)) return true;
     const s = low(it?.status ?? '');
     return s === 'klar' || s === 'ready' || s.includes('klar for');
-
-
-
 
   };
 
@@ -167,6 +165,7 @@ function renderSelect(data) {
       if (stateFilter === 'ready')  return isReady(b);
       if (stateFilter === 'utvalg') return inUtvalgSet.has(org);
       if (stateFilter === 'portal') return inPortalSet.has(org);
+      if (stateFilter === 'prosess') return isInProsessSet.has(org);
       return true;
     });
   }
@@ -174,6 +173,7 @@ function renderSelect(data) {
   // --- TELLERE ---
   let sumTotal   = filteredData.length;
   let sumPortal  = 0;
+  let sumInProsess = 0;
   let sumUtvalg  = 0;
   let sumReady   = 0;
   let sumEmail   = 0;
@@ -190,6 +190,7 @@ function renderSelect(data) {
 
     const org = getOrgnr(b);
     const rowIsPortal = inPortalSet.has(org);
+    const rowIsInProsess = isInProsessSet.has(org);
     const rowIsUtvalg = inUtvalgSet.has(org);
     let rowIsReady  = isReady(b);
 
@@ -199,6 +200,7 @@ function renderSelect(data) {
     }
 
     if (rowIsPortal) sumPortal++;
+    if (rowIsInProsess) sumInProsess++;
     if (rowIsUtvalg) sumUtvalg++;
     if (rowIsReady)  sumReady++;
     if (hasEmail(b)) sumEmail++;
@@ -242,13 +244,14 @@ function renderSelect(data) {
   if (typeof updateSelectCounterDark === 'function') {
     updateSelectCounterDark(
       sumTotal,
+      sumPortal,
+      sumInProsess,
+      sumUtvalg,
+      sumReady,
       sumEmail,
       sumWeb,
       sumPhone,
-      sumReady,    
-      sumPortal,  
-      sumUtvalg,  
-
+      
     );
   } else {
     const counter = document.getElementById("counterlistutvalg");
@@ -547,9 +550,9 @@ function initContactStateSelectFilter(){
   [
     {value:'',        label:'Alle selskap'},
     {value:'portal',  label:'Er i Portal'},
+    {value:'prosess',  label:'Er i epostløp'},
     {value:'utvalg',  label:'Er i utvalg'},
     {value:'ready',  label:'Er i klar'},
-    {value:'prosess',  label:'Er i epostløp'},
     
   ].forEach(({value,label})=>{
     const o=document.createElement('option'); o.value=value; o.textContent=label; sel.appendChild(o);
@@ -561,12 +564,16 @@ function initContactStateSelectFilter(){
 
 function updateSelectCounterDark(
   sumTotal = 0,
+  sumPortal = 0,
+  sumInProsess = 0,
+  sumReady = 0,
+  sumUtvalg = 0,
   sumEmail = 0,
   sumWeb = 0,
   sumPhone = 0,
-  sumReady = 0,
-  sumPortal = 0,
-  sumUtvalg = 0
+  
+  
+  
 ) 
 
 
@@ -605,20 +612,25 @@ function updateSelectCounterDark(
   const colors = {
     total:   { bg: '#1E3A8A1A', text: '#93C5FD', border: '#1E3A8A40' }, // blå
     portal:  { bg: '#064E3B33', text: '#6EE7B7', border: '#10B98140' }, // grønn
-    utvalg:  { bg: '#1E40AF33', text: '#93C5FD', border: '#3B82F640' }, // lys blå
+    inProsess: { bg: '#78350F33', text: '#FBBF24', border: '#D9770640' }, // oransje
     ready:   { bg: '#78350F33', text: '#FACC15', border: '#CA8A0440' }, // gul
+    utvalg:  { bg: '#1E40AF33', text: '#93C5FD', border: '#3B82F640' }, // lys blå
     email:   { bg: '#312E8122', text: '#A78BFA', border: '#7C3AED40' }, // lilla
     web:     { bg: '#07598533', text: '#38BDF8', border: '#0EA5E940' }, // cyan
     phone:   { bg: '#14532D33', text: '#4ADE80', border: '#22C55E40' }  // grønn
   };
 
   const totalEl  = makeChip('Totalt', sumTotal, colors.total);
+  const portalEl = makeChip('I portal', sumPortal, colors.portal);
+  const inProcessEl = makeChip('I epostløp', sumInProsess, colors.inProsess);
+  const readyEl  = makeChip('Klar', sumReady, colors.ready);
+  const utvalgEl = makeChip('I utvalg', sumUtvalg, colors.utvalg);
   const emailEl  = makeChip('Har e-post', sumEmail, colors.email);
   const webEl    = makeChip('Har nettside', sumWeb, colors.web);
   const phoneEl  = makeChip('Har telefon', sumPhone, colors.phone);
-  const readyEl  = makeChip('Klar', sumReady, colors.ready);
-  const portalEl = makeChip('I portal', sumPortal, colors.portal);
-  counter.append(totalEl, emailEl, webEl, phoneEl, readyEl, portalEl);
+  
+  
+  counter.append(totalEl, portalEl, inProcessEl,readyEl, emailEl, webEl, phoneEl );
 }
 
 
