@@ -220,11 +220,9 @@ function maketimerunnerObjects(companyes) {
 
     companyes.forEach(company => {
 
-        
-        let steppCount = 5; //antall steg i epostforløpet
-        for (var i = 0; i < steppCount; i++) {
+        for (var i = 0; i < mailSettings.length; i++) {
 
-            let daystepp = ['stepp' + (i + 1)];
+            let daystepp = mailSettings[i].stepp;
             const nextSteppDate = new Date();
             
             if (daystepp == 0) {
@@ -237,7 +235,7 @@ function maketimerunnerObjects(companyes) {
 
 
             let emailBody = getEmailBody(company,null);
-            let subject = eval('subject' + (i + 1));
+            let subject = mailSettings[i].subject || '';
 
 
             let timerunnerObject = {
