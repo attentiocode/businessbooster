@@ -221,7 +221,7 @@ function maketimerunnerObjects(companyes) {
     companyes.forEach(company => {
 
         
-        let steppCount = Object.keys(email_series).filter(key => key.startsWith('stepp')).length;
+        let steppCount = 5; //antall steg i epostforløpet
         for (var i = 0; i < steppCount; i++) {
 
             let daystepp = ['stepp' + (i + 1)];
