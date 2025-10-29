@@ -18,6 +18,7 @@ function airtablebodylistAND(obj){
       return body;
 }
 
+
 function rawdatacleaner(data){
     var array = [];
         for (var i = 0;i<data.data.length;i++){
