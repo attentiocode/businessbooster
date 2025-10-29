@@ -571,9 +571,6 @@ function initFilterselectors() {
   initContactStateSelectFilter();
 
   //ready list filters
-  initContactInfoReadyFilter();
-  initContactStateReadyFilter();
-
   initcssIconStyle();
 
 }
