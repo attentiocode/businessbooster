@@ -285,6 +285,8 @@ function ruteresponse(data,responseid){
       dataFromProff(data);
     }else if(responseid==="customerResponse"){
       customerResponse(data);
+    }else if(responseid==="leadsResponse"){
+      leadsResponse(data);
     }
 }
 
@@ -493,9 +495,8 @@ function customerResponse(data){
       let newcustomers = getNewCustomersInPortal(customers,30);
       updateCounter("label-new-customers", newcustomers, 1000, " siste 30 dager");
 
-   
-  
 }
+
 function getNewCustomersInPortal(customers,days){
     const now = new Date();
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
@@ -522,7 +523,6 @@ function convertCustomerJsonStringsToObjects(jsonStrings) {
           // Parse JSON-strengen uten HTML-dataen
           const data = JSON.parse(jsonString);
 
-
           // Sørg for at "group" og "category" alltid er arrays
           if (!data.cashflowjson) {
               data.cashflowjson = [];
@@ -548,16 +548,28 @@ function convertCustomerJsonStringsToObjects(jsonStrings) {
   });
 }
 
+function convertLeadsJsonStringsToObjects(jsonStrings) {
+  return jsonStrings.map((jsonString, index) => {
+      try {
+          
+        // Parse JSON-strengen uten HTML-dataen
+        const data = JSON.parse(jsonString);
+        return data;
+
+      } catch (error) {
+        console.error(`Feil ved parsing av JSON-streng på indeks ${index}:`, jsonString, error);
+        return null; // Returner null hvis parsing feiler
+      }
+  });
+}
+
 updateCounter("label-selected-customers", gSelectbedrifter.length, 1000);
 updateCounter("label-ready-customers", gReadybedrifter.length, 1000);
 updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
 
-
-
 function countReadyAndSendtCostumers(){
 //telle alle cunder som har status som sendt returner antall
   return  gReadybedrifter.filter(b => b.status === 'EpostSendt').length;
-  
 }
 
 function initFilterselectors() {
@@ -597,10 +609,33 @@ function initcssIconStyle() {
 }
 
 function getBoosterLeads(){
-
-
-
-
-
+     
+  //hente leads
+  GETairtable("appEUYGzpBtxB0fFe","tbllGJ7qtX4LXVmXm","rec3a2DzF0xfNWt0i","leadsResponse","skipCache");
   
+}
+
+
+function leadsResponse(data){
+  //ingen handling nødvendig her foreløpig
+
+  if (!data || !data.fields || !data.fields.leadsjson || !Array.isArray(data.fields.leadsjson)) {
+    console.error("Ugyldig dataformat: Forventet et objekt med 'fields.leadsjson' som en array.");
+    return; // Avbryt hvis data ikke er gyldig
+  } 
+
+  // Konverter JSON-strenger til objekter
+  const jsonStrings = data.fields.leadsjson;
+
+  let boosterLeads = convertLeadsJsonStringsToObjects(jsonStrings);
+  gProsessertBedrifter = boosterLeads;
+  updateCounter("label-mailer-sendt", countReadyAndSendtCostumers(), 1000);
+  console.log("Booster leads konvertert:", gProsessertBedrifter);
+  //lagre i global variabel
+  
+
+
+
+
+
 }
