@@ -39,7 +39,7 @@ function loadGroupSelectors(data){
         option.textContent = g.name;
         selector.appendChild(option);
       });
-      selector.value = currentValue || 'ALL';
+      //selector.value = 'ALL';
 
   });
 }
