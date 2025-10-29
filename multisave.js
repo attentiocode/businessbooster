@@ -19,7 +19,6 @@ function creatSaveCompatibleList(orgnrList) {
       "aktivitet",
       "status",
       "group",
-      "email_series", // <- vi fyller denne under
     ];
   
     const ALIASES = {
@@ -40,25 +39,7 @@ function creatSaveCompatibleList(orgnrList) {
       return String(v);
     }
   
-    // --- NYTT: bygg JSON-streng for email_series fra globale stepp1..5 ---
-    function buildEmailSeriesJSON() {
-      const obj = {};
-      for (let i = 1; i <= 5; i++) {
-        const key = "stepp" + i;
-        const val = globalThis?.[key]; // funker i både browser og node
-        if (val !== undefined && val !== null && String(val).trim() !== "") {
-          obj[key] = val;
-        }
-      }
-      // returner undefined hvis vi ikke har noe å lagre
-      if (Object.keys(obj).length === 0) return undefined;
-      try {
-        return JSON.stringify(obj);
-      } catch {
-        return undefined;
-      }
-    }
-    // ---------------------------------------------------------------
+  
   
     // Kritisk: sørger for at verdien blir string eller boolean (aldri array)
     function sanitizeForAirtable(val) {
@@ -151,8 +132,7 @@ function creatSaveCompatibleList(orgnrList) {
     const list = Array.isArray(orgnrList) ? orgnrList : [];
   
     // Forberedt én gang per kall
-    const emailSeriesJson = buildEmailSeriesJSON();
-  
+   
     list.forEach((orgnr) => {
       const normalizedQueryOrgnr = normalizeOrgnr(orgnr);
   
@@ -190,12 +170,6 @@ function creatSaveCompatibleList(orgnrList) {
         if (field === "status" && (raw == null || raw === "")) {
           raw = "Klar for utsendelse";
         }
-  
-        // --- NYTT: tving email_series til å bruke den ferdige JSON-strengen ---
-        if (field === "email_series") {
-          raw = emailSeriesJson; // kan være undefined hvis ingen stepp* er satt
-        }
-        // ----------------------------------------------------------------------
   
         const val = sanitizeForAirtable(raw);
   
