@@ -554,6 +554,10 @@ function convertLeadsJsonStringsToObjects(jsonStrings) {
           
         // Parse JSON-strengen uten HTML-dataen
         const data = JSON.parse(jsonString);
+        // hvs det finnes et felt med dette navnet "email_series"
+        if (!data.email_series) {
+            data.email_series = [];
+        }
         return data;
 
       } catch (error) {
