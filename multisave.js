@@ -220,11 +220,11 @@ function maketimerunnerObjects(companyes) {
 
     companyes.forEach(company => {
 
-        let email_series = company.email_series ? JSON.parse(company.email_series) : {};
+        
         let steppCount = Object.keys(email_series).filter(key => key.startsWith('stepp')).length;
         for (var i = 0; i < steppCount; i++) {
 
-            let daystepp = email_series['stepp' + (i + 1)];
+            let daystepp = ['stepp' + (i + 1)];
             const nextSteppDate = new Date();
             
             if (daystepp == 0) {
