@@ -22,7 +22,7 @@ let userName = null;
 
 
 document.getElementById("select-field-preset").addEventListener('change', (e) => {
-    startBrregList(gBrregbedrifter);
+  startBrregList(gBrregbedrifter);
 });
 
 document.getElementById("select-contact-info-filter").addEventListener('change', (e) => {
@@ -34,7 +34,7 @@ document.getElementById("select-contact-state-filter").addEventListener('change'
 });
 
 document.getElementById("filterGroupReadyMaster").addEventListener('change', (e) => {
-  startReadyList(gReadybedrifter);
+  renderReady(gReadybedrifter);
 });
 
 //sideknappene rooting
