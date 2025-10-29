@@ -24,6 +24,8 @@ document.getElementById("filterGroupSelectMaster").addEventListener("change", ()
 });
 
 
+
+
 document.getElementById("select-contact-info-select-filter").addEventListener('change', (e) => {
   renderSelect(gSelectbedrifter);
 });

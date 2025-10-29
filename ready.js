@@ -3,6 +3,11 @@ document.getElementById('tabReadyButton').addEventListener('click', () => {
     renderReady(gReadybedrifter || []);
 });
 
+//når søkefeltet med id searchSelect endres skal renderSelect kjøres med gSelectbedrifter som inndata
+document.getElementById("search-Select-ready").addEventListener("input", () => {
+  renderReady(gReadybedrifter || []);
+});
+
 
 function renderReady(data) {
     const tbody = document.getElementById('rowlistReady');
