@@ -32,6 +32,7 @@ function loadGroupSelectors(data){
 
   groupSelectors.forEach(selector => {
     //oppdater gruppe selector
+    let currentValue = selector.value;
       selector.innerHTML = '<option value="ALL">Alle grupper</option>';
       data.forEach(g => {
         const option = document.createElement('option');
@@ -39,7 +40,7 @@ function loadGroupSelectors(data){
         option.textContent = g.name;
         selector.appendChild(option);
       });
-      //selector.value = 'ALL';
+      selector.value = currentValue || 'ALL';
 
   });
 }
