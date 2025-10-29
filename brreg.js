@@ -745,6 +745,7 @@ function updateBrregCounterDark(
 function initContactInfoFilter() {
   let select = document.getElementById('select-contact-info-filter');
 
+
   // Opprett select hvis den ikke finnes
   if (!select) {
     select = document.createElement('select');

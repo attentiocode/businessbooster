@@ -20,20 +20,28 @@ function renderGroups(filter='') {
     });
   localStorage.setItem('gGroupbedrifter', JSON.stringify(gGroupbedrifter));
 
-  //oppdater selector
-    const groupSelect = document.getElementById('filterGroupSelectMaster');
-    if (groupSelect) {
-      const currentValue = groupSelect.value;
-      groupSelect.innerHTML = '<option value="ALL">Alle grupper</option>';
-      gGroupbedrifter.forEach(g => {
+  //oppdater gruppe selector
+  loadGroupSelectors(gGroupbedrifter);
+
+}
+
+function loadGroupSelectors(data){
+
+  //sinne alle gruppeSelector som er i denne klassen "group-selectors"
+  const groupSelectors = document.querySelectorAll('.group-selectors');
+
+  groupSelectors.forEach(selector => {
+    //oppdater gruppe selector
+      selector.innerHTML = '<option value="ALL">Alle grupper</option>';
+      data.forEach(g => {
         const option = document.createElement('option');
         option.value = g.id;
         option.textContent = g.name;
-        groupSelect.appendChild(option);
+        selector.appendChild(option);
       });
-      groupSelect.value = currentValue || 'ALL';
-    }
+      selector.value = currentValue || 'ALL';
 
+  });
 }
 
 function openGroupDialog() {

@@ -33,6 +33,10 @@ document.getElementById("select-contact-state-filter").addEventListener('change'
   startBrregList(gBrregbedrifter);
 });
 
+document.getElementById("filterGroupReadyMaster").addEventListener('change', (e) => {
+  startReadyList(gReadybedrifter);
+});
+
 //sideknappene rooting
 document.getElementById("dashboardSideButton").addEventListener("click", function() {
     document.getElementById("dashboardTabButton").click();
@@ -565,6 +569,10 @@ function initFilterselectors() {
   //select list filters
   initContactInfoSelectFilter();
   initContactStateSelectFilter();
+
+  //ready list filters
+  initContactInfoReadyFilter();
+  initContactStateReadyFilter();
 
   initcssIconStyle();
 
