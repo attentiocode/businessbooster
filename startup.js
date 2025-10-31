@@ -50,6 +50,10 @@ document.getElementById("presetSideButton").addEventListener("click", function()
     document.getElementById("presetTabButton").click();
 });
 
+document.getElementById("tabProsessButton").addEventListener("click", function() {
+  renderProsess(gProsessertBedrifter);
+});
+
 document.getElementById("groupEmailButton").addEventListener("click", function() {
     document.getElementById("emailTabButton").click();
 });
