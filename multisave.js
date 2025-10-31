@@ -159,36 +159,49 @@ function startMultisaveProcess(orgnrList) {
     const data = creatSaveCompatibleList(orgnrList);
   
     // Post til Airtable
-    multisaveAirtable(data, baseid, tabelid, "postToBoosterDB","Booster lagring ");
+    multisaveAirtable(data, baseid, tabelid, "multiReturnfromAirtable","Booster lagring ");
 }
   
 function multiReturnfromAirtable(payload) {
     
-    let cleanerData = cleanReturnfromAirtable(payload)
-    console.log("Multisave fullført med respons:", cleanerData);
+  let cleanerData = cleanReturnfromAirtable(payload)
+  console.log("Multisave fullført med respons:", cleanerData);
 
-    //legge til alle rader i cleanerData inn i gProsessertBedrifter slett de gamle om de eksisterer
-    cleanerData.forEach(row => {
-        //sjekke om orgnr finnes i gProsessertBedrifter
-        let existingIndex = gProsessertBedrifter.findIndex(bedrift => bedrift.orgnr === row.orgnr);
-        if(existingIndex !== -1){
-            //oppdatere eksisterende rad
-            gProsessertBedrifter[existingIndex] = row;
-        }else{
-            //legge til ny rad
-            gProsessertBedrifter.push(row);
-        }
-    });
+  //legge til alle rader i cleanerData inn i gProsessertBedrifter slett de gamle om de eksisterer
+  cleanerData.forEach(row => {
+      //sjekke om orgnr finnes i gProsessertBedrifter
+      let existingIndex = gProsessertBedrifter.findIndex(bedrift => bedrift.orgnr === row.orgnr);
+      if(existingIndex !== -1){
+          //oppdatere eksisterende rad
+          gProsessertBedrifter[existingIndex] = row;
+      }else{
+          //legge til ny rad
+          gProsessertBedrifter.push(row);
+      }
+  });
 
-    
-    //lagre lokalt
-    localStorage.setItem("gProsessertBedrifter", JSON.stringify(gProsessertBedrifter));
+  //lagre lokalt
+  localStorage.setItem("gProsessertBedrifter", JSON.stringify(gProsessertBedrifter));
 
-    //oppdater UI
-    updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
+  //slette disse rader fra gReadybedrifter
+  cleanerData.forEach(row => {
+      gReadybedrifter = gReadybedrifter.filter(bedrift => bedrift.orgnr !== row.orgnr);
+  });
 
-    //opprette hele epostforløpet i timerunner db
-    makeNextSteppInTimeRunner(cleanerData);
+  //lagre lokalt
+  localStorage.setItem("gReadybedrifter", JSON.stringify(gReadybedrifter));
+  //oppdater listen Ready bedrifter i UI
+  renderReady(gReadybedrifter);
+
+  //oppdater UI
+  updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
+
+  //opprette hele epostforløpet i timerunner db
+  makeNextSteppInTimeRunner(cleanerData);
+
+
+  //Rendre listen over prosesserte bedrifter på nytt
+  renderProsess(gProsessertBedrifter);
 
 }
 
@@ -200,7 +213,7 @@ function makeNextSteppInTimeRunner(companyes){
     //starte multisave i timrunnerdb
     const baseid = "appISWcEA5QICIlzP";
     const tabelid = "tblldBMExI1U4yMNI";
-    multisaveAirtable(timerunnerObjects, baseid, tabelid, "postToTimeRunnerDB","Epostforløp lagring ");
+    multisaveAirtable(timerunnerObjects, baseid, tabelid, "multiReturnFromTimeRunnerAirtable","Epostforløp lagring ");
 
 }
 
@@ -209,6 +222,9 @@ function multiReturnFromTimeRunnerAirtable(payload) {
     
     //Trigg time runner for å plukke opp nye jobber
     triggerTimeRun();
+
+
+    //
      
 }
 
@@ -324,9 +340,9 @@ async function multisaveAirtable(data, baseid, tabelid, returid,lable) {
         statusProcessing(lable,totalRows, uploadedRows);
         await processBatches();
 
-        if(returid === "postToBoosterDB"){
+        if(returid === "multiReturnfromAirtable"){
         multiReturnfromAirtable({ success: true, data: allResponses});
-        }else if(returid === "postToTimeRunnerDB"){
+        }else if(returid === "multiReturnFromTimeRunnerAirtable"){
         multiReturnFromTimeRunnerAirtable({ success: true, data: allResponses});
         }
 

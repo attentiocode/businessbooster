@@ -20,7 +20,10 @@ const cdnScripts = [
     "https://attentiocode.github.io/businessbooster/ready.js",
     "https://attentiocode.github.io/businessbooster/emailloop.js",
     "https://attentiocode.github.io/businessbooster/multisave.js",
-    "https://attentiocode.github.io/businessbooster/emailsending.js"
+    "https://attentiocode.github.io/businessbooster/emailsending.js",
+    "https://attentiocode.github.io/businessbooster/prosess.js"
+
+    
 ];
 
 // Laste inn alle skriptene sekvensielt
@@ -44,7 +47,6 @@ cdnScripts.reduce((promise, script) => {
 
             //hent alle kunder fra airtable
             getCustomer();
-
             //hent alle 
             getBoosterLeads();
             //  
