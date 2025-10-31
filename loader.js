@@ -10,6 +10,7 @@ function loadScript(url) {
 
 // Liste over CDN-URL-er som skal lastes inn
 const cdnScripts = [
+
     "https://attentiocode.github.io/businessbooster/startup.js",
     "https://attentiocode.github.io/businessbooster/apicom.js",
     "https://attentiocode.github.io/businessbooster/proff.js",
@@ -23,7 +24,6 @@ const cdnScripts = [
     "https://attentiocode.github.io/businessbooster/emailsending.js",
     "https://attentiocode.github.io/businessbooster/prosess.js"
 
-    
 ];
 
 // Laste inn alle skriptene sekvensielt
