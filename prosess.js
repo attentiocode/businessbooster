@@ -37,30 +37,6 @@ function renderProsess(data){
         const hasWeb = (it) => !!getWeb(it);
       
        
-        // Kontaktfilter (for ready-listen)
-        const passesContactFilter = (item, filterVal) => {
-          if (!filterVal) return true;
-      
-          const email = hasEmail(item);
-          const web = hasWeb(item);
-          const phone = hasPhone(item);
-      
-          switch (filterVal) {
-            case 'email':        return email;
-            case 'web':          return web;
-            case 'phone':        return phone;
-            case 'email-only':   return email && !web && !phone;
-            case 'web-only':     return web && !email && !phone;
-            case 'phone-only':   return phone && !email && !web;
-            case 'email-web':    return email && web && !phone;
-            case 'email-phone':  return email && phone && !web;
-            case 'web-phone':    return web && phone && !email;
-            case 'all-three':    return email && web && phone;
-            case 'missing-email': return !email; // 👈 nytt filter for “mangler epost”
-            default:             return true;
-          }
-        };
-    
         // --- Les filtre ---
         const searchEl   = document.getElementById('search-input-prosess');
         const searchTerm = low(searchEl ? searchEl.value : '');
