@@ -72,10 +72,7 @@ function renderProsess(data){
       
         // --- TELLERE ---
         let sumTotal   = filteredData.length;
-        let sumPortal  = 0;
-        let sumEmail   = 0;
-        let sumWeb     = 0;
-        let sumPhone   = 0;
+      
       
         // Lookup for handlers
         const byOrgnr = new Map(filteredData.map(it => [getOrgnr(it), it]));
@@ -86,17 +83,6 @@ function renderProsess(data){
           tr.classList.add('default-row');
       
           const org = getOrgnr(b);
-          const rowIsPortal = inPortalSet.has(org);
-          let isSendt = false;
-      
-          
-      
-          if (rowIsPortal) sumPortal++;
-          if (hasEmail(b)) sumEmail++;
-          if (hasWeb(b))   sumWeb++;
-          if (hasPhone(b)) sumPhone++;
-      
-        
       
           const g = (gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
           const contactHtml = renderContactIcons(b);
