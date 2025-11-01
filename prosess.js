@@ -451,11 +451,7 @@ function onToggleFlowStop(flowId, isStopped, step) {
         "tblldBMExI1U4yMNI",
         flowId,
         data
-        ).then((res) => {
-        console.log("Flow oppdatert:", res);
-        }).catch((err) => {
-        console.error("Feil ved oppdatering av flow:", err);
-        });
+        );
 }
 
   
