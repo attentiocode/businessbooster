@@ -201,6 +201,9 @@ function multiReturnfromAirtable(payload) {
   updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
   makeNextSteppInTimeRunner(cleanerData);
   renderProsess(gProsessertBedrifter);
+
+  //åpen prosess fane
+  document.getElementById("tabProsessButton").click();
 }
 
 
