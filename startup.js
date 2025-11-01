@@ -257,7 +257,7 @@ document.getElementById("selectmastercheckbox").addEventListener("change", funct
     
 });
 
-document.getElementById("readymastercheckbox").addEventListener("change", function() {
+document.getElementById("readymulticheckbox").addEventListener("change", function() {
   const container = document.getElementById("rowlistReady");
   const checkboxes = container.querySelectorAll(".selectcheckbox")
   checkboxes.forEach(cb => {
