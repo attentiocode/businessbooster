@@ -233,51 +233,38 @@ function renderEmailFlows(flows = []) {
 
 // Oppretter / toggler en ekspansjonsrad etter gitt <tr>
 function toggleExpandRowAfter(tr, contentHTML, open = true) {
-  // Finn eksisterende expand-row
-  let next = tr.nextElementSibling;
-  const isExpandRow = next && next.classList.contains('expand-row');
-
-  // Lukk hvis åpen og vi skal toggle
-  if (isExpandRow && !open) {
-    const wrap = next.querySelector('.expand-wrap');
+    const next = tr.nextElementSibling;
+    const isExpandRow = next && next.classList.contains('expand-row');
+  
+    // Hvis raden allerede er åpen, og vi klikker igjen ⇒ lukk den
+    if (isExpandRow) {
+      const wrap = next.querySelector('.expand-wrap');
+      wrap.style.maxHeight = '0px';
+      setTimeout(() => next.remove(), 260);
+      return; // <- stopper her, så du får "toggle"-oppførsel
+    }
+  
+    // Ellers åpne ny
+    const colSpan = tr.children.length;
+    const expandTr = document.createElement('tr');
+    expandTr.className = 'expand-row';
+    expandTr.innerHTML = `
+      <td colspan="${colSpan}">
+        <div class="expand-wrap">
+          <div class="expand-inner">${contentHTML}</div>
+        </div>
+      </td>
+    `;
+    tr.parentNode.insertBefore(expandTr, tr.nextSibling);
+  
+    const wrap = expandTr.querySelector('.expand-wrap');
+    const inner = expandTr.querySelector('.expand-inner');
     wrap.style.maxHeight = '0px';
-    // fjern etter animasjon
-    setTimeout(() => next.remove(), 260);
-    return;
-  }
-
-  // Hvis finnes, oppdater innhold og åpne
-  if (isExpandRow) {
-    const inner = next.querySelector('.expand-inner');
-    inner.innerHTML = contentHTML;
-    const wrap = next.querySelector('.expand-wrap');
     requestAnimationFrame(() => {
       wrap.style.maxHeight = inner.scrollHeight + 'px';
     });
-    return;
   }
-
-  // Opprett ny ekspansjonsrad
-  const colSpan = tr.children.length; // samme antall kolonner
-  const expandTr = document.createElement('tr');
-  expandTr.className = 'expand-row';
-  expandTr.innerHTML = `
-    <td colspan="${colSpan}">
-      <div class="expand-wrap">
-        <div class="expand-inner">${contentHTML}</div>
-      </div>
-    </td>
-  `;
-  tr.parentNode.insertBefore(expandTr, tr.nextSibling);
-
-  // Trigg animasjonen
-  const wrap = expandTr.querySelector('.expand-wrap');
-  const inner = expandTr.querySelector('.expand-inner');
-  wrap.style.maxHeight = '0px';
-  requestAnimationFrame(() => {
-    wrap.style.maxHeight = inner.scrollHeight + 'px';
-  });
-}
+  
 
 // Hovedfunksjon for klikk på rad (enkeltklikk = åpne/toggle ekspansjon)
 async function handleRowClick(tr, bedriftObj) {
