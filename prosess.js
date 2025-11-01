@@ -184,7 +184,7 @@ async function fetchEmailFlowsByAirtable(airtableId) {
     return null;
     }else {
     let data = await response.json();
-    return data
+    return data.data;
     };
  
 
