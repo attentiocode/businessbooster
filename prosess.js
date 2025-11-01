@@ -444,7 +444,8 @@ function onToggleFlowStop(flowId, isStopped, step) {
     //   body: JSON.stringify({ id: flowId, stopp: isStopped, step }) });
     console.log('toggle stopp', { flowId, isStopped, step });
 
-    let data = {stopp: true};
+    let data = JSON.stringify({stopp: true});
+
         PATCHairtable(
         "appISWcEA5QICIlzP",
         "tblldBMExI1U4yMNI",
