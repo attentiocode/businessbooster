@@ -191,42 +191,99 @@ async function fetchEmailFlowsByAirtable(airtableId) {
 }
 
 // Presenter flows i en liten tabell-grid
+// Presenter flows i en liten tabell-grid (tilpasset Airtable-responsen over)
 function renderEmailFlows(flows = []) {
-  if (!flows.length) {
-    return `<div class="muted">Ingen epostforløp funnet for denne kunden.</div>`;
-  }
-  const hdr = `
-    <div class="flows-grid" style="margin-bottom:6px;">
-      <div class="hdr">Emne</div>
-      <div class="hdr">Steg</div>
-      <div class="hdr">Status</div>
-      <div class="hdr">Planlagt / Sendt</div>
-    </div>
-  `;
-  const rows = flows.map(f => {
-    const statusTag = (() => {
-      const base = 'tag';
-      if (f.status === 'sent' || f.status === 'opened' || f.status === 'clicked') return `${base} ok`;
-      if (f.status === 'failed') return `${base} warn`;
-      return base;
-    })();
-    const when =
-      f.sentAt
-        ? new Date(f.sentAt).toLocaleString('no-NO')
-        : (f.scheduledAt ? new Date(f.scheduledAt).toLocaleString('no-NO') : '—');
-
-    return `
-      <div class="flows-grid">
-        <div><strong>${f.subject || '—'}</strong><div class="muted">${f.to || ''}</div></div>
-        <div>${Number.isFinite(+f.step) ? f.step : '—'}</div>
-        <div><span class="${statusTag}">${f.status || '—'}</span></div>
-        <div>${when}</div>
+    if (!Array.isArray(flows) || !flows.length) {
+      return `<div class="muted">Ingen epostforløp funnet for denne kunden.</div>`;
+    }
+  
+    // Normaliser hver rad fra Airtable -> flate felt
+    const norm = flows.map(row => {
+      const f = row?.fields || row?._rawJson?.fields || row || {};
+      // payload kan være JSON-streng – prøv å parse
+      let payload = {};
+      try {
+        if (typeof f.payload === 'string') payload = JSON.parse(f.payload);
+        else if (f.payload && typeof f.payload === 'object') payload = f.payload;
+      } catch { /* ignorer parsefeil */ }
+  
+      // Statusmapping
+      let status = 'queued';
+      if (f.executed === true) status = 'sent';
+      else if (typeof f.status === 'string') {
+        const s = f.status.toLowerCase();
+        if (s === 'pending') status = 'queued';
+        else if (['sent','opened','clicked','failed','queued'].includes(s)) status = s;
+      }
+  
+      return {
+        subject: payload.subject || f.title || '—',
+        to: payload.epost || payload.email || '',
+        step: (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr))) ? Number(f.internnr) : (f.step ?? null),
+        status,
+        scheduledAt: f.when || null,
+        sentAt: f.executedAt || null
+      };
+    });
+  
+    // Sortér fornuftig: stigende steg, deretter tidspunkt
+    norm.sort((a, b) => {
+      const sa = (a.step ?? Number.POSITIVE_INFINITY);
+      const sb = (b.step ?? Number.POSITIVE_INFINITY);
+      if (sa !== sb) return sa - sb;
+      const ta = a.sentAt || a.scheduledAt || 0;
+      const tb = b.sentAt || b.scheduledAt || 0;
+      return new Date(ta) - new Date(tb);
+    });
+  
+    const fmtDT = (iso) => {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return isNaN(d) ? '—' : d.toLocaleString('no-NO');
+    };
+  
+    const hdr = `
+      <div class="flows-grid" style="margin-bottom:6px;">
+        <div class="hdr">Emne</div>
+        <div class="hdr">Steg</div>
+        <div class="hdr">Status</div>
+        <div class="hdr">Planlagt / Sendt</div>
       </div>
     `;
-  }).join('');
-
-  return hdr + rows;
-}
+  
+    const rows = norm.map(f => {
+      const statusTag = (() => {
+        const base = 'tag';
+        if (['sent','opened','clicked'].includes(f.status)) return `${base} ok`;
+        if (f.status === 'failed') return `${base} warn`;
+        return base; // queued / annet
+      })();
+  
+      const when = f.sentAt ? fmtDT(f.sentAt) : fmtDT(f.scheduledAt);
+  
+      return `
+        <div class="flows-grid">
+          <div><strong>${escapeHtml(f.subject)}</strong><div class="muted">${escapeHtml(f.to)}</div></div>
+          <div>${Number.isFinite(+f.step) ? f.step : '—'}</div>
+          <div><span class="${statusTag}">${escapeHtml(f.status)}</span></div>
+          <div>${when}</div>
+        </div>
+      `;
+    }).join('');
+  
+    return hdr + rows;
+  
+    // Liten helper for å unngå uønsket HTML-injeksjon fra data
+    function escapeHtml(s) {
+      return String(s ?? '')
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  }
+  
 
 // Oppretter / toggler en ekspansjonsrad etter gitt <tr>
 function toggleExpandRowAfter(tr, contentHTML, open = true) {
