@@ -633,7 +633,7 @@ function startBrregList(data) {
   updateBulkUI();
 }
 
-
+/*
 document.getElementById("brregmastercheckbox").addEventListener("change", function() {
     const container = document.getElementById("rowlist");
     const checkboxes = container.querySelectorAll(".selectcheckbox")
@@ -661,7 +661,7 @@ document.getElementById("brregmastercheckbox").addEventListener("change", functi
     }
     
 });
-
+*/
 let sentToSelectButton = document.getElementById("sentToSelect");
 sentToSelectButton.addEventListener("click", function() {
   dataFromBrregToSelect();
