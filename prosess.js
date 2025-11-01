@@ -192,22 +192,25 @@ async function fetchEmailFlowsByAirtable(airtableId) {
 
 // Presenter flows i en liten tabell-grid
 // Presenter flows i en liten tabell-grid (tilpasset Airtable-responsen over)
+// Presenter flows i en tabell-grid med # og "Deaktiver" (stopp)
 function renderEmailFlows(flows = []) {
     if (!Array.isArray(flows) || !flows.length) {
       return `<div class="muted">Ingen epostforløp funnet for denne kunden.</div>`;
     }
   
-    // Normaliser hver rad fra Airtable -> flate felt
+    // Normaliser datastruktur pr rad
     const norm = flows.map(row => {
+      const id = row?.id || row?._rawJson?.id || null;
       const f = row?.fields || row?._rawJson?.fields || row || {};
-      // payload kan være JSON-streng – prøv å parse
+  
+      // payload kan være JSON-streng
       let payload = {};
       try {
         if (typeof f.payload === 'string') payload = JSON.parse(f.payload);
         else if (f.payload && typeof f.payload === 'object') payload = f.payload;
-      } catch { /* ignorer parsefeil */ }
+      } catch { /* ignorér parsefeil */ }
   
-      // Statusmapping
+      // status
       let status = 'queued';
       if (f.executed === true) status = 'sent';
       else if (typeof f.status === 'string') {
@@ -216,17 +219,23 @@ function renderEmailFlows(flows = []) {
         else if (['sent','opened','clicked','failed','queued'].includes(s)) status = s;
       }
   
+      // stopp (truthy => stoppet)
+      const stoppRaw = f.stopp;
+      const stopp = stoppRaw === true || stoppRaw === 1 || stoppRaw === '1' || String(stoppRaw).toLowerCase() === 'true';
+  
       return {
+        id,
         subject: payload.subject || f.title || '—',
         to: payload.epost || payload.email || '',
         step: (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr))) ? Number(f.internnr) : (f.step ?? null),
         status,
         scheduledAt: f.when || null,
-        sentAt: f.executedAt || null
+        sentAt: f.executedAt || null,
+        stopp
       };
     });
   
-    // Sortér fornuftig: stigende steg, deretter tidspunkt
+    // Sortér fornuftig (steg stigende)
     norm.sort((a, b) => {
       const sa = (a.step ?? Number.POSITIVE_INFINITY);
       const sb = (b.step ?? Number.POSITIVE_INFINITY);
@@ -242,38 +251,54 @@ function renderEmailFlows(flows = []) {
       return isNaN(d) ? '—' : d.toLocaleString('no-NO');
     };
   
+    // Header: # | Emne | Steg | Status | Planlagt/Sendt | Deaktiver
     const hdr = `
-      <div class="flows-grid" style="margin-bottom:6px;">
+      <div class="flows-grid" style="margin-bottom:6px;grid-template-columns:auto 1fr auto auto auto auto;">
+        <div class="hdr">#</div>
         <div class="hdr">Emne</div>
         <div class="hdr">Steg</div>
         <div class="hdr">Status</div>
         <div class="hdr">Planlagt / Sendt</div>
+        <div class="hdr">Deaktiver</div>
       </div>
     `;
   
-    const rows = norm.map(f => {
+    const rows = norm.map((f, idx) => {
       const statusTag = (() => {
         const base = 'tag';
         if (['sent','opened','clicked'].includes(f.status)) return `${base} ok`;
         if (f.status === 'failed') return `${base} warn`;
-        return base; // queued / annet
+        return base; // queued/annet
       })();
   
       const when = f.sentAt ? fmtDT(f.sentAt) : fmtDT(f.scheduledAt);
+      const checked = f.stopp ? 'checked' : '';
   
       return `
-        <div class="flows-grid">
+        <div class="flows-grid" style="grid-template-columns:auto 1fr auto auto auto auto;">
+          <div>${idx + 1}</div>
           <div><strong>${escapeHtml(f.subject)}</strong><div class="muted">${escapeHtml(f.to)}</div></div>
           <div>${Number.isFinite(+f.step) ? f.step : '—'}</div>
           <div><span class="${statusTag}">${escapeHtml(f.status)}</span></div>
           <div>${when}</div>
+          <div>
+            <label class="muted" style="display:inline-flex;align-items:center;gap:6px;">
+              <input type="checkbox"
+                     class="flow-stop-toggle"
+                     data-id="${escapeAttr(f.id)}"
+                     data-step="${escapeAttr(f.step)}"
+                     ${checked}
+              />
+              Stopp
+            </label>
+          </div>
         </div>
       `;
     }).join('');
   
     return hdr + rows;
   
-    // Liten helper for å unngå uønsket HTML-injeksjon fra data
+    // helpers
     function escapeHtml(s) {
       return String(s ?? '')
         .replace(/&/g, "&amp;")
@@ -282,7 +307,11 @@ function renderEmailFlows(flows = []) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     }
+    function escapeAttr(s) {
+      return String(s ?? '').replace(/"/g, '&quot;');
+    }
   }
+  
   
 
 // Oppretter / toggler en ekspansjonsrad etter gitt <tr>
