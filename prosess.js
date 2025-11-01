@@ -455,16 +455,17 @@ function onToggleFlowStop(flowId, isStopped, step) {
         }).catch((err) => {
         console.error("Feil ved oppdatering av flow:", err);
         });
-    }
+}
+
   
-  // Lytt globalt etter endringer på checkbokser i utvidelsen
-  document.addEventListener('change', (e) => {
+// Lytt globalt etter endringer på checkbokser i utvidelsen
+document.addEventListener('change', (e) => {
     const el = e.target;
     if (!el.matches('.flow-stop-toggle')) return;
     const flowId = el.getAttribute('data-id') || null;
     const step   = el.getAttribute('data-step') || null;
     const isStopped = !!el.checked;
     onToggleFlowStop(flowId, isStopped, step);
-  });
-}
+});
+
   
