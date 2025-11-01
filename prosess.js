@@ -159,42 +159,32 @@ const getAirtableId = (obj) => String(obj?.airtable ?? obj?.airTable ?? obj?.air
 // MOCK: Bytt dette med ekte fetch mot din server
 // Forvent at du søker på "airtable" (airtableId) server-side.
 async function fetchEmailFlowsByAirtable(airtableId) {
-  // eksempel på ekte kall:
-  // const res = await fetch(`/api/epostlop?airtable=${encodeURIComponent(airtableId)}`);
-  // if (!res.ok) throw new Error('Serverfeil');
-  // return await res.json();
+    let obj = { airtable: airtableId };
+    let body = airtablebodylistAND(obj);
 
-  // Eksempeldata (du kan forme som du vil)
-  await new Promise(r => setTimeout(r, 400)); // simuler litt latency
-  return [
-    {
-      id: 'flow_01',
-      step: 1,
-      subject: 'Introduksjon',
-      status: 'queued',            // queued | sent | failed | opened | clicked
-      scheduledAt: '2025-10-28T09:00:00Z',
-      sentAt: null,
-      to: 'post@kunde.no'
-    },
-    {
-      id: 'flow_02',
-      step: 2,
-      subject: 'Oppfølging #1',
-      status: 'sent',
-      scheduledAt: '2025-10-30T10:00:00Z',
-      sentAt: '2025-10-30T10:00:12Z',
-      to: 'post@kunde.no'
-    },
-    {
-      id: 'flow_03',
-      step: 3,
-      subject: 'Oppfølging #2',
-      status: 'queued',
-      scheduledAt: '2025-11-02T10:00:00Z',
-      sentAt: null,
-      to: 'post@kunde.no'
-    }
-  ];
+    let response;
+    let token = MemberStack.getToken();
+
+    response = await fetch(`https://expoapi-zeta.vercel.app/api/search?baseId=${baseId}&tableId=${tableId}&token=${token}`, {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json",
+        },
+        body: body
+    });
+        
+    
+
+
+    if (!response.ok) {
+    throw new Error(`HTTP-feil! status: ${response.status} - ${response.statusText}`);
+    return null;
+    }else {
+    let data = await response.json();
+    return data
+    };
+ 
+
 }
 
 // Presenter flows i en liten tabell-grid
