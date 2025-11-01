@@ -147,8 +147,7 @@ function renderProsess(data){
   
 
 
-  // Hjelpere for ID-er
-const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
+  // Hjelpere for ID-e
 const getOrgnr = (obj) =>
   normalizeOrgnr(obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber);
 const getAirtableId = (obj) => String(obj?.airtable ?? obj?.airTable ?? obj?.airtableId ?? obj?.airtable_id ?? '').trim();
