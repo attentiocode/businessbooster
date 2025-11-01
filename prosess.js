@@ -466,4 +466,5 @@ function onToggleFlowStop(flowId, isStopped, step) {
     const isStopped = !!el.checked;
     onToggleFlowStop(flowId, isStopped, step);
   });
+}
   
