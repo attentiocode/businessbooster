@@ -163,47 +163,46 @@ function startMultisaveProcess(orgnrList) {
 }
   
 function multiReturnfromAirtable(payload) {
-    
-  let cleanerData = cleanReturnfromAirtable(payload)
-  console.log("Multisave fullført med respons:", cleanerData);
+  let cleanerData = cleanReturnfromAirtable(payload);
 
-  //legge til alle rader i cleanerData inn i gProsessertBedrifter slett de gamle om de eksisterer
   cleanerData.forEach(row => {
-      //sjekke om orgnr finnes i gProsessertBedrifter
-      let existingIndex = gProsessertBedrifter.findIndex(bedrift => bedrift.orgnr === row.orgnr);
-      if(existingIndex !== -1){
-          //oppdatere eksisterende rad
-          gProsessertBedrifter[existingIndex] = row;
-      }else{
-          //legge til ny rad
-          gProsessertBedrifter.push(row);
+      // Hent organisasjonsnummer uansett hvilket felt som brukes
+      const orgnr = row.orgnr || row.organisasjonsnummer;
+
+      // Oppdatere eller legge til i gProsessertBedrifter
+      const existingIndex = gProsessertBedrifter.findIndex(
+          bedrift => bedrift.orgnr === orgnr || bedrift.organisasjonsnummer === orgnr
+      );
+
+      // Oppdater raden slik at den alltid får et felles orgnr-felt
+      const normalizedRow = { ...row, orgnr };
+
+      if (existingIndex !== -1) {
+          gProsessertBedrifter[existingIndex] = normalizedRow;
+      } else {
+          gProsessertBedrifter.push(normalizedRow);
       }
   });
 
-  //lagre lokalt
+  // Lagre lokalt
   localStorage.setItem("gProsessertBedrifter", JSON.stringify(gProsessertBedrifter));
 
-  //slette disse rader fra gReadybedrifter
+  // Slette rader fra gReadybedrifter
   cleanerData.forEach(row => {
-      gReadybedrifter = gReadybedrifter.filter(bedrift => bedrift.orgnr !== row.orgnr);
+      const orgnr = row.orgnr || row.organisasjonsnummer;
+      gReadybedrifter = gReadybedrifter.filter(
+          bedrift => bedrift.orgnr !== orgnr && bedrift.organisasjonsnummer !== orgnr
+      );
   });
 
-  //lagre lokalt
   localStorage.setItem("gReadybedrifter", JSON.stringify(gReadybedrifter));
-  //oppdater listen Ready bedrifter i UI
+
   renderReady(gReadybedrifter);
-
-  //oppdater UI
   updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
-
-  //opprette hele epostforløpet i timerunner db
   makeNextSteppInTimeRunner(cleanerData);
-
-
-  //Rendre listen over prosesserte bedrifter på nytt
   renderProsess(gProsessertBedrifter);
-
 }
+
 
 function makeNextSteppInTimeRunner(companyes){
 
