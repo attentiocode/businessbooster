@@ -159,8 +159,11 @@ const getAirtableId = (obj) => String(obj?.airtable ?? obj?.airTable ?? obj?.air
 // MOCK: Bytt dette med ekte fetch mot din server
 // Forvent at du søker på "airtable" (airtableId) server-side.
 async function fetchEmailFlowsByAirtable(airtableId) {
-    let obj = { airtable: airtableId };
+    let obj = { external_rawId: airtableId };
     let body = airtablebodylistAND(obj);
+
+    let baseId = "appISWcEA5QICIlzP";
+    let tableId = "tblldBMExI1U4yMNI";
 
     let response;
     let token = MemberStack.getToken();
