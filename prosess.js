@@ -438,13 +438,24 @@ function isRowOpen(tr) {
   
 
   // Kalles når bruker klikker "Deaktiver" (stopp) på en flow
-// Kalles når bruker klikker "Deaktiver" (stopp) på en flow
 function onToggleFlowStop(flowId, isStopped, step) {
     // TODO: bytt ut med faktisk API-kall
     // fetch('/api/flow/stopp', { method:'POST', headers:{'Content-Type':'application/json'},
     //   body: JSON.stringify({ id: flowId, stopp: isStopped, step }) });
     console.log('toggle stopp', { flowId, isStopped, step });
-  }
+
+    let data = {stopp: true};
+        PATCHairtable(
+        "appISWcEA5QICIlzP",
+        "tblldBMExI1U4yMNI",
+        flowId,
+        data
+        ).then((res) => {
+        console.log("Flow oppdatert:", res);
+        }).catch((err) => {
+        console.error("Feil ved oppdatering av flow:", err);
+        });
+    }
   
   // Lytt globalt etter endringer på checkbokser i utvidelsen
   document.addEventListener('change', (e) => {
@@ -455,5 +466,5 @@ function onToggleFlowStop(flowId, isStopped, step) {
     const isStopped = !!el.checked;
     onToggleFlowStop(flowId, isStopped, step);
   });
-  
+}
   
