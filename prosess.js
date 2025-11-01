@@ -121,26 +121,30 @@ function renderProsess(data){
   
       tr.style.cursor = 'pointer';
 
-    // Enkeltklikk: toggle/åpne ekspansjon m/ fetch
-    tr.addEventListener('click', (e) => {
-    const t = e.target;
-    if (t.closest('input[type="checkbox"]')) return;
-    if (t.closest('a')) return;
-    handleRowClick(tr, b); // <— NY
-    });
 
-    // Dobbeltklikk: behold eksisterende adferd
-    tr.addEventListener('dblclick', (e) => {
-    const t = e.target;
-    if (t.closest('input[type="checkbox"]')) return;
-    if (t.closest('a')) return;
-    const org = getOrgnr(b);
-    if (typeof openEditPopup === 'function') {
-        openEditPopup(b, org);
-    }
-    });
+        let clickTimer;
+        tr.addEventListener('click', (e) => {
+        const t = e.target;
+        if (t.closest('input[type="checkbox"]') || t.closest('a')) return;
 
-  
+        // Delay for å se om det kommer dblclick
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+            handleRowClick(tr, b); // enkel-klikk => åpne/lukke
+        }, 200);
+        });
+
+        tr.addEventListener('dblclick', (e) => {
+        const t = e.target;
+        if (t.closest('input[type="checkbox"]') || t.closest('a')) return;
+
+        // Avbryt enkel-klikk-handling
+        clearTimeout(clickTimer);
+
+        const org = getOrgnr(b);
+        if (typeof openEditPopup === 'function') openEditPopup(b, org);
+        });
+
       tbody.appendChild(tr);
     });
   }
@@ -266,23 +270,90 @@ function toggleExpandRowAfter(tr, contentHTML, open = true) {
   }
   
 
-// Hovedfunksjon for klikk på rad (enkeltklikk = åpne/toggle ekspansjon)
+// ---- Hoved-click: IKKE toggle ved fetch ----
 async function handleRowClick(tr, bedriftObj) {
-  const airtableId = getAirtableId(bedriftObj);
-  if (!airtableId) {
-    // Ingen airtable-id => bare toggl tom seksjon med melding
-    toggleExpandRowAfter(tr, `<div class="muted">Ingen "airtable"-verdi på denne raden.</div>`, true);
-    return;
+    // Hvis allerede åpen → lukk og stopp
+    if (isRowOpen(tr)) {
+      closeExpandRow(tr);
+      return;
+    }
+  
+    // Åpne med "loading"
+    openExpandRowAfter(tr, `<span class="spinner"></span> Henter epostforløp …`);
+  
+    // Hent data og ERSTATT innhold (ikke toggle)
+    try {
+      const airtableId = getAirtableId(bedriftObj);
+      if (!airtableId) {
+        replaceExpandContent(tr, `<div class="muted">Ingen "airtable"-verdi på denne raden.</div>`);
+        return;
+      }
+      const flows = await fetchEmailFlowsByAirtable(airtableId);
+      replaceExpandContent(tr, renderEmailFlows(flows));
+    } catch (err) {
+      replaceExpandContent(tr, `<div class="tag warn">Feil ved henting</div> <span class="muted">${String(err?.message || err)}</span>`);
+    }
   }
 
-  // Vis loading mens vi henter
-  toggleExpandRowAfter(tr, `<span class="spinner" aria-hidden="true"></span> Henter epostforløp …`, true);
+  
 
-  try {
-    const flows = await fetchEmailFlowsByAirtable(airtableId);
-    const html = renderEmailFlows(flows);
-    toggleExpandRowAfter(tr, html, true);
-  } catch (err) {
-    toggleExpandRowAfter(tr, `<div class="tag warn">Feil ved henting</div> <span class="muted">${String(err?.message || err)}</span>`, true);
+  // ---- Expand helpers (ikke toggle i samme fn) ----
+function isRowOpen(tr) {
+    const next = tr.nextElementSibling;
+    return !!(next && next.classList.contains('expand-row'));
   }
-}
+  
+  function openExpandRowAfter(tr, contentHTML) {
+    const colSpan = tr.children.length;
+    let next = tr.nextElementSibling;
+  
+    if (next && next.classList.contains('expand-row')) {
+      // finnes: bare oppdater innhold + høyde
+      const inner = next.querySelector('.expand-inner');
+      const wrap  = next.querySelector('.expand-wrap');
+      inner.innerHTML = contentHTML;
+      requestAnimationFrame(() => {
+        wrap.style.maxHeight = inner.scrollHeight + 'px';
+      });
+      return;
+    }
+  
+    // opprett ny
+    const expandTr = document.createElement('tr');
+    expandTr.className = 'expand-row';
+    expandTr.innerHTML = `
+      <td colspan="${colSpan}">
+        <div class="expand-wrap">
+          <div class="expand-inner">${contentHTML}</div>
+        </div>
+      </td>
+    `;
+    tr.parentNode.insertBefore(expandTr, tr.nextSibling);
+  
+    const wrap  = expandTr.querySelector('.expand-wrap');
+    const inner = expandTr.querySelector('.expand-inner');
+    wrap.style.maxHeight = '0px';
+    requestAnimationFrame(() => {
+      wrap.style.maxHeight = inner.scrollHeight + 'px';
+    });
+  }
+  
+  function replaceExpandContent(tr, contentHTML) {
+    const next = tr.nextElementSibling;
+    if (!(next && next.classList.contains('expand-row'))) return openExpandRowAfter(tr, contentHTML);
+    const inner = next.querySelector('.expand-inner');
+    const wrap  = next.querySelector('.expand-wrap');
+    inner.innerHTML = contentHTML;
+    requestAnimationFrame(() => {
+      wrap.style.maxHeight = inner.scrollHeight + 'px';
+    });
+  }
+  
+  function closeExpandRow(tr) {
+    const next = tr.nextElementSibling;
+    if (!(next && next.classList.contains('expand-row'))) return;
+    const wrap = next.querySelector('.expand-wrap');
+    wrap.style.maxHeight = '0px';
+    setTimeout(() => next.remove(), 260);
+  }
+  
