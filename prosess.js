@@ -120,14 +120,183 @@ function renderProsess(data){
       `;
   
       tr.style.cursor = 'pointer';
-      tr.addEventListener('click', (e) => {
-        const t = e.target;
-        if (t.closest('input[type="checkbox"]')) return;
-        if (t.closest('a')) return;
+
+    // Enkeltklikk: toggle/åpne ekspansjon m/ fetch
+    tr.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t.closest('input[type="checkbox"]')) return;
+    if (t.closest('a')) return;
+    handleRowClick(tr, b); // <— NY
+    });
+
+    // Dobbeltklikk: behold eksisterende adferd
+    tr.addEventListener('dblclick', (e) => {
+    const t = e.target;
+    if (t.closest('input[type="checkbox"]')) return;
+    if (t.closest('a')) return;
+    const org = getOrgnr(b);
+    if (typeof openEditPopup === 'function') {
         openEditPopup(b, org);
-      });
+    }
+    });
+
   
       tbody.appendChild(tr);
     });
   }
   
+
+
+  // Hjelpere for ID-er
+const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
+const getOrgnr = (obj) =>
+  normalizeOrgnr(obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber);
+const getAirtableId = (obj) => String(obj?.airtable ?? obj?.airTable ?? obj?.airtableId ?? obj?.airtable_id ?? '').trim();
+
+// MOCK: Bytt dette med ekte fetch mot din server
+// Forvent at du søker på "airtable" (airtableId) server-side.
+async function fetchEmailFlowsByAirtable(airtableId) {
+  // eksempel på ekte kall:
+  // const res = await fetch(`/api/epostlop?airtable=${encodeURIComponent(airtableId)}`);
+  // if (!res.ok) throw new Error('Serverfeil');
+  // return await res.json();
+
+  // Eksempeldata (du kan forme som du vil)
+  await new Promise(r => setTimeout(r, 400)); // simuler litt latency
+  return [
+    {
+      id: 'flow_01',
+      step: 1,
+      subject: 'Introduksjon',
+      status: 'queued',            // queued | sent | failed | opened | clicked
+      scheduledAt: '2025-10-28T09:00:00Z',
+      sentAt: null,
+      to: 'post@kunde.no'
+    },
+    {
+      id: 'flow_02',
+      step: 2,
+      subject: 'Oppfølging #1',
+      status: 'sent',
+      scheduledAt: '2025-10-30T10:00:00Z',
+      sentAt: '2025-10-30T10:00:12Z',
+      to: 'post@kunde.no'
+    },
+    {
+      id: 'flow_03',
+      step: 3,
+      subject: 'Oppfølging #2',
+      status: 'queued',
+      scheduledAt: '2025-11-02T10:00:00Z',
+      sentAt: null,
+      to: 'post@kunde.no'
+    }
+  ];
+}
+
+// Presenter flows i en liten tabell-grid
+function renderEmailFlows(flows = []) {
+  if (!flows.length) {
+    return `<div class="muted">Ingen epostforløp funnet for denne kunden.</div>`;
+  }
+  const hdr = `
+    <div class="flows-grid" style="margin-bottom:6px;">
+      <div class="hdr">Emne</div>
+      <div class="hdr">Steg</div>
+      <div class="hdr">Status</div>
+      <div class="hdr">Planlagt / Sendt</div>
+    </div>
+  `;
+  const rows = flows.map(f => {
+    const statusTag = (() => {
+      const base = 'tag';
+      if (f.status === 'sent' || f.status === 'opened' || f.status === 'clicked') return `${base} ok`;
+      if (f.status === 'failed') return `${base} warn`;
+      return base;
+    })();
+    const when =
+      f.sentAt
+        ? new Date(f.sentAt).toLocaleString('no-NO')
+        : (f.scheduledAt ? new Date(f.scheduledAt).toLocaleString('no-NO') : '—');
+
+    return `
+      <div class="flows-grid">
+        <div><strong>${f.subject || '—'}</strong><div class="muted">${f.to || ''}</div></div>
+        <div>${Number.isFinite(+f.step) ? f.step : '—'}</div>
+        <div><span class="${statusTag}">${f.status || '—'}</span></div>
+        <div>${when}</div>
+      </div>
+    `;
+  }).join('');
+
+  return hdr + rows;
+}
+
+// Oppretter / toggler en ekspansjonsrad etter gitt <tr>
+function toggleExpandRowAfter(tr, contentHTML, open = true) {
+  // Finn eksisterende expand-row
+  let next = tr.nextElementSibling;
+  const isExpandRow = next && next.classList.contains('expand-row');
+
+  // Lukk hvis åpen og vi skal toggle
+  if (isExpandRow && !open) {
+    const wrap = next.querySelector('.expand-wrap');
+    wrap.style.maxHeight = '0px';
+    // fjern etter animasjon
+    setTimeout(() => next.remove(), 260);
+    return;
+  }
+
+  // Hvis finnes, oppdater innhold og åpne
+  if (isExpandRow) {
+    const inner = next.querySelector('.expand-inner');
+    inner.innerHTML = contentHTML;
+    const wrap = next.querySelector('.expand-wrap');
+    requestAnimationFrame(() => {
+      wrap.style.maxHeight = inner.scrollHeight + 'px';
+    });
+    return;
+  }
+
+  // Opprett ny ekspansjonsrad
+  const colSpan = tr.children.length; // samme antall kolonner
+  const expandTr = document.createElement('tr');
+  expandTr.className = 'expand-row';
+  expandTr.innerHTML = `
+    <td colspan="${colSpan}">
+      <div class="expand-wrap">
+        <div class="expand-inner">${contentHTML}</div>
+      </div>
+    </td>
+  `;
+  tr.parentNode.insertBefore(expandTr, tr.nextSibling);
+
+  // Trigg animasjonen
+  const wrap = expandTr.querySelector('.expand-wrap');
+  const inner = expandTr.querySelector('.expand-inner');
+  wrap.style.maxHeight = '0px';
+  requestAnimationFrame(() => {
+    wrap.style.maxHeight = inner.scrollHeight + 'px';
+  });
+}
+
+// Hovedfunksjon for klikk på rad (enkeltklikk = åpne/toggle ekspansjon)
+async function handleRowClick(tr, bedriftObj) {
+  const airtableId = getAirtableId(bedriftObj);
+  if (!airtableId) {
+    // Ingen airtable-id => bare toggl tom seksjon med melding
+    toggleExpandRowAfter(tr, `<div class="muted">Ingen "airtable"-verdi på denne raden.</div>`, true);
+    return;
+  }
+
+  // Vis loading mens vi henter
+  toggleExpandRowAfter(tr, `<span class="spinner" aria-hidden="true"></span> Henter epostforløp …`, true);
+
+  try {
+    const flows = await fetchEmailFlowsByAirtable(airtableId);
+    const html = renderEmailFlows(flows);
+    toggleExpandRowAfter(tr, html, true);
+  } catch (err) {
+    toggleExpandRowAfter(tr, `<div class="tag warn">Feil ved henting</div> <span class="muted">${String(err?.message || err)}</span>`, true);
+  }
+}
