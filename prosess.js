@@ -436,3 +436,22 @@ function isRowOpen(tr) {
     setTimeout(() => next.remove(), 260);
   }
   
+
+  // Kalles når bruker klikker "Deaktiver" (stopp) på en flow
+function onToggleFlowStop(flowId, isStopped, step) {
+    // TODO: bytt ut med faktisk API-kall
+    // fetch('/api/flow/stopp', { method:'POST', headers:{'Content-Type':'application/json'},
+    //   body: JSON.stringify({ id: flowId, stopp: isStopped, step }) });
+    console.log('toggle stopp', { flowId, isStopped, step });
+  }
+  
+  // Lytt globalt etter endringer på checkbokser i utvidelsen
+  document.addEventListener('change', (e) => {
+    const el = e.target;
+    if (!el.matches('.flow-stop-toggle')) return;
+    const flowId = el.getAttribute('data-id') || null;
+    const step   = el.getAttribute('data-step') || null;
+    const isStopped = !!el.checked;
+    onToggleFlowStop(flowId, isStopped, step);
+  });
+  
