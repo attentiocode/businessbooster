@@ -574,7 +574,7 @@ updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
 
 function countReadyAndSendtCostumers(){
 //telle alle cunder som har status som sendt returner antall
-  return  gReadybedrifter.filter(b => b.status === 'EpostSendt').length;
+  return  gProsessertBedrifter.length;
 }
 
 function initFilterselectors() {
@@ -637,6 +637,9 @@ function leadsResponse(data){
   updateCounter("label-mailer-sendt", countReadyAndSendtCostumers(), 1000);
   console.log("Booster leads konvertert:", gProsessertBedrifter);
   //lagre i global variabel
+
+  //rendre prosess liste
+  renderProsess(gProsessertBedrifter);
   
 
 
