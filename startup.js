@@ -669,7 +669,7 @@ function leadsResponse(data){
   //lagre i global variabel
 
   //rendre prosess liste
-  renderProsess(gProsessertBedrifter);
+  //renderProsess(gProsessertBedrifter); //Venter med å rendre til timeRunner objects er hentet
 
 }
 
@@ -700,6 +700,8 @@ function timeRunnerObjects(data){
 
   //merge timerunner object inn i prosessert bedrifter
   mergeTimerunnerObject(gTimerunnerObjects);
+
+  renderProsess(gProsessertBedrifter);
   
 
 }
