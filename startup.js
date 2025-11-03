@@ -685,11 +685,11 @@ function timeRunnerObjects(data){
   console.log("timeRunnerObjects hentet:", timeRunnerObjects);
 
   //rendre oversikt
-  timeRunnerObjectOverview(timeRunnerObjects);
+  timeRunner.update(timeRunnerObjects);
 
 }
 
-
+/*
 function timeRunnerObjectOverview(data){
   const now = new Date();
 
@@ -896,5 +896,5 @@ animateWidth(progBar, prev.progress, progress, duration);
     progress
   };
 }
-
+*/
 
