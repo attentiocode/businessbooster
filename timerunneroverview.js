@@ -89,6 +89,16 @@ const timeRunner = (() => {
         sentPct: Math.min(100, pct(t.sent, t.total))
       };
     }
+
+    function card(title, valueHtml, subtitle) {
+      return `
+        <div class="tro-card">
+          <div class="tro-title">${title}</div>
+          <div class="tro-value">${valueHtml}</div>
+          <div class="tro-sub">${subtitle}</div>
+        </div>
+      `;
+    }
   
     function overviewHtml(){
       return `
