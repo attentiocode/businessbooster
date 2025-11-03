@@ -172,7 +172,7 @@ function renderProsess(data){
       let emailAccepted   = Number(b.emailAcceptedCount ?? 0);
       let counttext       = `${emailsendt}/${emailcount}`;
       let noInterested    = isTruthy(b.noInterest ?? b.no_interested ?? b.no_interest);
-      let stoppet         = isTruthy(b.stopp ?? b.stop ?? b.stopped ?? b.disabled);
+      let stoppet         = b.stopp || false;
   
       const showBadge = emailcount > 0;
   
