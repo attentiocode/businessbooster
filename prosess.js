@@ -365,7 +365,7 @@ function renderEmailFlows(flows = []) {
         if (f.accepted === true) return `${base} ok`;
         if (f.open === true) return `${base} info`;
         if (f.stopp === true) return `${base} warn`;
-        if (f.no_interest === true) return `${base} warn`;
+        if (f.status === 'Avmeldt') return `${base} warn`;
         if (['sent','opened','clicked'].includes(f.status)) return `${base} info`;
         if (f.status === 'failed') return `${base} warn`;
         return base; // queued/annet
