@@ -227,30 +227,41 @@ function renderEmailFlows(flows = []) {
   
     // Normaliser datastruktur pr rad
     const norm = flows.map(row => {
-      const id = row?.id || row?._rawJson?.id || null;
-      const f = row?.fields || row?._rawJson?.fields || row || {};
-  
-      // payload kan være JSON-streng
-      let payload = {};
-      try {
+        const id = row?.id || row?._rawJson?.id || null;
+        const f = row?.fields || row?._rawJson?.fields || row || {};
+    
+        // payload kan være JSON-streng
+        let payload = {};
+        try {
         if (typeof f.payload === 'string') payload = JSON.parse(f.payload);
         else if (f.payload && typeof f.payload === 'object') payload = f.payload;
-      } catch { /* ignorér parsefeil */ }
-  
-      // status
-      let status = 'queued';
-      if (f.executed === true) status = 'sent';
-      else if (typeof f.status === 'string') {
+        } catch { /* ignorér parsefeil */ }
+    
+        // status
+        let status = 'queued';
+        if (f.executed === true) status = 'sent';
+        else if (typeof f.status === 'string') {
         const s = f.status.toLowerCase();
         if (s === 'pending') status = 'queued';
         else if (['sent','opened','clicked','failed','queued'].includes(s)) status = s;
-      }
-  
-      // stopp (truthy => stoppet)
-      const stoppRaw = f.stopp;
-      const stopp = stoppRaw === true || stoppRaw === 1 || stoppRaw === '1' || String(stoppRaw).toLowerCase() === 'true';
-  
-      return {
+        }
+    
+        // stopp (truthy => stoppet)
+        const stoppRaw = f.stopp;
+        const stopp = stoppRaw === true || stoppRaw === 1 || stoppRaw === '1' || String(stoppRaw).toLowerCase() === 'true';
+    
+        // 
+        if (stopp) {
+        status = 'Stoppet';
+        } else if (f.no_interest === true || f.no_interest === 1 || f.no_interest === '1' || String(f.no_interest).toLowerCase() === 'true') {
+        status = 'Avmeldt';
+        } else if (f.accepted === true || f.accepted === 1 || String(f.accepted).toLowerCase() === 'true') {
+        status = 'Akseptert';
+        } else if (f.open === true || f.open === 1 || String(f.open).toLowerCase() === 'true') {
+        status = 'Åpnet';
+        }
+    
+        return {
         id,
         subject: payload.subject || f.title || '—',
         to: payload.epost || payload.email || '',
@@ -259,8 +270,9 @@ function renderEmailFlows(flows = []) {
         scheduledAt: f.when || null,
         sentAt: f.executedAt || null,
         stopp
-      };
+        };
     });
+  
   
     // Sortér fornuftig (steg stigende)
     norm.sort((a, b) => {
@@ -294,6 +306,10 @@ function renderEmailFlows(flows = []) {
       const statusTag = (() => {
         const base = 'tag';
         if (['sent','opened','clicked'].includes(f.status)) return `${base} ok`;
+        if (f.accepted === true) return `${base} ok`;
+        if (f.open === true) return `${base} info`;
+        if (f.stopp === true) return `${base} warn`;
+        if (f.no_interest === true) return `${base} warn`;
         if (f.status === 'failed') return `${base} warn`;
         return base; // queued/annet
       })();
