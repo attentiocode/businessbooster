@@ -75,6 +75,9 @@ function renderProsess(data){
         );
       });
     }
+
+    //oppdater teller
+    document.getElementById('counterlistprosess').innerText = `${filteredData.length} bedrifter`;
   
     // --- Render rader ---
     (filteredData || []).forEach((b) => {
@@ -134,6 +137,9 @@ function renderProsess(data){
 
       tbody.appendChild(tr);
     });
+
+
+
   }
   
 
