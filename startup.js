@@ -733,6 +733,14 @@ function mergeTimerunnerObject(gTimerunnerObjects) {
     if (isTrue(trObj.accepted)) {
       company.emailAcceptedCount = (company.emailAcceptedCount || 0) + 1;
     }
+
+    // --- no_interest ---
+    if (isTrue(trObj.no_interest)) {
+      company.noInterest = true;
+    }
+
+
+
   });
 }
 

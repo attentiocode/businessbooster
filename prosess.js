@@ -18,7 +18,7 @@ function renderProsess(data){
           height: 18px;
           padding: 0 6px;
           border-radius: 9999px;
-          background:rgba(253, 4, 4, 0.39); /* rød farge */
+          background:'rgba(128, 128, 128, 0.5)'; 
           color: #fff;
           font-size: 11px;
           line-height: 18px;
@@ -95,6 +95,7 @@ function renderProsess(data){
        let emailsendt = b.emailSentCount || 0;
        let emailAccepted = b.emailAcceptedCount || 0;
        let counttext = emailsendt+"/"+emailcount;
+       let noInterested = b.noInterest || false;
 
 
 
@@ -126,11 +127,20 @@ function renderProsess(data){
 
       }
 
+      if(noInterested){
+        // finne badge-elementet og gjøre det rød hvis ikke interessert
+        const badgeEl = tr.querySelector('.prosess-badge');
+        if (badgeEl) {
+          badgeEl.style.background = 'rgba(255, 82, 82, 0.7)'; // endre til rød farge
+        }
+
+      }
+
       //hvis ikke det er planlagte eposter så gjøre badge grå
         if (emailcount === 0) {
             const badgeEl = tr.querySelector('.prosess-badge');
             if (badgeEl) {
-            badgeEl.style.background = 'rgba(128, 128, 128, 0.5)'; // endre til grå farge
+            badgeEl.style.displayt = 'none'; // skjul badgen hvis ingen eposter er planlagt 
             }
         }
 
