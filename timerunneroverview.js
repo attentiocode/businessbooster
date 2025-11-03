@@ -89,9 +89,9 @@ const timeRunner = (() => {
       nextMonth: t.nextMonth,
       stopped: t.stopped,
       accepted: t.accepted,                        // <-- NEW
-      progress: Math.min(100, pct(t.sent, t.total)),
-      sentPct: Math.min(100, pct(t.sent, t.total)),
-      acceptRate: Math.min(100, pct(t.accepted, t.total || 1)) // ev. nyttig senere
+      progress: Math.min(100, pct(t.accepted, t.sent || 1)), // viser accepted vs sent
+      sentPct: Math.min(100, pct(t.sent, t.total || 1)),
+      acceptRate: Math.min(100, pct(t.accepted, t.total || 1))
     };
   }
 
@@ -120,7 +120,7 @@ const timeRunner = (() => {
           <div class="tro-title">Progresjon</div>
           <div class="tro-value" id="tro-prog-text">0%</div>
           <div class="tro-progress"><div class="tro-bar" id="tro-prog-bar" style="width:0%"></div></div>
-          <div class="tro-sub">Sendt vs. totalt</div>
+          <div class="tro-sub">Aksept-rate</div>
         </div>
       </div>`;
   }

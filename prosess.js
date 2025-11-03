@@ -77,7 +77,7 @@ function renderProsess(data){
     }
 
     //oppdater teller
-    document.getElementById('counterlistprosess').innerText = `${filteredData.length} bedrifter`;
+    document.getElementById('counterlistprosess').innerText = `${filteredData.length} stk. bedrifter`;
   
     // --- Render rader ---
     (filteredData || []).forEach((b) => {
