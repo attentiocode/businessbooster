@@ -199,7 +199,6 @@ function multiReturnfromAirtable(payload) {
   localStorage.setItem("gReadybedrifter", JSON.stringify(gReadybedrifter));
 
   renderReady(gReadybedrifter);
-  updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
   makeNextSteppInTimeRunner(cleanerData);
   renderProsess(gProsessertBedrifter);
 

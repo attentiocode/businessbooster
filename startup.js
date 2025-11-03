@@ -592,7 +592,6 @@ function converttimeRunnerObjectsToObjects(jsonStrings) {
 
 updateCounter("label-selected-customers", gSelectbedrifter.length, 1000);
 updateCounter("label-ready-customers", gReadybedrifter.length, 1000);
-updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
 
 function countReadyAndSendtCostumers(){
 //telle alle cunder som har status som sendt returner antall
@@ -656,7 +655,6 @@ function leadsResponse(data){
 
   let boosterLeads = convertLeadsJsonStringsToObjects(jsonStrings);
   gProsessertBedrifter = boosterLeads;
-  updateCounter("label-mailer-sendt", countReadyAndSendtCostumers(), 1000);
   console.log("Booster leads konvertert:", gProsessertBedrifter);
   //lagre i global variabel
 
