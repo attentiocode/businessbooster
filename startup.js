@@ -742,7 +742,11 @@ function mergeTimerunnerObject(gTimerunnerObjects) {
     if (isTrue(trObj.no_interest)) {
       company.noInterest = true;
     }
-
+    
+    //Om den har stopp == true
+    if (isTrue(trObj.stopp)) {
+      company.stopp = true;
+    }
 
 
   });

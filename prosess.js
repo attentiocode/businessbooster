@@ -172,6 +172,7 @@ function renderProsess(data){
       let emailAccepted   = Number(b.emailAcceptedCount ?? 0);
       let counttext       = `${emailsendt}/${emailcount}`;
       let noInterested    = isTruthy(b.noInterest ?? b.no_interested ?? b.no_interest);
+      let 
   
       const showBadge = emailcount > 0;
   
@@ -202,8 +203,8 @@ function renderProsess(data){
           badgeEl.style.background = 'rgba(255, 82, 82, 0.7)';      // rød
         } else if (key === 'utgått') {
           badgeEl.style.background = 'rgba(255, 165, 0, 0.7)';      // oransje
-        } else if (key === 'stoppet') {
-          badgeEl.style.background = 'rgba(120, 120, 120, 0.7)';    // grå
+        } else if (stoppet) {
+          badgeEl.style.background = 'rgba(255, 82, 82, 0.7)';     // grå
         }
         // ellers behold default (semigrå)
       }
@@ -555,7 +556,6 @@ function onToggleFlowStop(flowId, isStopped, step) {
             timrunnerObject.stopp = isStopped;
             timeRunner.update(gTimerunnerObjects);
         }
-
 
 }
 
