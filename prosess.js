@@ -18,7 +18,7 @@ function renderProsess(data){
           height: 18px;
           padding: 0 6px;
           border-radius: 9999px;
-          background:rgba(130, 244, 0, 0.39); /* grønn */
+          background:rgba(253, 4, 4, 0.39); /* rød farge */
           color: #fff;
           font-size: 11px;
           line-height: 18px;
@@ -94,6 +94,7 @@ function renderProsess(data){
        let emailcount = b.emailCount || 0;
        let emailsendt = b.emailSentCount || 0;
        let emailAccepted = b.emailAcceptedCount || 0;
+       let counttext = emailsendt+"/"+emailcount;
 
 
 
@@ -112,13 +113,26 @@ function renderProsess(data){
         <td style="font-size:11px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
         <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
         <td class="prosess-badge-cell">
-          ${showBadge ? `<span class="prosess-badge" aria-label="Antall eposter i forløp">${emailsendt}</span>` : ''}
+          ${showBadge ? `<span class="prosess-badge" aria-label="Antall eposter i forløp">${counttext}</span>` : ''}
         </td>
       `;
   
       if (emailAccepted > 0) {
-        tr.classList.add('accepted');
+        // finne badge-elementet og gjøre det grønt hvis noen eposter er akseptert
+        const badgeEl = tr.querySelector('.prosess-badge');
+        if (badgeEl) {
+          badgeEl.style.background = 'rgba(0, 200, 83, 0.7)'; // endre til grønn farge
+        }
+
       }
+
+      //hvis ikke det er planlagte eposter så gjøre badge grå
+        if (emailcount === 0) {
+            const badgeEl = tr.querySelector('.prosess-badge');
+            if (badgeEl) {
+            badgeEl.style.background = 'rgba(128, 128, 128, 0.5)'; // endre til grå farge
+            }
+        }
 
       tr.style.cursor = 'pointer';
 
