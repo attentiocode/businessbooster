@@ -226,8 +226,8 @@ function multiReturnFromTimeRunnerAirtable(payload) {
     //Trigg time runner for å plukke opp nye jobber
     triggerTimeRun();
 
-
-    //
+    //Kjøre ny oppdatert liste på timeObjects
+    getTimeRunnerObjects();
      
 }
 
