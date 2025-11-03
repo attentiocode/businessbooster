@@ -58,6 +58,10 @@ document.getElementById("groupEmailButton").addEventListener("click", function()
     document.getElementById("emailTabButton").click();
 });
 
+document.getElementById("runnTimeRunnerButton").addEventListener("click", function() {
+  triggerTimeRun();
+});
+
 
 
 const fmt = d => d.toISOString().slice(0, 10);
