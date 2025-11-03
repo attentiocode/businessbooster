@@ -25,7 +25,7 @@ function renderProsess(data){
           text-align: center;
           font-weight: 700;
           display: inline-block;
-          pointer-events: none; /* ikke klikkbar */
+          pointer-events: none;
         }
       `;
       document.head.appendChild(style);
@@ -34,6 +34,8 @@ function renderProsess(data){
     // --- Hjelpere ---
     const val = v => (v == null ? '' : String(v));
     const low = v => val(v).toLowerCase();
+    const isTruthy = (x) => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
+  
     const fmtDate = (d) => (!d ? '—' : (isNaN(new Date(d)) ? d : new Date(d).toLocaleDateString('no-NO')));
     const fmtAddr = (b) => {
       const a = b?.forretningsadresse || b?.postadresse || {};
@@ -44,6 +46,55 @@ function renderProsess(data){
     const getOrgnr = (obj) =>
       normalizeOrgnr(obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber);
   
+    // Avled status-nøkkel + label for hver rad (selskap)
+    function deriveStatus(b) {
+      const stopp = isTruthy(b?.stopp ?? b?.stop ?? b?.stopped ?? b?.disabled);
+      const noInterested = isTruthy(b?.noInterest ?? b?.no_interested ?? b?.no_interest);
+      const emailsendt = Number(b?.emailSentCount ?? 0);
+      const emailcount = Number(b?.emailCount ?? 0);
+      const emailAccepted = Number(b?.emailAcceptedCount ?? 0);
+  
+      if (stopp)              return { key: 'stoppet',   label: 'Stoppet' };
+      if (noInterested)       return { key: 'avmeldt',   label: 'Avmeldt' };
+      if (emailAccepted > 0)  return { key: 'akseptert', label: 'Akseptert' };
+  
+      // Ferdig løp uten aksept → "Utgått"
+      if (emailcount > 0 && emailsendt >= emailcount && emailAccepted === 0) {
+        return { key: 'utgått', label: 'Utgått' };
+      }
+  
+      // Ingen sendt ennå, men har planlagte
+      if (emailcount > 0 && emailsendt === 0) {
+        return { key: 'i_prosess', label: 'I prosess' };
+      }
+  
+      // Underveis
+      if (emailcount > 0 && emailsendt > 0 && emailsendt < emailcount) {
+        return { key: 'i_prosess', label: 'I prosess' };
+      }
+  
+      // Fallback
+      return { key: 'i_prosess', label: 'I prosess' };
+    }
+  
+    // Avled "current step" hvis mulig, ellers gjett fra counts
+    function deriveStep(b) {
+      const explicit =
+        b?.step ?? b?.prosessStep ?? b?.prosess_step ?? b?.internnr ?? b?.internNr ?? null;
+  
+      if (explicit != null && /^\d+$/.test(String(explicit))) {
+        return Number(explicit);
+      }
+  
+      const emailsendt = Number(b?.emailSentCount ?? 0);
+      const emailcount = Number(b?.emailCount ?? 0);
+      if (emailcount > 0) {
+        const next = Math.min(emailsendt + 1, emailcount);
+        return next; // "neste steg" eller siste hvis ferdig
+      }
+      return null;
+    }
+  
     // --- Les filtre ---
     const searchEl   = document.getElementById('search-prosess-input');
     const searchTerm = low(searchEl ? searchEl.value : '');
@@ -52,13 +103,18 @@ function renderProsess(data){
     const rawFilter   = grpSel ? grpSel.value : '';
     const filterGroup = String(rawFilter || '').trim();
   
+    const statusSel     = document.getElementById('filterStatusProsess');
+    const statusFilter  = low(statusSel ? statusSel.value : ''); // "", "stoppet", "akseptert", "stepp3", ...
+  
     // --- Filtrer grunnlag ---
     let filteredData = Array.isArray(data) ? data.slice() : [];
   
+    // Gruppefilter
     if (!(filterGroup === '' || filterGroup.toLowerCase() === 'all')) {
       filteredData = filteredData.filter(b => String(b.group ?? '').trim() === filterGroup);
     }
   
+    // Søk
     if (searchTerm) {
       filteredData = filteredData.filter(b => {
         const a   = b?.forretningsadresse || b?.postadresse || {};
@@ -74,9 +130,32 @@ function renderProsess(data){
         );
       });
     }
-
-    //oppdater teller
-    document.getElementById('counterlistprosess').innerText = `${filteredData.length} stk. bedrifter`;
+  
+    // Statusfilter (fra select)
+    if (statusFilter) {
+      filteredData = filteredData.filter(b => {
+        const { key } = deriveStatus(b);
+  
+        // steppN
+        if (statusFilter.startsWith('stepp')) {
+          const n = Number(statusFilter.replace('stepp', ''));
+          const step = deriveStep(b);
+          return Number.isFinite(n) && step === n;
+        }
+  
+        // alias for i_prosess: "i_prosess", "køet", "i prosess"
+        if (statusFilter === 'i_prosess' || statusFilter === 'køet' || statusFilter === 'i prosess') {
+          return key === 'i_prosess';
+        }
+  
+        // direkte nøkkelmatch: stoppet / akseptert / avmeldt / utgått
+        return key === statusFilter;
+      });
+    }
+  
+    // oppdater teller
+    const counterEl = document.getElementById('counterlistprosess');
+    if (counterEl) counterEl.innerText = `${filteredData.length} stk. bedrifter`;
   
     // --- Render rader ---
     (filteredData || []).forEach((b) => {
@@ -85,22 +164,16 @@ function renderProsess(data){
   
       const org = getOrgnr(b);
       const g = (gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
-      const contactHtml = renderContactIcons(b);
+      const contactHtml = typeof renderContactIcons === 'function' ? renderContactIcons(b) : '';
   
-      // Normaliser antall eposter
-      const countRaw = b?.countprosess ?? b?.countProsess ?? null;
-
-        //sjekke opp mot gTimerunnerObjects for å finne riktig count på sendte og planlagte eposter 2 av 6 i forløp
-       let emailcount = b.emailCount || 0;
-       let emailsendt = b.emailSentCount || 0;
-       let emailAccepted = b.emailAcceptedCount || 0;
-       let counttext = emailsendt+"/"+emailcount;
-       let noInterested = b.noInterest || false;
-
-
-
-      const count = Number(countRaw);
-      const showBadge = Number.isFinite(count) && count > 0;
+      // Normaliser counts
+      let emailcount      = Number(b.emailCount ?? 0);
+      let emailsendt      = Number(b.emailSentCount ?? 0);
+      let emailAccepted   = Number(b.emailAcceptedCount ?? 0);
+      let counttext       = `${emailsendt}/${emailcount}`;
+      let noInterested    = isTruthy(b.noInterest ?? b.no_interested ?? b.no_interest);
+  
+      const showBadge = emailcount > 0;
   
       tr.innerHTML = `
         <td style="width:40px;">
@@ -118,63 +191,47 @@ function renderProsess(data){
         </td>
       `;
   
-      if (emailAccepted > 0) {
-        // finne badge-elementet og gjøre det grønt hvis noen eposter er akseptert
-        const badgeEl = tr.querySelector('.prosess-badge');
-        if (badgeEl) {
-          badgeEl.style.background = 'rgba(0, 200, 83, 0.7)'; // endre til grønn farge
+      // Farge på badge basert på status
+      const badgeEl = tr.querySelector('.prosess-badge');
+      const { key } = deriveStatus(b);
+  
+      if (badgeEl) {
+        if (key === 'akseptert') {
+          badgeEl.style.background = 'rgba(0, 200, 83, 0.7)';       // grønn
+        } else if (noInterested) {
+          badgeEl.style.background = 'rgba(255, 82, 82, 0.7)';      // rød
+        } else if (key === 'utgått') {
+          badgeEl.style.background = 'rgba(255, 165, 0, 0.7)';      // oransje
+        } else if (key === 'stoppet') {
+          badgeEl.style.background = 'rgba(120, 120, 120, 0.7)';    // grå
         }
-
+        // ellers behold default (semigrå)
       }
-
-      if(noInterested){
-        // finne badge-elementet og gjøre det rød hvis ikke interessert
-        const badgeEl = tr.querySelector('.prosess-badge');
-        if (badgeEl) {
-          badgeEl.style.background = 'rgba(255, 82, 82, 0.7)'; // endre til rød farge
-        }
-
-      }
-
-      if(emailcount == emailsendt && emailAccepted == 0){
-        //epostløpet er ferdig uten noen aksepterte eposter
-        
-          const badgeEl = tr.querySelector('.prosess-badge');
-          if (badgeEl) {
-            badgeEl.style.background = 'rgba(255, 165, 0, 0.7)'; // endre til oransje farge
-          }
-        }
-
+  
       tr.style.cursor = 'pointer';
-
-
-        let clickTimer;
-        tr.addEventListener('click', (e) => {
+  
+      let clickTimer;
+      tr.addEventListener('click', (e) => {
         const t = e.target;
         if (t.closest('input[type="checkbox"]') || t.closest('a')) return;
-
-        // Delay for å se om det kommer dblclick
         clearTimeout(clickTimer);
         clickTimer = setTimeout(() => {
-            handleRowClick(tr, b); // enkel-klikk => åpne/lukke
+          if (typeof handleRowClick === 'function') handleRowClick(tr, b);
         }, 200);
-        });
-
-        tr.addEventListener('dblclick', (e) => {
+      });
+  
+      tr.addEventListener('dblclick', (e) => {
         const t = e.target;
         if (t.closest('input[type="checkbox"]') || t.closest('a')) return;
-
-        // Avbryt enkel-klikk-handling
         clearTimeout(clickTimer);
-
         const org = getOrgnr(b);
         if (typeof openEditPopup === 'function') openEditPopup(b, org);
-        });
-
+      });
+  
       tbody.appendChild(tr);
     });
-
   }
+  
   
 
 
@@ -272,8 +329,7 @@ function renderEmailFlows(flows = []) {
         stopp
         };
     });
-  
-  
+
     // Sortér fornuftig (steg stigende)
     norm.sort((a, b) => {
       const sa = (a.step ?? Number.POSITIVE_INFINITY);
@@ -354,7 +410,7 @@ function renderEmailFlows(flows = []) {
     function escapeAttr(s) {
       return String(s ?? '').replace(/"/g, '&quot;');
     }
-  }
+}
   
   
 
