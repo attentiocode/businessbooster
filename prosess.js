@@ -44,22 +44,9 @@ function renderProsess(data){
     const getOrgnr = (obj) =>
       normalizeOrgnr(obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber);
   
-    // Kontaktfelt helpers (uendret fra deg)
-    const getEmail = (it) =>
-      String(it?.epostadresse ?? it?.epost ?? it?.email ?? it?.mail ?? '').trim().replace(/^mailto:/i, '');
-    const isValidEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim());
-    const hasEmail = (it) => !!getEmail(it);
-  
-    const getPhone = (it) =>
-      String(it?.mobil ?? it?.mobilnummer ?? it?.telefon ?? it?.telefonnummer ?? it?.phone ?? it?.tlf ?? '').trim();
-    const hasPhone = (it) => !!getPhone(it);
-  
-    const getWeb = (it) =>
-      String(it?.hjemmeside ?? it?.hjemmesideurl ?? it?.hjemmesideUrl ?? it?.web ?? it?.www ?? it?.website ?? it?.nettside ?? '').trim();
-    const hasWeb = (it) => !!getWeb(it);
   
     // --- Les filtre ---
-    const searchEl   = document.getElementById('search-input-prosess');
+    const searchEl   = document.getElementById('search-prosess-input');
     const searchTerm = low(searchEl ? searchEl.value : '');
   
     const grpSel      = document.getElementById('filterGroupProsessMaster');

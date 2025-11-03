@@ -34,6 +34,11 @@ document.getElementById("select-contact-state-filter").addEventListener('change'
   startBrregList(gBrregbedrifter);
 });
 
+document.getElementById("search-prosess-input").addEventListener('change', (e) => {
+  renderProsess(gProsessertBedrifter);
+});
+
+
 document.getElementById("filterGroupReadyMaster").addEventListener('change', (e) => {
   renderReady(gReadybedrifter);
 });
