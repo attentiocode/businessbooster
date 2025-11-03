@@ -687,3 +687,146 @@ function timeRunnerObjects(data){
   console.log("timeRunnerObjects hentet:", timeRunnerObjects);
 
 }
+
+
+function timeRunnerObjectOverview(data){
+  // --- Aggregering ----------------------------------------------------------
+  const now = new Date();
+
+  const isTrue = v => String(v).toUpperCase() === "TRUE";
+
+  const toDate = v => (v ? new Date(v) : null);
+
+  const isNextMonth = (d, ref=now) => {
+    if(!d) return false;
+    const y = ref.getFullYear(), m = ref.getMonth();
+    const next = new Date(y, m + 1, 1);
+    const afterNext = new Date(y, m + 2, 1);
+    return d >= next && d < afterNext;
+  };
+
+  const totals = data.reduce((acc, row) => {
+    const executed = isTrue(row.executed);
+    const stopped  = isTrue(row.stopp);
+    const whenDate = toDate(row.when);
+
+    acc.total++;
+    if (executed) acc.sent++;
+    if (!executed && !stopped) acc.processing++; // planlagt / ikke sendt / ikke stoppet
+    if (stopped) acc.stopped++;
+    if (isNextMonth(whenDate)) acc.nextMonth++;
+
+    // (Feltene finnes ikke i datasettet – holdes på 0, men behold hook om de dukker opp)
+    if (isTrue(row.accepted)) acc.accepted++;
+    if (isTrue(row.declined)) acc.declined++;
+
+    // for liste "kommende"
+    if (!executed && !stopped && whenDate && whenDate >= now) acc.upcoming.push(row);
+
+    return acc;
+  }, { total:0, sent:0, processing:0, nextMonth:0, stopped:0, accepted:0, declined:0, upcoming:[] });
+
+  // sorter og begrens kommende
+  totals.upcoming.sort((a,b)=> new Date(a.when) - new Date(b.when));
+  const upcoming5 = totals.upcoming.slice(0,5);
+
+  // --- UI: enkel, selvforsynt stil -----------------------------------------
+  if(!document.getElementById("timeRunnerOverviewStyles")){
+    const css = `
+      .tro-wrap{display:grid;gap:16px}
+      @media(min-width:900px){.tro-wrap{grid-template-columns:repeat(12,1fr)}}
+      .tro-card{grid-column:span 3;background:linear-gradient(135deg,#0e1b2b 0%,#0b1623 100%);
+        border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:16px 18px; 
+        box-shadow:0 10px 30px rgba(0,0,0,.25)}
+      .tro-card.wide{grid-column:span 6}
+      .tro-title{color:#9fb3c8;font-size:12px;letter-spacing:.6px;text-transform:uppercase}
+      .tro-value{color:#e8f0ff;font-size:28px;font-weight:700;margin-top:6px}
+      .tro-sub{color:#87a0b9;font-size:12px;margin-top:2px}
+      .tro-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;margin-left:8px;
+        background:rgba(34,197,94,.12);color:#a7f3d0;border:1px solid rgba(34,197,94,.25)}
+      .tro-badge.warn{background:rgba(234,179,8,.12);color:#fde68a;border-color:rgba(234,179,8,.25)}
+      .tro-badge.err{background:rgba(239,68,68,.12);color:#fecaca;border-color:rgba(239,68,68,.25)}
+      .tro-list{margin-top:8px}
+      .tro-li{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid rgba(255,255,255,.06)}
+      .tro-name{color:#dbe8ff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+      .tro-when{color:#9fb3c8;font-size:12px}
+      .tro-progress{height:8px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:10px}
+      .tro-bar{height:100%;background:linear-gradient(90deg,#4f46e5,#06b6d4);width:0%}
+    `;
+    const style = document.createElement('style');
+    style.id = "timeRunnerOverviewStyles";
+    style.innerHTML = css;
+    document.head.appendChild(style);
+  }
+
+  // små hjelpere
+  const pct = (n, d) => d ? Math.round((n/d)*100) : 0;
+  const fmtDate = iso => {
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  };
+
+  const progress = Math.min(100, pct(totals.sent, totals.total));
+  const upcomingHtml = upcoming5.length
+    ? upcoming5.map(x=>(
+      `<div class="tro-li">
+         <div class="tro-name" title="${x.externalId}">${x.externalId}</div>
+         <div class="tro-when">${fmtDate(x.when)}</div>
+       </div>`
+    )).join('')
+    : `<div class="tro-sub" style="margin-top:6px">Ingen planlagte utsendelser.</div>`;
+
+  // --- Render ----------------------------------------------------------------
+  const el = document.getElementById("timeRunnerOverview");
+  if(!el) return;
+
+  el.innerHTML = `
+    <div class="tro-wrap">
+      <div class="tro-card"><div class="tro-title">Sendt</div>
+        <div class="tro-value">${totals.sent}<span class="tro-badge"> ${pct(totals.sent, totals.total)}% </span></div>
+        <div class="tro-sub">Antall e-poster som er gjennomført</div>
+      </div>
+
+      <div class="tro-card"><div class="tro-title">I prosess</div>
+        <div class="tro-value">${totals.processing}</div>
+        <div class="tro-sub">Planlagt / ikke stoppet</div>
+      </div>
+
+      <div class="tro-card"><div class="tro-title">Neste måned</div>
+        <div class="tro-value">${totals.nextMonth}</div>
+        <div class="tro-sub">Planlagte utsendelser i neste kalendermåned</div>
+      </div>
+
+      <div class="tro-card"><div class="tro-title">Stoppet</div>
+        <div class="tro-value">${totals.stopped}<span class="tro-badge err">Manuell stopp</span></div>
+        <div class="tro-sub">Utsendelser markert som «stopp»</div>
+      </div>
+
+      <div class="tro-card"><div class="tro-title">Totalt</div>
+        <div class="tro-value">${totals.total}</div>
+        <div class="tro-sub">Alle rader i datasettet</div>
+      </div>
+
+      <div class="tro-card"><div class="tro-title">Akseptert / Avslått</div>
+        <div class="tro-value">${totals.accepted} / ${totals.declined}
+          <span class="tro-badge warn">Ingen felt i data</span>
+        </div>
+        <div class="tro-sub">Felt mangler i input – settes til 0</div>
+      </div>
+
+      <div class="tro-card wide">
+        <div class="tro-title">Progresjon</div>
+        <div class="tro-value">${progress}%</div>
+        <div class="tro-progress"><div class="tro-bar" style="width:${progress}%"></div></div>
+        <div class="tro-sub">Sendt vs. totalt</div>
+      </div>
+
+      <div class="tro-card wide">
+        <div class="tro-title">Kommende utsendelser (neste 5)</div>
+        <div class="tro-list">
+          ${upcomingHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
