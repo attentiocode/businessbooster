@@ -848,28 +848,42 @@ function timeRunnerObjectOverview(data){
   animateNumber(document.getElementById('tro-next'),  prev.nextMonth, totals.nextMonth, duration);
   animateNumber(document.getElementById('tro-stop'),  prev.stopped, totals.stopped, duration);
 
-  // prosent badge + tekst
-  const sentPctNew = pct(totals.sent, totals.total);
-  const sentPctPrev = pct(prev.sent, prev.total || prev.sent || 1); // unngå /0
-  const badge = document.getElementById('tro-sent-pct');
-  const progText = document.getElementById('tro-prog-text');
-  const progBar  = document.getElementById('tro-prog-bar');
+ // prosent-beregning
+const sentPctNew  = pct(totals.sent, totals.total);
+const sentPctPrev = pct(prev.sent, prev.total || prev.sent || 1);
+const badge    = document.getElementById('tro-sent-pct');
+const progText = document.getElementById('tro-prog-text');
+const progBar  = document.getElementById('tro-prog-bar');
 
-  // animér prosent-tekstene også
-  (function animatePct(el, from, to, dur){
-    if (from === to){ el.textContent = to + '%'; return; }
-    const start = performance.now();
-    function frame(now){
-      const t = Math.min(1, (now - start)/dur);
-      const val = Math.round(from + (to - from) * (1 - Math.pow(1 - t, 3)));
-      el.textContent = val + '%';
-      if (t < 1) requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-  })(badge, sentPctPrev, sentPctNew, duration);
+// Felles funksjoner (ikke IIFE)
+function animatePct(el, from, to, dur){
+  if (from === to){ el.textContent = to + '%'; return; }
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now - start)/dur);
+    const val = Math.round(from + (to - from) * (1 - Math.pow(1 - t, 3)));
+    el.textContent = val + '%';
+    if (t < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function animateWidth(el, fromPct, toPct, duration=1000){
+  if (fromPct === toPct) { el.style.width = toPct + '%'; return; }
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now - start)/duration);
+    const v = fromPct + (toPct - fromPct) * (1 - Math.pow(1 - t, 3));
+    el.style.width = v + '%';
+    if (t < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
 
-  animatePct(progText, prev.progress, progress, duration);
-  animateWidth(progBar, prev.progress, progress, duration);
+// Kall begge steder
+animatePct(badge,    sentPctPrev, sentPctNew, duration);
+animatePct(progText, prev.progress, progress, duration);
+animateWidth(progBar, prev.progress, progress, duration);
+
 
   // lagre nåværende metrics for neste kall
   el.__prevMetrics = {
