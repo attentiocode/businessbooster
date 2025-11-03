@@ -112,7 +112,7 @@ const timeRunner = (() => {
         ${card('Antall bedrifter', `<span id="tro-leads">0</span>`, 'Unike selskaper')}
         ${card('Antall e-poster', `<span id="tro-total">0</span>`, 'Alle sendte og planlagte e-poster')}
         ${card('Sendt', `<span id="tro-sent-num">0</span> <span class="tro-badge" id="tro-sent-pct">0%</span>`, 'E-poster som er sendt')}
-        ${card('Aksepterte', `<span id="tro-acc">0</span>`, 'Har fått invitasjon')}
+        ${card('Aksepterte', `<span id="tro-acc">0</span>`, 'Har trykket på akseptlenke')}
         ${card('I prosess', `<span id="tro-proc">0</span>`, 'Planlagt / ikke stoppet')}
         ${card('Neste måned', `<span id="tro-next">0</span>`, 'Planlagte utsendelser')}
         ${card('Stoppet', `<span id="tro-stop">0</span> <span class="tro-badge err">Stoppet</span>`, 'Utsendelser er stoppet')}
