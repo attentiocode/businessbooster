@@ -292,6 +292,8 @@ function ruteresponse(data,responseid){
       customerResponse(data);
     }else if(responseid==="leadsResponse"){
       leadsResponse(data);
+    }else if(responseid==="timeRunnerObjects"){
+      timeRunnerObjects(data);
     }
 }
 
@@ -572,6 +574,22 @@ function convertLeadsJsonStringsToObjects(jsonStrings) {
   });
 }
 
+function converttimeRunnerObjectsToObjects(jsonStrings) {
+  return jsonStrings.map((jsonString, index) => {
+      try {
+          
+        // Parse JSON-strengen uten HTML-dataen
+        const data = JSON.parse(jsonString);
+        // hvs det finnes et felt med dette navnet "email_series"
+        return data;
+
+      } catch (error) {
+        console.error(`Feil ved parsing av JSON-streng på indeks ${index}:`, jsonString, error);
+        return null; // Returner null hvis parsing feiler
+      }
+  });
+}
+
 updateCounter("label-selected-customers", gSelectbedrifter.length, 1000);
 updateCounter("label-ready-customers", gReadybedrifter.length, 1000);
 updateCounter("label-mailer-sendt", gProsessertBedrifter.length, 1000);
@@ -644,10 +662,28 @@ function leadsResponse(data){
 
   //rendre prosess liste
   renderProsess(gProsessertBedrifter);
+
+}
+
+function getTimeRunnerObjects(){
+     
+  //hente leads
+  GETairtable("appISWcEA5QICIlzP","tblyf1BLbKx7I4JHR","rec7so5TB9qPCgf1w","timeRunnerObjects","skipCache");
   
+}
 
+function timeRunnerObjects(data){
 
+  if (!data || !data.fields || !data.fields.runningjson || !Array.isArray(data.fields.runningjson)) {
+    console.error("Ugyldig dataformat: Forventet et objekt med 'fields.runningjson' som en array.");
+    return; // Avbryt hvis data ikke er gyldig
+  } 
 
+  // Konverter JSON-strenger til objekter
+  const jsonStrings = data.fields.runningjson;
+  let timeRunnerObjects = converttimeRunnerObjectsToObjects(jsonStrings);
 
+  //ingen handling nødvendig her foreløpig
+  console.log("timeRunnerObjects hentet:", timeRunnerObjects);
 
 }

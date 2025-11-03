@@ -50,6 +50,8 @@ cdnScripts.reduce((promise, script) => {
             //hent alle 
             getBoosterLeads();
             //  
+            getTimeRunnerObjects();
+            //
             initFilterselectors();
             //
             getAllallIndustri();
