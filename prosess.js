@@ -453,7 +453,7 @@ function onToggleFlowStop(flowId, isStopped, step) {
         let timrunnerObject = gTimerunnerObjects.find(obj => String(obj.airtable) === String(flowId));
         if (timrunnerObject) {
             timrunnerObject.stopp = isStopped;
-            renderOverviewTimerunners(gTimerunnerObjects);
+            timeRunner.update(gTimerunnerObjects);
         }
 
 
