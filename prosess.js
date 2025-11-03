@@ -439,11 +439,6 @@ function isRowOpen(tr) {
 
   // Kalles når bruker klikker "Deaktiver" (stopp) på en flow
 function onToggleFlowStop(flowId, isStopped, step) {
-    // TODO: bytt ut med faktisk API-kall
-    // fetch('/api/flow/stopp', { method:'POST', headers:{'Content-Type':'application/json'},
-    //   body: JSON.stringify({ id: flowId, stopp: isStopped, step }) });
-    console.log('toggle stopp', { flowId, isStopped, step });
-
 
     let data = JSON.stringify({stopp: isStopped});
 
@@ -453,6 +448,15 @@ function onToggleFlowStop(flowId, isStopped, step) {
         flowId,
         data
         );
+
+        // Finne raden i gTimerunnerObjects og oppdatere stopp-statusen og deretter opptadere overview
+        let timrunnerObject = gTimerunnerObjects.find(obj => String(obj.airtable) === String(flowId));
+        if (timrunnerObject) {
+            timrunnerObject.stopp = isStopped;
+            renderOverviewTimerunners(gTimerunnerObjects);
+        }
+
+
 }
 
   
