@@ -686,6 +686,9 @@ function timeRunnerObjects(data){
   //ingen handling nødvendig her foreløpig
   console.log("timeRunnerObjects hentet:", timeRunnerObjects);
 
+  //rendre oversikt
+  timeRunnerObjectOverview(timeRunnerObjects);
+
 }
 
 
