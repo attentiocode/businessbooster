@@ -1,11 +1,3 @@
-timeRunner.init('#timeRunnerOverview'); // én gang ved mount
-timeRunner.loading();                   // vis ventemodus mens du henter
-// ...hent data...
-//timeRunner.update(data);                // vis og animer tall
-// timeRunner.error('Noe gikk galt');  // valgfri feilvisning
-
-
-
 
 // ---- TimeRunner modul ------------------------------------------------------
 const timeRunner = (() => {
@@ -243,3 +235,9 @@ const timeRunner = (() => {
     return { init, loading, update, error };
   })();
   
+
+  timeRunner.init('#timeRunnerOverview'); // én gang ved mount
+timeRunner.loading();                   // vis ventemodus mens du henter
+// ...hent data...
+//timeRunner.update(data);                // vis og animer tall
+// timeRunner.error('Noe gikk galt');  // valgfri feilvisning
