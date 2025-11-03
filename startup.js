@@ -47,6 +47,10 @@ document.getElementById("filterGroupProsessMaster").addEventListener('change', (
   renderProsess(gProsessertBedrifter);
 });
 
+document.getElementById("filterStatusProsess").addEventListener('change', (e) => {
+  renderProsess(gProsessertBedrifter);
+});
+
 //sideknappene rooting
 document.getElementById("dashboardSideButton").addEventListener("click", function() {
     document.getElementById("dashboardTabButton").click();
