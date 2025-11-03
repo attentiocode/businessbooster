@@ -255,6 +255,7 @@ function maketimerunnerObjects(companyes) {
 
             let emailBody = getEmailBody(company,null);
             let subject = mailSettings[i].subject || '';
+            let group = ["rec7so5TB9qPCgf1w"];
 
 
             let timerunnerObject = {
@@ -278,7 +279,8 @@ function maketimerunnerObjects(companyes) {
                 external_databaseId: baseid,
                 external_tableId: tabelid,
                 external_rawId: company.id || '',
-                internnr:i + 1
+                internnr:i + 1,
+                group:group
             };
             timerunnerObjects.push(timerunnerObject);
 
