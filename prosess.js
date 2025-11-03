@@ -44,7 +44,6 @@ function renderProsess(data){
     const getOrgnr = (obj) =>
       normalizeOrgnr(obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber);
   
-  
     // --- Les filtre ---
     const searchEl   = document.getElementById('search-prosess-input');
     const searchTerm = low(searchEl ? searchEl.value : '');
@@ -90,6 +89,14 @@ function renderProsess(data){
   
       // Normaliser antall eposter
       const countRaw = b?.countprosess ?? b?.countProsess ?? null;
+
+        //sjekke opp mot gTimerunnerObjects for å finne riktig count på sendte og planlagte eposter 2 av 6 i forløp
+       let emailcount = b.emailCount || 0;
+       let emailsendt = b.emailSentCount || 0;
+       let emailAccepted = b.emailAcceptedCount || 0;
+
+
+
       const count = Number(countRaw);
       const showBadge = Number.isFinite(count) && count > 0;
   
@@ -105,7 +112,7 @@ function renderProsess(data){
         <td style="font-size:11px;">${fmtDate(b.registreringsdatoEnhetsregisteret || b.registreringsdatoForetaksregisteret)}</td>
         <td class="contact-cell" style="font-size:11px;">${contactHtml}</td>
         <td class="prosess-badge-cell">
-          ${showBadge ? `<span class="prosess-badge" aria-label="Antall eposter i forløp">${count}</span>` : ''}
+          ${showBadge ? `<span class="prosess-badge" aria-label="Antall eposter i forløp">${emailsendt}</span>` : ''}
         </td>
       `;
   
@@ -137,8 +144,6 @@ function renderProsess(data){
 
       tbody.appendChild(tr);
     });
-
-
 
   }
   

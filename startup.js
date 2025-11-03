@@ -698,6 +698,41 @@ function timeRunnerObjects(data){
   //rendre oversikt
   timeRunner.update(timeRunnerObjects);
 
+  //merge timerunner object inn i prosessert bedrifter
+  mergeTimerunnerObject(gTimerunnerObjects);
+  
+
 }
+
+
+function mergeTimerunnerObject(gTimerunnerObjects) {
+  const isTrue = v => String(v).toUpperCase() === "TRUE";
+
+  // Lag et oppslag (hashmap) for rask matching
+  const bedriftMap = new Map(
+    gProsessertBedrifter.map(b => [String(b.orgnr), b])
+  );
+
+  gTimerunnerObjects.forEach(trObj => {
+    if (!trObj.customerId) return; // hopp over rader uten ID
+
+    const company = bedriftMap.get(String(trObj.customerId));
+    if (!company) return;
+
+    // --- totalt antall eposter ---
+    company.emailCount = (company.emailCount || 0) + 1;
+
+    // --- sendte eposter ---
+    if (isTrue(trObj.executed)) {
+      company.emailSentCount = (company.emailSentCount || 0) + 1;
+    }
+
+    // --- aksepterte eposter ---
+    if (isTrue(trObj.accepted)) {
+      company.emailAcceptedCount = (company.emailAcceptedCount || 0) + 1;
+    }
+  });
+}
+
 
 
