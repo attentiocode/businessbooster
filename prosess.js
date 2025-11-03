@@ -18,7 +18,7 @@ function renderProsess(data){
           height: 18px;
           padding: 0 6px;
           border-radius: 9999px;
-          background: #e02424; /* rød */
+          background:rgba(130, 244, 0, 0.39); /* grønn */
           color: #fff;
           font-size: 11px;
           line-height: 18px;
@@ -116,6 +116,10 @@ function renderProsess(data){
         </td>
       `;
   
+      if (emailAccepted > 0) {
+        tr.classList.add('accepted');
+      }
+
       tr.style.cursor = 'pointer';
 
 
