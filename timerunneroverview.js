@@ -110,7 +110,7 @@ const timeRunner = (() => {
     return `
       <div class="tro-wrap">
         ${card('Antall bedrifter', `<span id="tro-leads">0</span>`, 'Unike selskaper')}
-        ${card('Antall e-poster', `<span id="tro-total">0</span>`, 'Alle utsendinger')}
+        ${card('Antall e-poster', `<span id="tro-total">0</span>`, 'Alle sendte og planlagte e-poster')}
         ${card('Sendt', `<span id="tro-sent-num">0</span> <span class="tro-badge" id="tro-sent-pct">0%</span>`, 'E-poster som er sendt')}
         ${card('Aksepterte', `<span id="tro-acc">0</span>`, 'accepted = TRUE')}   <!-- NEW -->
         ${card('I prosess', `<span id="tro-proc">0</span>`, 'Planlagt / ikke stoppet')}
@@ -232,7 +232,7 @@ const timeRunner = (() => {
       .tro-card{grid-column:span 3;background:linear-gradient(135deg,#0e1b2b 0%,#0b1623 100%);
         border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:16px 18px; 
         box-shadow:0 10px 30px rgba(0,0,0,.25)}
-      .tro-card.wide{grid-column:span 6}
+      .tro-card.wide{grid-column:span 3}
       .tro-title{color:#9fb3c8;font-size:12px;letter-spacing:.6px;text-transform:uppercase}
       .tro-value{color:#e8f0ff;font-size:28px;font-weight:700;margin-top:6px}
       .tro-sub{color:#87a0b9;font-size:12px;margin-top:2px}
@@ -262,6 +262,6 @@ const timeRunner = (() => {
   return { init, loading, update, error };
 })();
 
-timeRunner.init('#timeRunnerOverview'); // én gang ved mount
-timeRunner.loading();                   // vis ventemodus mens du henter
+timeRunner.init('#timeRunnerOverview');   // én gang ved mount
+timeRunner.loading();  // vis ventemodus mens du henter
 
