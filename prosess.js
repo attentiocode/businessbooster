@@ -305,7 +305,7 @@ function renderEmailFlows(flows = []) {
     const rows = norm.map((f, idx) => {
       const statusTag = (() => {
         const base = 'tag';
-        if (['sent','opened','clicked'].includes(f.status)) return `${base} ok`;
+        if (['sent','opened','clicked'].includes(f.status)) return `${base} info`;
         if (f.accepted === true) return `${base} ok`;
         if (f.open === true) return `${base} info`;
         if (f.stopp === true) return `${base} warn`;
