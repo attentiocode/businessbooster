@@ -120,7 +120,7 @@ const timeRunner = (() => {
           <div class="tro-title">Progresjon</div>
           <div class="tro-value" id="tro-prog-text">0%</div>
           <div class="tro-progress"><div class="tro-bar" id="tro-prog-bar" style="width:0%"></div></div>
-          <div class="tro-sub">Aksept-rate</div>
+          <div class="tro-sub">Aksept-rate (sendte vs. akseptert)</div>
         </div>
       </div>`;
   }
