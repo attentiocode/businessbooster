@@ -136,12 +136,13 @@ function renderProsess(data){
 
       }
 
-      //hvis ikke det er planlagte eposter så gjøre badge grå
-        if (emailcount === 0) {
-            const badgeEl = tr.querySelector('.prosess-badge');
-            if (badgeEl) {
-            badgeEl.style.displayt = 'none'; // skjul badgen hvis ingen eposter er planlagt 
-            }
+      if(emailcount == emailsendt && emailAccepted == 0){
+        //epostløpet er ferdig uten noen aksepterte eposter
+        
+          const badgeEl = tr.querySelector('.prosess-badge');
+          if (badgeEl) {
+            badgeEl.style.background = 'rgba(255, 165, 0, 0.7)'; // endre til oransje farge
+          }
         }
 
       tr.style.cursor = 'pointer';
