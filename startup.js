@@ -695,6 +695,7 @@ function timeRunnerObjects(data){
 function timeRunnerObjectOverview(data){
   const now = new Date();
 
+  // ---- helpers ----
   const isTrue = v => String(v).toUpperCase() === "TRUE";
   const toDate = v => (v ? new Date(v) : null);
   const isNextMonth = (d, ref=now) => {
@@ -704,25 +705,34 @@ function timeRunnerObjectOverview(data){
     const afterNext = new Date(y, m + 2, 1);
     return d >= next && d < afterNext;
   };
+  const pct = (n, d) => d ? Math.round((n/d)*100) : 0;
+  const nf = new Intl.NumberFormat();
 
+  // ---- aggregates ----
+  const leads = new Set();
   const totals = data.reduce((acc, row) => {
+    leads.add(row.externalId);
     const executed = isTrue(row.executed);
     const stopped  = isTrue(row.stopp);
     const whenDate = toDate(row.when);
-
     acc.total++;
     if (executed) acc.sent++;
     if (!executed && !stopped) acc.processing++;
     if (stopped) acc.stopped++;
     if (isNextMonth(whenDate)) acc.nextMonth++;
-
     return acc;
   }, { total:0, sent:0, processing:0, nextMonth:0, stopped:0 });
 
+  const progress = Math.min(100, pct(totals.sent, totals.total));
+
+  // ---- styles (once) ----
   if(!document.getElementById("timeRunnerOverviewStyles")){
     const css = `
       .tro-wrap{display:grid;gap:16px}
       @media(min-width:900px){.tro-wrap{grid-template-columns:repeat(12,1fr)}}
+      .tro-header{display:flex;align-items:center;gap:10px;margin:0 0 10px 2px}
+      .tro-header svg{width:18px;height:18px;opacity:.85}
+      .tro-header-title{color:#e8f0ff;font-weight:700;letter-spacing:.3px}
       .tro-card{grid-column:span 3;background:linear-gradient(135deg,#0e1b2b 0%,#0b1623 100%);
         border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:16px 18px; 
         box-shadow:0 10px 30px rgba(0,0,0,.25)}
@@ -742,46 +752,137 @@ function timeRunnerObjectOverview(data){
     document.head.appendChild(style);
   }
 
-  const pct = (n, d) => d ? Math.round((n/d)*100) : 0;
-  const progress = Math.min(100, pct(totals.sent, totals.total));
+  // ---- animation helpers ----
+  const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+  function animateNumber(el, from, to, duration=1000){
+    if (from === to) { el.textContent = nf.format(to); return; }
+    const start = performance.now();
+    function frame(now){
+      const t = Math.min(1, (now - start)/duration);
+      const val = Math.round(from + (to - from) * easeOutCubic(t));
+      el.textContent = nf.format(val);
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  function animateWidth(el, fromPct, toPct, duration=1000){
+    if (fromPct === toPct) { el.style.width = toPct + '%'; return; }
+    const start = performance.now();
+    function frame(now){
+      const t = Math.min(1, (now - start)/duration);
+      const v = fromPct + (toPct - fromPct) * easeOutCubic(t);
+      el.style.width = v + '%';
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
 
+  // ---- render ----
   const el = document.getElementById("timeRunnerOverview");
   if(!el) return;
 
+  // hent forrige metrics fra elementet (første gang = undefined)
+  const prev = el.__prevMetrics || {
+    leads: 0, total: 0, sent: 0, processing: 0, nextMonth: 0, stopped: 0, progress: 0
+  };
+
   el.innerHTML = `
+    <div class="tro-header">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M22 8l-8.7 5.8a2 2 0 0 1-2.6 0L2 8" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+      <div class="tro-header-title">Epostløp</div>
+    </div>
+
     <div class="tro-wrap">
-      <div class="tro-card"><div class="tro-title">Totalt</div>
-        <div class="tro-value">${totals.total}</div>
+      <div class="tro-card">
+        <div class="tro-title">Antall leads</div>
+        <div class="tro-value" id="tro-leads">0</div>
+        <div class="tro-sub">Unike selskaper (externalId)</div>
+      </div>
+
+      <div class="tro-card">
+        <div class="tro-title">Totalt</div>
+        <div class="tro-value" id="tro-total">0</div>
         <div class="tro-sub">Alle rader i datasettet</div>
       </div>
 
-      <div class="tro-card"><div class="tro-title">Sendt</div>
-        <div class="tro-value">${totals.sent}<span class="tro-badge">${pct(totals.sent, totals.total)}%</span></div>
+      <div class="tro-card">
+        <div class="tro-title">Sendt</div>
+        <div class="tro-value" id="tro-sent">0 <span class="tro-badge" id="tro-sent-pct">0%</span></div>
         <div class="tro-sub">E-poster som er sendt</div>
       </div>
 
-      <div class="tro-card"><div class="tro-title">I prosess</div>
-        <div class="tro-value">${totals.processing}</div>
+      <div class="tro-card">
+        <div class="tro-title">I prosess</div>
+        <div class="tro-value" id="tro-proc">0</div>
         <div class="tro-sub">Planlagt / ikke stoppet</div>
       </div>
 
-      <div class="tro-card"><div class="tro-title">Neste måned</div>
-        <div class="tro-value">${totals.nextMonth}</div>
+      <div class="tro-card">
+        <div class="tro-title">Neste måned</div>
+        <div class="tro-value" id="tro-next">0</div>
         <div class="tro-sub">Planlagte utsendelser neste måned</div>
       </div>
 
-      <div class="tro-card"><div class="tro-title">Stoppet</div>
-        <div class="tro-value">${totals.stopped}<span class="tro-badge err">Stoppet</span></div>
+      <div class="tro-card">
+        <div class="tro-title">Stoppet</div>
+        <div class="tro-value" id="tro-stop">0 <span class="tro-badge err">Stoppet</span></div>
         <div class="tro-sub">Utsendelser markert som stopp</div>
       </div>
 
       <div class="tro-card wide">
         <div class="tro-title">Progresjon</div>
-        <div class="tro-value">${progress}%</div>
-        <div class="tro-progress"><div class="tro-bar" style="width:${progress}%"></div></div>
+        <div class="tro-value" id="tro-prog-text">0%</div>
+        <div class="tro-progress"><div class="tro-bar" id="tro-prog-bar" style="width:0%"></div></div>
         <div class="tro-sub">Sendt vs. totalt</div>
       </div>
     </div>
   `;
+
+  // ---- animate numbers (from prev -> current) ----
+  const duration = el.__prevMetrics ? 800 : 1000; // 1. kall: 1000ms, ellers 800ms
+  animateNumber(document.getElementById('tro-leads'), prev.leads, leads.size, duration);
+  animateNumber(document.getElementById('tro-total'), prev.total, totals.total, duration);
+  animateNumber(document.getElementById('tro-sent'),  prev.sent,  totals.sent,  duration);
+  animateNumber(document.getElementById('tro-proc'),  prev.processing, totals.processing, duration);
+  animateNumber(document.getElementById('tro-next'),  prev.nextMonth, totals.nextMonth, duration);
+  animateNumber(document.getElementById('tro-stop'),  prev.stopped, totals.stopped, duration);
+
+  // prosent badge + tekst
+  const sentPctNew = pct(totals.sent, totals.total);
+  const sentPctPrev = pct(prev.sent, prev.total || prev.sent || 1); // unngå /0
+  const badge = document.getElementById('tro-sent-pct');
+  const progText = document.getElementById('tro-prog-text');
+  const progBar  = document.getElementById('tro-prog-bar');
+
+  // animér prosent-tekstene også
+  (function animatePct(el, from, to, dur){
+    if (from === to){ el.textContent = to + '%'; return; }
+    const start = performance.now();
+    function frame(now){
+      const t = Math.min(1, (now - start)/dur);
+      const val = Math.round(from + (to - from) * (1 - Math.pow(1 - t, 3)));
+      el.textContent = val + '%';
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })(badge, sentPctPrev, sentPctNew, duration);
+
+  animatePct(progText, prev.progress, progress, duration);
+  animateWidth(progBar, prev.progress, progress, duration);
+
+  // lagre nåværende metrics for neste kall
+  el.__prevMetrics = {
+    leads: leads.size,
+    total: totals.total,
+    sent: totals.sent,
+    processing: totals.processing,
+    nextMonth: totals.nextMonth,
+    stopped: totals.stopped,
+    progress
+  };
 }
+
 
