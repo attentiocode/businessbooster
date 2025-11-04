@@ -2,7 +2,7 @@ let gBrregbedrifter = JSON.parse(localStorage.getItem('gBrregbedrifter') || '[]'
 let gSelectbedrifter = JSON.parse(localStorage.getItem('gSelectbedrifter') || '[]');
 let gReadybedrifter = JSON.parse(localStorage.getItem('gReadybedrifter') || '[]');
 let gGroupbedrifter = JSON.parse(localStorage.getItem('gGroupbedrifter') || '[]');
-let gProsessertBedrifter = JSON.parse(localStorage.getItem('gProsessertBedrifter') || '[]');
+let gProsessertBedrifter = [];
 let gTimerunnerObjects = [];
 let gCustomers = [];
 let userid = null;
@@ -669,12 +669,9 @@ function leadsResponse(data){
 
   let boosterLeads = convertLeadsJsonStringsToObjects(jsonStrings);
   gProsessertBedrifter = boosterLeads;
-  console.log("Booster leads konvertert:", gProsessertBedrifter);
+ 
   //lagre i global variabel
-
-  //rendre prosess liste
-  //renderProsess(gProsessertBedrifter); //Venter med å rendre til timeRunner objects er hentet
-
+  getTimeRunnerObjects();
 }
 
 function getTimeRunnerObjects(){
@@ -712,7 +709,6 @@ function timeRunnerObjects(data){
   
 
 }
-
 
 function mergeTimerunnerObject(gTimerunnerObjects) {
   const isTrue = v => String(v).toUpperCase() === "TRUE";

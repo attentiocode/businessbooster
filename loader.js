@@ -50,8 +50,6 @@ cdnScripts.reduce((promise, script) => {
             getCustomer();
             //hent alle 
             getBoosterLeads();
-            //  
-            getTimeRunnerObjects();
             //
             initFilterselectors();
             //
