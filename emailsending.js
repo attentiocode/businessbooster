@@ -46,7 +46,7 @@ var mailSettings = [
         subject: subject5,
         body: emailbody5
     }
-  ];
+];
 
 
   //recordId (Airtable id, f.eks. "recABC123…")
@@ -57,10 +57,6 @@ const destTrial = 'https://www.innkjops-gruppen.no/prov-gratis';
 
 const openPixelSrc = `${PUBLIC_BASE_URL}/api/open.gif?rid=${encodeURIComponent(recordId)}`;
 const ctaHrefTrial = `${PUBLIC_BASE_URL}/api/clk?rid=${encodeURIComponent(recordId)}&to=${encodeURIComponent(destTrial)}`;
-
-
-
-
 
 
 function sendEmailToCompany(company, totalRows, uploadedRows) {
