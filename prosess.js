@@ -285,41 +285,40 @@ function renderEmailFlows(flows = []) {
   
     // Normaliser datastruktur pr rad
     const norm = flows.map(row => {
-        const id = row?.id || row?._rawJson?.id || null;
-        const f = row?.fields || row?._rawJson?.fields || row || {};
-    
-        // payload kan være JSON-streng
-        let payload = {};
-        try {
+      const id = row?.id || row?._rawJson?.id || null;
+      const f = row?.fields || row?._rawJson?.fields || row || {};
+  
+      // payload kan være JSON-streng
+      let payload = {};
+      try {
         if (typeof f.payload === 'string') payload = JSON.parse(f.payload);
         else if (f.payload && typeof f.payload === 'object') payload = f.payload;
-        } catch { /* ignorér parsefeil */ }
-    
-        // status
-        let status = 'queued';
-        if (f.executed === true) status = 'sent';
-        else if (typeof f.status === 'string') {
+      } catch { /* ignorér parsefeil */ }
+  
+      // status
+      let status = 'queued';
+      if (f.executed === true) status = 'sent';
+      else if (typeof f.status === 'string') {
         const s = f.status.toLowerCase();
         if (s === 'pending') status = 'queued';
         else if (['sent','opened','clicked','failed','queued'].includes(s)) status = s;
-        }
-    
-        // stopp (truthy => stoppet)
-        const stoppRaw = f.stopp;
-        const stopp = stoppRaw === true || stoppRaw === 1 || stoppRaw === '1' || String(stoppRaw).toLowerCase() === 'true';
-    
-        // 
-        if (stopp) {
+      }
+  
+      // stopp (truthy => stoppet)
+      const stoppRaw = f.stopp;
+      const stopp = stoppRaw === true || stoppRaw === 1 || stoppRaw === '1' || String(stoppRaw).toLowerCase() === 'true';
+  
+      if (stopp) {
         status = 'Stoppet';
-        } else if (f.no_interest === true || f.no_interest === 1 || f.no_interest === '1' || String(f.no_interest).toLowerCase() === 'true') {
+      } else if (f.no_interest === true || f.no_interest === 1 || f.no_interest === '1' || String(f.no_interest).toLowerCase() === 'true') {
         status = 'Avmeldt';
-        } else if (f.accepted === true || f.accepted === 1 || String(f.accepted).toLowerCase() === 'true') {
+      } else if (f.accepted === true || f.accepted === 1 || String(f.accepted).toLowerCase() === 'true') {
         status = 'Akseptert';
-        } else if (f.open === true || f.open === 1 || String(f.open).toLowerCase() === 'true') {
+      } else if (f.open === true || f.open === 1 || String(f.open).toLowerCase() === 'true') {
         status = 'Åpnet';
-        }
-    
-        return {
+      }
+  
+      return {
         id,
         subject: payload.subject || f.title || '—',
         to: payload.epost || payload.email || '',
@@ -328,9 +327,9 @@ function renderEmailFlows(flows = []) {
         scheduledAt: f.when || null,
         sentAt: f.executedAt || null,
         stopp
-        };
+      };
     });
-
+  
     // Sortér fornuftig (steg stigende)
     norm.sort((a, b) => {
       const sa = (a.step ?? Number.POSITIVE_INFINITY);
@@ -347,7 +346,7 @@ function renderEmailFlows(flows = []) {
       return isNaN(d) ? '—' : d.toLocaleString('no-NO');
     };
   
-    // Header: # | Emne | Steg | Status | Planlagt/Sendt | Deaktiver
+    // Header
     const hdr = `
       <div class="flows-grid" style="margin-bottom:6px;grid-template-columns:auto 1fr auto auto auto auto;">
         <div class="hdr">#</div>
@@ -359,6 +358,7 @@ function renderEmailFlows(flows = []) {
       </div>
     `;
   
+    // Rader
     const rows = norm.map((f, idx) => {
       const statusTag = (() => {
         const base = 'tag';
@@ -369,26 +369,32 @@ function renderEmailFlows(flows = []) {
         if (f.status === 'Avmeldt') return `${base} warn`;
         if (['sent','opened','clicked'].includes(f.status)) return `${base} info`;
         if (f.status === 'failed') return `${base} warn`;
-        return base; // queued/annet
+        return base;
       })();
   
       const when = f.sentAt ? fmtDT(f.sentAt) : fmtDT(f.scheduledAt);
-      const checked = f.stopp ? 'checked' : '';
+      const checked  = f.stopp ? 'checked' : '';
+      const disabled = ['sent','opened','clicked'].includes(f.status) ? 'disabled' : '';
+      const strikeStyle = disabled ? 'text-decoration: line-through; opacity:0.7;' : '';
   
       return `
         <div class="flows-grid" style="grid-template-columns:auto 1fr auto auto auto auto;">
           <div>${idx + 1}</div>
-          <div><strong>${escapeHtml(f.subject)}</strong><div class="muted">${escapeHtml(f.to)}</div></div>
+          <div>
+            <strong>${escapeHtml(f.subject)}</strong>
+            <div class="muted">${escapeHtml(f.to)}</div>
+          </div>
           <div>${Number.isFinite(+f.step) ? f.step : '—'}</div>
           <div><span class="${statusTag}">${escapeHtml(f.status)}</span></div>
           <div>${when}</div>
           <div>
-            <label class="muted" style="display:inline-flex;align-items:center;gap:6px;">
+            <label class="muted" style="display:inline-flex;align-items:center;gap:6px;${strikeStyle}">
               <input type="checkbox"
                      class="flow-stop-toggle"
                      data-id="${escapeAttr(f.id)}"
                      data-step="${escapeAttr(f.step)}"
                      ${checked}
+                     ${disabled}
               />
               Stopp
             </label>
@@ -411,7 +417,8 @@ function renderEmailFlows(flows = []) {
     function escapeAttr(s) {
       return String(s ?? '').replace(/"/g, '&quot;');
     }
-}
+  }
+  
   
   
 
