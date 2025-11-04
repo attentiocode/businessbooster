@@ -17,6 +17,9 @@ var emailbody4 = "";
 var emailbody5 = "";
 
 
+
+
+
 var mailSettings = [
     {
         stepp: 0,
@@ -44,6 +47,16 @@ var mailSettings = [
         body: emailbody5
     }
   ];
+
+
+  //recordId (Airtable id, f.eks. "recABC123…")
+const recordId = company.rawId || company.airtableId || 'unknownId';
+
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || 'https://din-app.vercel.app';
+const destTrial = 'https://www.innkjops-gruppen.no/prov-gratis';
+
+const openPixelSrc = `${PUBLIC_BASE_URL}/api/open.gif?rid=${encodeURIComponent(recordId)}`;
+const ctaHrefTrial = `${PUBLIC_BASE_URL}/api/clk?rid=${encodeURIComponent(recordId)}&to=${encodeURIComponent(destTrial)}`;
 
 
 
@@ -117,33 +130,16 @@ function getEmailBody(company, type = 'trial') {
   const kontakt = company?.kontaktperson?.navn || company?.lederNavn || '';
   const greetingName = kontakt || navn || 'der';
 
-  // --- tracking / links -----------------------------------------------------
-  // Sett PUBLIC_BASE_URL i Vercel → Settings → Environment Variables
-  const PUBLIC_BASE_URL =
-    (typeof process !== 'undefined' && process.env?.PUBLIC_BASE_URL) ||
-    'https://din-app.vercel.app';
-
-  // Basis-lenker (destinasjonene)
+  // --- sporing (Zapier fyller inn {{trackingId}} senere) --------------------
+  const PUBLIC_BASE_URL = 'https://airtable-time-runner.vercel.app'; // ev. bytt til eget domene
   const rawCtaTrial   = 'https://www.innkjops-gruppen.no/prov-gratis';
   const rawCtaContact = 'mailto:post@innkjops-gruppen.no';
 
-  // Unik ID per utsendelse (ta gjerne med egen utsendelses-ID hvis du har)
-  const emailId = `${orgnr || 'noorg'}-${type || 'generic'}-${Date.now()}`;
-  const trk = emailId; // kan bruke samme
-
-  // Sporede lenker (går via /api/clk og redirecter videre til "to=")
-  const clk = (to) =>
-    `${PUBLIC_BASE_URL}/api/clk?trk=${encodeURIComponent(trk)}&emailId=${encodeURIComponent(
-      emailId
-    )}&to=${encodeURIComponent(to)}`;
-
-  const ctaHrefTrial   = clk(rawCtaTrial);
-  const ctaHrefContact = rawCtaContact; // mailto spores vanligvis ikke
-
-  // Åpningspiksel
-  const openPixelSrc = `${PUBLIC_BASE_URL}/api/open.gif?emailId=${encodeURIComponent(
-    emailId
-  )}&trk=${encodeURIComponent(trk)}`;
+  // lenker MED plassholder for trackingId som Zapier bytter ut:
+  const ctaHrefTrial   =
+    `${PUBLIC_BASE_URL}/api/clk?rid={{trackingId}}&to=${encodeURIComponent(rawCtaTrial)}`;
+  const openPixelSrc   =
+    `${PUBLIC_BASE_URL}/api/open.gif?rid={{trackingId}}`;
 
   // --- content --------------------------------------------------------------
   const preheader =
@@ -272,12 +268,13 @@ function getEmailBody(company, type = 'trial') {
     </table>
   </div>
 
-  <!-- Åpningspiksel -->
+  <!-- Åpningspiksel med Zapier-plassholder -->
   <img src="${openPixelSrc}" width="1" height="1" style="display:none;" alt="" />
 </body>
 </html>
 `;
 }
+
 
   
 function escapeHtml(s) {
