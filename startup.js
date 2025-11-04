@@ -705,6 +705,9 @@ function timeRunnerObjects(data){
   //merge timerunner object inn i prosessert bedrifter
   mergeTimerunnerObject(gTimerunnerObjects);
 
+  //lagre gProsessertBedrifter i lokalstorage
+  localStorage.setItem('gProsessertBedrifter', JSON.stringify(gProsessertBedrifter));
+
   renderProsess(gProsessertBedrifter);
   
 
