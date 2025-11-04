@@ -568,6 +568,20 @@ document.addEventListener('change', (e) => {
     const step   = el.getAttribute('data-step') || null;
     const isStopped = !!el.checked;
     onToggleFlowStop(flowId, isStopped, step);
+
+    //finne nærmeste element med class="tag info"
+    const tagEl = el.closest('.flows-grid').querySelector('.tag');
+    if (tagEl) {
+      if (isStopped) {
+        tagEl.className = 'tag warn';
+        tagEl.innerText = 'Stoppet';
+      } else {
+        tagEl.className = 'tag';
+        tagEl.innerText = 'queued';
+      }
+    }
+
+
 });
 
   
