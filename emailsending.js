@@ -132,7 +132,7 @@ function getEmailBody(company, type = 'trial') {
 
   // --- sporing (Zapier fyller inn {{trackingId}} senere) --------------------
   const PUBLIC_BASE_URL = 'https://airtable-time-runner.vercel.app'; // ev. bytt til eget domene
-  const rawCtaTrial   = 'https://www.innkjops-gruppen.no/prov-gratis';
+  const rawCtaTrial   = 'https://ikg-businessbooster.webflow.io/response';
   const rawCtaContact = 'mailto:post@innkjops-gruppen.no';
 
   // lenker MED plassholder for trackingId som Zapier bytter ut:
