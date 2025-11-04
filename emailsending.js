@@ -98,140 +98,187 @@ async function sendDataToZapierWebhook(data,url) {
 }
 
 
-function getEmailBody(company, type) {
-    const orgnr   = String(company?.organisasjonsnummer ?? company?.orgnr ?? '').replace(/\D/g,'').padStart(9,'0');
-    const navn    = company?.navn || '';
-    const kontakt = company?.kontaktperson?.navn || company?.lederNavn || '';
-    const greetingName = kontakt || navn || 'der';
-  
-    const preheader = `Prøv Innkjøps-gruppen helt uforpliktet i 30 dager – sparer du ikke, betaler du ikke.`;
-    const ctaHrefTrial = 'https://www.innkjops-gruppen.no/prov-gratis';
-    const ctaHrefContact = 'mailto:post@innkjops-gruppen.no';
-  
-    return `
-    <!doctype html>
-    <html lang="no">
-    <head>
-      <meta charset="utf-8">
-      <meta name="x-apple-disable-message-reformatting">
-      <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Innkjøps-gruppen</title>
-      <style>
-        body,table,td,p { margin:0; padding:0; }
-        img { border:0; outline:none; text-decoration:none; display:block; }
-        a { text-decoration:none; }
-        .container { width:100%; background:#0B1220; padding:24px 0; }
-        .card {
-          width:100%; max-width:640px; margin:0 auto;
-          background:#0F172A; color:#E5E7EB;
-          border:1px solid #1F2937; border-radius:12px; overflow:hidden;
-          font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        }
-        .header { padding:20px 24px; border-bottom:1px solid #1F2937; }
-        .title  { font-size:20px; font-weight:700; color:#F3F4F6; margin:0; }
-        .subtle { font-size:12px; color:#93A1B3; }
-        .content { padding:24px; line-height:1.55; font-size:14px; color:#E5E7EB; }
-        .list { margin:12px 0 18px; padding-left:18px; }
-        .list li { margin:6px 0; }
-        .chip {
-          display:inline-block; font-size:12px; padding:4px 10px; border-radius:9999px;
-          background:rgba(37,99,235,0.12); color:#93C5FD; border:1px solid rgba(37,99,235,0.35);
-          margin-right:6px; margin-top:8px;
-        }
-        .cta {
-          display:inline-block; margin-top:18px; padding:12px 22px; font-weight:700;
-          background:#2563EB; color:#ffffff; border-radius:8px; border:1px solid #1D4ED8;
-        }
-        .cta-secondary {
-          display:inline-block; margin-top:12px; padding:10px 20px; font-weight:600;
-          background:transparent; color:#60A5FA; border-radius:8px; border:1px solid #1E3A8A;
-        }
-        .meta { margin-top:20px; font-size:13px; color:#9CA3AF; }
-        .highlight {
-          font-size:16px; color:#FBBF24; font-weight:600;
-          margin-top:20px; text-align:center;
-        }
-        .signature { padding:20px 24px; border-top:1px solid #1F2937; background:#0B1220; }
-        @media (max-width:480px) {
-          .content { padding:20px; }
-          .header { padding:16px 20px; }
-          .signature { padding:16px 20px; }
-        }
-      </style>
-    </head>
-    <body style="background:#0B1220; margin:0;">
-      <div style="display:none; max-height:0; overflow:hidden; opacity:0; visibility:hidden;">
-        ${preheader}
-      </div>
-  
-      <div class="container">
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-          <tr>
-            <td align="center">
-              <table role="presentation" class="card" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td class="header">
-                    <p class="title">Smarte innkjøp for bedre lønnsomhet</p>
-                    <p class="subtle">Til ${navn ? navn : 'deres virksomhet'} ${orgnr ? '(org.nr ' + orgnr + ')' : ''}</p>
-                  </td>
-                </tr>
-  
-                <tr>
-                  <td class="content">
-                    <p>Hei ${escapeHtml(greetingName)},</p>
-                    <p style="margin-top:10px;">
-                      Vi i <strong>Innkjøps-gruppen</strong> hjelper bedrifter å redusere kostnader og oppnå bedre avtaler –
-                      helt uten binding. Dere får tilgang til fremforhandlede priser og rammeavtaler med solide leverandører
-                      innenfor de viktigste innkjøpsområdene.
-                    </p>
-  
-                    <ul class="list">
-                      <li><strong>Lavere priser</strong> gjennom felles volum</li>
-                      <li><strong>Forutsigbare vilkår</strong> og enklere administrasjon</li>
-                      <li><strong>Ingen binding</strong> – prøv oss risikofritt</li>
-                      <li><strong>Personlig oppfølging</strong> fra vårt erfarne team</li>
-                    </ul>
-  
-                    <div class="highlight">
-                      Sparer du ikke – betaler du ikke.
-                    </div>
-  
-                    <a href="${ctaHrefTrial}" class="cta" target="_blank" rel="noopener">
-                      Prøv oss helt uforpliktet i 30 dager
-                    </a>
-  
-                    <a href="${ctaHrefContact}" class="cta-secondary" target="_blank" rel="noopener">
-                      Har du spørsmål? Ta gjerne kontakt her
-                    </a>
-  
-                    <div class="meta">
-                      Mange bedrifter sparer betydelige summer allerede første måned – la oss vise deg hvordan.
-                    </div>
-                  </td>
-                </tr>
-  
-                <tr>
-                  <td class="signature">
-                    <p>&nbsp;<strong>innkj&oslash;psGRUPPEN<br /></strong>
-                      <span>Mobil:&nbsp;+47 91 14 52 94</span><br />
-                      <span>Epost: </span><u><a href="mailto:post@innkjops-gruppen.no">post@innkjops-gruppen.no</a><br /><br /></u>
-                      <u><a href="http://www.innkjops-gruppen.no/">www.innkjops-gruppen.no</a><br />
-                        <img width="400" height="109" alt="" src="https://uploads-ssl.webflow.com/6346cf959f8b0bccad5075af/65a8e9fe0b759f07aa7d7b13_image002.png" />
-                      </u><strong></strong>
-                    </p>
-                  </td>
-                </tr>
-  
-              </table>
-            </td>
-          </tr>
-        </table>
-      </div>
-    </body>
-    </html>
-    `;
+function getEmailBody(company, type = 'trial') {
+  // --- helpers --------------------------------------------------------------
+  const escapeHtml = (s) =>
+    String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+  const onlyDigits = (v) => String(v ?? '').replace(/\D/g, '');
+  const pad9 = (v) => onlyDigits(v).padStart(9, '0');
+
+  // --- company fields -------------------------------------------------------
+  const orgnr   = pad9(company?.organisasjonsnummer ?? company?.orgnr ?? '');
+  const navn    = company?.navn || '';
+  const kontakt = company?.kontaktperson?.navn || company?.lederNavn || '';
+  const greetingName = kontakt || navn || 'der';
+
+  // --- tracking / links -----------------------------------------------------
+  // Sett PUBLIC_BASE_URL i Vercel → Settings → Environment Variables
+  const PUBLIC_BASE_URL =
+    (typeof process !== 'undefined' && process.env?.PUBLIC_BASE_URL) ||
+    'https://din-app.vercel.app';
+
+  // Basis-lenker (destinasjonene)
+  const rawCtaTrial   = 'https://www.innkjops-gruppen.no/prov-gratis';
+  const rawCtaContact = 'mailto:post@innkjops-gruppen.no';
+
+  // Unik ID per utsendelse (ta gjerne med egen utsendelses-ID hvis du har)
+  const emailId = `${orgnr || 'noorg'}-${type || 'generic'}-${Date.now()}`;
+  const trk = emailId; // kan bruke samme
+
+  // Sporede lenker (går via /api/clk og redirecter videre til "to=")
+  const clk = (to) =>
+    `${PUBLIC_BASE_URL}/api/clk?trk=${encodeURIComponent(trk)}&emailId=${encodeURIComponent(
+      emailId
+    )}&to=${encodeURIComponent(to)}`;
+
+  const ctaHrefTrial   = clk(rawCtaTrial);
+  const ctaHrefContact = rawCtaContact; // mailto spores vanligvis ikke
+
+  // Åpningspiksel
+  const openPixelSrc = `${PUBLIC_BASE_URL}/api/open.gif?emailId=${encodeURIComponent(
+    emailId
+  )}&trk=${encodeURIComponent(trk)}`;
+
+  // --- content --------------------------------------------------------------
+  const preheader =
+    'Prøv Innkjøps-gruppen helt uforpliktet i 30 dager – sparer du ikke, betaler du ikke.';
+
+  // --- HTML -----------------------------------------------------------------
+  return `
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innkjøps-gruppen</title>
+  <style>
+    body,table,td,p { margin:0; padding:0; }
+    img { border:0; outline:none; text-decoration:none; display:block; }
+    a { text-decoration:none; }
+    .container { width:100%; background:#0B1220; padding:24px 0; }
+    .card {
+      width:100%; max-width:640px; margin:0 auto;
+      background:#0F172A; color:#E5E7EB;
+      border:1px solid #1F2937; border-radius:12px; overflow:hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .header { padding:20px 24px; border-bottom:1px solid #1F2937; }
+    .title  { font-size:20px; font-weight:700; color:#F3F4F6; margin:0; }
+    .subtle { font-size:12px; color:#93A1B3; }
+    .content { padding:24px; line-height:1.55; font-size:14px; color:#E5E7EB; }
+    .list { margin:12px 0 18px; padding-left:18px; }
+    .list li { margin:6px 0; }
+    .chip {
+      display:inline-block; font-size:12px; padding:4px 10px; border-radius:9999px;
+      background:rgba(37,99,235,0.12); color:#93C5FD; border:1px solid rgba(37,99,235,0.35);
+      margin-right:6px; margin-top:8px;
+    }
+    .cta {
+      display:inline-block; margin-top:18px; padding:12px 22px; font-weight:700;
+      background:#2563EB; color:#ffffff; border-radius:8px; border:1px solid #1D4ED8;
+    }
+    .cta-secondary {
+      display:inline-block; margin-top:12px; padding:10px 20px; font-weight:600;
+      background:transparent; color:#60A5FA; border-radius:8px; border:1px solid #1E3A8A;
+    }
+    .meta { margin-top:20px; font-size:13px; color:#9CA3AF; }
+    .highlight {
+      font-size:16px; color:#FBBF24; font-weight:600;
+      margin-top:20px; text-align:center;
+    }
+    .signature { padding:20px 24px; border-top:1px solid #1F2937; background:#0B1220; }
+    @media (max-width:480px) {
+      .content { padding:20px; }
+      .header { padding:16px 20px; }
+      .signature { padding:16px 20px; }
+    }
+  </style>
+</head>
+<body style="background:#0B1220; margin:0;">
+  <!-- preheader -->
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0; visibility:hidden;">
+    ${preheader}
+  </div>
+
+  <div class="container">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td align="center">
+          <table role="presentation" class="card" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class="header">
+                <p class="title">Smarte innkjøp for bedre lønnsomhet</p>
+                <p class="subtle">Til ${navn ? escapeHtml(navn) : 'deres virksomhet'}${orgnr ? ' (org.nr ' + orgnr + ')' : ''}</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="content">
+                <p>Hei ${escapeHtml(greetingName)},</p>
+                <p style="margin-top:10px;">
+                  Vi i <strong>Innkjøps-gruppen</strong> hjelper bedrifter å redusere kostnader og oppnå bedre avtaler –
+                  helt uten binding. Dere får tilgang til fremforhandlede priser og rammeavtaler med solide leverandører
+                  innenfor de viktigste innkjøpsområdene.
+                </p>
+
+                <ul class="list">
+                  <li><strong>Lavere priser</strong> gjennom felles volum</li>
+                  <li><strong>Forutsigbare vilkår</strong> og enklere administrasjon</li>
+                  <li><strong>Ingen binding</strong> – prøv oss risikofritt</li>
+                  <li><strong>Personlig oppfølging</strong> fra vårt erfarne team</li>
+                </ul>
+
+                <div class="highlight">
+                  Sparer du ikke – betaler du ikke.
+                </div>
+
+                <a href="${ctaHrefTrial}" class="cta" target="_blank" rel="noopener">
+                  Prøv oss helt uforpliktet i 30 dager
+                </a>
+
+                <a href="${escapeHtml(rawCtaContact)}" class="cta-secondary" target="_blank" rel="noopener">
+                  Har du spørsmål? Ta gjerne kontakt her
+                </a>
+
+                <div class="meta">
+                  Mange bedrifter sparer betydelige summer allerede første måned – la oss vise deg hvordan.
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="signature">
+                <p>&nbsp;<strong>innkj&oslash;psGRUPPEN<br /></strong>
+                  <span>Mobil:&nbsp;+47 91 14 52 94</span><br />
+                  <span>Epost: </span><u><a href="mailto:post@innkjops-gruppen.no">post@innkjops-gruppen.no</a><br /><br /></u>
+                  <u><a href="http://www.innkjops-gruppen.no/">www.innkjops-gruppen.no</a><br />
+                    <img width="400" height="109" alt="" src="https://uploads-ssl.webflow.com/6346cf959f8b0bccad5075af/65a8e9fe0b759f07aa7d7b13_image002.png" />
+                  </u><strong></strong>
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Åpningspiksel -->
+  <img src="${openPixelSrc}" width="1" height="1" style="display:none;" alt="" />
+</body>
+</html>
+`;
 }
+
   
 function escapeHtml(s) {
     return String(s || '').replace(/[&<>"']/g, m => (
