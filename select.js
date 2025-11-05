@@ -467,6 +467,9 @@ function renderSelect(data) {
 
   // Ev. annen teller
   updateCounter("label-selected-customers", (gSelectbedrifter || []).length, 1000);
+
+  //oppdater lokalteller på knspp
+  updateReadyCountElement(gReadybedrifter.length);
 }
 
 function initContactInfoSelectFilter() {

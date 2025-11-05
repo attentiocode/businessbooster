@@ -185,6 +185,8 @@ function renderReady(data) {
   
       tbody.appendChild(tr);
     });
+
+
   
     // --- Oppdater teller / chips ---
     if (typeof updateReadyCounterDark === 'function') {
@@ -200,7 +202,8 @@ function renderReady(data) {
       const counter = document.getElementById("counterlistready");
       if (counter) counter.textContent = `${sumTotal} Stk.`;
     }
-  
+        
+
     // --- Popup bygges én gang ---
     if (!document.getElementById('edit-popup')) {
       const popup = document.createElement('div');
