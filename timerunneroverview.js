@@ -1,6 +1,7 @@
 
 // ---- TimeRunner modul (full utvidet versjon) -------------------------------
 // ---- TimeRunner modul (full utvidet versjon + footer/knapp) ---------------
+// ---- TimeRunner modul (full utvidet versjon + "Oppdatert for … siden") ----
 const timeRunner = (() => {
   const STATE = { el: null, prev: null, mounted: false, mode: 'idle', lastUpdated: null, relTimer: null };
   const nf = new Intl.NumberFormat('nb-NO');
@@ -19,26 +20,20 @@ const timeRunner = (() => {
   function loading(){
     ensureMounted();
     STATE.mode = 'loading';
-    const inner = headerHtml() + `
-      <div class="tro-wrap">
-        ${Array.from({length:10}).map(()=>skeletonCard()).join('')}
-        <div class="tro-card wide">${skeletonBlock()}</div>
-      </div>
-    `;
-    STATE.el.innerHTML = hostWrap(inner, /*footerText*/ 'Oppdaterer …');
-    wireFooter();
-    startRelativeTicker();
+    STATE.lastUpdated = null;
+    STATE.el.innerHTML = headerHtml() + loadingHtml();
+    startRelativeTicker(); // viser "Oppdaterer …"
   }
 
   function update(data){
     ensureMounted();
     const metrics = computeMetrics(data);
-    const inner = headerHtml() + overviewHtml(metrics);
+    STATE.el.innerHTML = headerHtml() + overviewHtml(metrics);
 
-    STATE.el.innerHTML = hostWrap(inner, relativeSince(new Date()));
+    // animasjoner
     animateAll(metrics, STATE.prev);
 
-    // Oppdater snitttider (ikke animert)
+    // snitttider (tekst)
     const oc = document.getElementById('tro-avg-open-click');
     const ca = document.getElementById('tro-avg-click-accept');
     if (oc) oc.textContent = formatDuration(metrics.avgOpenToClickMs);
@@ -47,64 +42,33 @@ const timeRunner = (() => {
     STATE.prev = metrics;
     STATE.mode = 'ready';
     STATE.lastUpdated = new Date();
-
-    wireFooter();
     startRelativeTicker();
   }
 
   function error(message='Kunne ikke hente data'){
     ensureMounted();
     STATE.mode = 'error';
-    const inner = headerHtml() + `
+    STATE.lastUpdated = null;
+    STATE.el.innerHTML = headerHtml() + `
       <div class="tro-wrap">
         <div class="tro-card wide" style="grid-column:span 12">
           <div class="tro-title">Feil</div>
           <div class="tro-value" style="color:#fecaca">${escapeHtml(message)}</div>
           <div class="tro-sub">Prøv å laste siden på nytt eller forsøk senere.</div>
         </div>
+        ${updatedRowHtml()}  <!-- høyrejustert status under siste kort -->
       </div>
     `;
-    STATE.el.innerHTML = hostWrap(inner, '—');
-    wireFooter();
-    startRelativeTicker();
+    startRelativeTicker(); // viser "—"
   }
 
-  // ---------- Private: layout helpers ----------
-  function hostWrap(innerHtml, footerText){
+  // ---------- Private: updated tekst ----------
+  function updatedRowHtml(){
     return `
-      <div class="tro-host">
-        ${innerHtml}
-        ${footerHtml(footerText)}
+      <div class="tro-updated-row">
+        <span id="tro-updated">${relativeSince(STATE.lastUpdated)}</span>
       </div>
     `;
-  }
-
-  function footerHtml(text){
-    return `
-      <div class="tro-footer">
-        <button class="tro-refresh-btn" id="tro-refresh-btn" title="Hent siste tall">Oppdater</button>
-        <div class="tro-updated" id="tro-updated">${escapeHtml(text || '—')}</div>
-      </div>
-    `;
-  }
-
-  function wireFooter(){
-    const btn = document.getElementById('tro-refresh-btn');
-    if (btn){
-      btn.onclick = () => {
-        try {
-          if (typeof window !== 'undefined' && typeof window.getTimeRunnerObjects === 'function') {
-            window.getTimeRunnerObjects();
-          } else if (typeof getTimeRunnerObjects === 'function') {
-            getTimeRunnerObjects();
-          } else {
-            console.warn('getTimeRunnerObjects() ikke funnet i global scope');
-          }
-        } catch(e){
-          console.error('Klarte ikke å kjøre getTimeRunnerObjects()', e);
-        }
-      };
-    }
   }
 
   function startRelativeTicker(){
@@ -113,21 +77,28 @@ const timeRunner = (() => {
       const el = document.getElementById('tro-updated');
       if (!el) return;
       el.textContent = relativeSince(STATE.lastUpdated);
-    }, 60_000); // hvert minutt
-    // oppdater én gang med en gang
+    }, 1000); // hvert sekund siden vi viser sekunder
+    // oppdater umiddelbart
     const el = document.getElementById('tro-updated');
     if (el) el.textContent = relativeSince(STATE.lastUpdated);
   }
 
   function relativeSince(date){
+    if (STATE.mode === 'loading') return 'Oppdaterer …';
     if (!date) return '—';
     const s = Math.max(0, Math.round((Date.now() - date.getTime())/1000));
-    if (s < 30) return 'Oppdatert nå';
-    if (s < 60) return `Oppdatert for ${s}s siden`;
+    if (s < 5) return 'Oppdatert nå';
+    if (s < 60) return `Oppdatert for ${s} sek. siden`;
     const m = Math.floor(s/60);
-    if (m < 60) return `Oppdatert for ${m} min siden`;
+    if (m < 60) {
+      const rs = s % 60;
+      return rs ? `Oppdatert for ${m} min ${rs} sek. siden` : `Oppdatert for ${m} min siden`;
+    }
     const h = Math.floor(m/60);
-    if (h < 24) return `Oppdatert for ${h} t siden`;
+    if (h < 24) {
+      const rm = m % 60;
+      return rm ? `Oppdatert for ${h} t ${rm} min siden` : `Oppdatert for ${h} t siden`;
+    }
     const d = Math.floor(h/24);
     return `Oppdatert for ${d} d siden`;
   }
@@ -242,6 +213,7 @@ const timeRunner = (() => {
     return `<span class="tro-badge" id="${id}">${value}%</span>`;
   }
 
+  // oversikts-HTML inkl. "Oppdatert for … siden"
   function overviewHtml(m){
     return `
       <div class="tro-wrap">
@@ -257,7 +229,7 @@ const timeRunner = (() => {
         ${card('Neste måned', `<span id="tro-next">0</span>`, 'Planlagte utsendelser')}
         ${card('Stoppet', `<span id="tro-stop">0</span> <span class="tro-badge err">Stoppet</span>`, 'Utsendelser er stoppet')}
 
-        <!-- nytt kort: snitttider -->
+        <!-- snitttider -->
         <div class="tro-card">
           <div class="tro-title">Snitttider</div>
           <div class="tro-value">
@@ -285,7 +257,19 @@ const timeRunner = (() => {
           </div>
           <div class="tro-sub">Hjelper å se hvor det lekker i trakten</div>
         </div>
+
+        ${updatedRowHtml()} <!-- rad nederst, høyrejustert -->
       </div>`;
+  }
+
+  function loadingHtml(){
+    return `
+      <div class="tro-wrap">
+        ${Array.from({length:10}).map(()=>skeletonCard()).join('')}
+        <div class="tro-card wide">${skeletonBlock()}</div>
+        ${updatedRowHtml()}
+      </div>
+    `;
   }
 
   function headerHtml(){
@@ -412,7 +396,6 @@ const timeRunner = (() => {
   function injectStylesOnce(){
     if(document.getElementById('timeRunnerOverviewStyles')) return;
     const css = `
-      .tro-host{position:relative; min-height: 120px;}
       .tro-wrap{display:grid;gap:16px}
       @media(min-width:900px){.tro-wrap{grid-template-columns:repeat(12,1fr)}}
       .tro-header{display:flex;align-items:center;gap:10px;margin:0 0 10px 2px}
@@ -433,24 +416,17 @@ const timeRunner = (() => {
       .tro-progress{height:8px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:10px}
       .tro-bar{height:100%;background:linear-gradient(90deg,#4f46e5,#06b6d4);width:0%}
 
-      /* footer (knapp + tekst) */
-      .tro-footer{
-        position:absolute; right:10px; bottom:10px;
-        display:flex; align-items:center; gap:10px;
-        background:rgba(11,22,35,.6); backdrop-filter: blur(6px);
-        border:1px solid rgba(255,255,255,.06);
-        padding:8px 10px; border-radius:12px;
+      /* "Oppdatert for … siden" nederst til høyre */
+      .tro-updated-row{
+        grid-column: 1 / -1;
+        text-align: right;
+        margin-top: 2px;
       }
-      .tro-refresh-btn{
-        appearance:none; border:none; cursor:pointer;
-        padding:6px 10px; border-radius:10px; font-weight:600;
-        color:#e8f0ff; background:linear-gradient(135deg,#1e293b,#0f172a);
-        border:1px solid rgba(255,255,255,.1); box-shadow:0 2px 8px rgba(0,0,0,.25);
-        transition: transform .06s ease, background .2s ease;
+      #tro-updated{
+        color:#87a0b9;
+        font-size:12px;
+        opacity:.9;
       }
-      .tro-refresh-btn:hover{ transform: translateY(-1px); }
-      .tro-refresh-btn:active{ transform: translateY(0); }
-      .tro-updated{ color:#87a0b9; font-size:12px; white-space:nowrap; }
 
       /* skeleton / shimmer */
       .skel{position:relative;overflow:hidden;border-radius:8px}
@@ -472,7 +448,6 @@ const timeRunner = (() => {
 
   return { init, loading, update, error };
 })();
-
 
 // ---- Init og bruk av TimeRunner-modul --------------------------------------
 timeRunner.init('#timeRunnerOverview');   // én gang ved mount
