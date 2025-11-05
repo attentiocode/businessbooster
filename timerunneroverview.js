@@ -77,8 +77,7 @@ const timeRunner = (() => {
       const el = document.getElementById('tro-updated');
       if (!el) return;
       el.textContent = relativeSince(STATE.lastUpdated);
-    }, 1000); // hvert sekund siden vi viser sekunder
-    // oppdater umiddelbart
+    }, 1000);
     const el = document.getElementById('tro-updated');
     if (el) el.textContent = relativeSince(STATE.lastUpdated);
   }
@@ -128,8 +127,9 @@ const timeRunner = (() => {
       const clicked = isTrue(row.clicked);
       const accepted = isTrue(row.accepted);
 
-      const openedAt = toDate(row.openedAt);
-      const clickedAt = toDate(row.clickedAt);
+      const executedAt = toDate(row.executedAt);       // NEW: sendetid
+      const openedAt   = toDate(row.openedAt);
+      const clickedAt  = toDate(row.clickedAt);
       const acceptedAt = toDate(row.acceptedAt);
 
       const unsub =
@@ -149,14 +149,22 @@ const timeRunner = (() => {
       if (accepted) acc.accepted++;
       if (unsub) acc.unsubscribed++;
 
-      // tidsintervaller
+      // Åpnet -> Klikk (kun når begge stempler finnes i rekkefølge)
       if (openedAt && clickedAt && clickedAt >= openedAt) {
         sumOpenToClick += (clickedAt - openedAt);
         nOpenToClick++;
       }
-      if (clickedAt && acceptedAt && acceptedAt >= clickedAt) {
-        sumClickToAccept += (acceptedAt - clickedAt);
-        nClickToAccept++;
+
+      // CHANGED: Klikk -> Aksept med fallbacks
+      // 1) clickedAt -> acceptedAt
+      // 2) (fallback) openedAt -> acceptedAt
+      // 3) (fallback) executedAt -> acceptedAt
+      if (acceptedAt) {
+        const start = clickedAt || openedAt || executedAt || null;
+        if (start && acceptedAt >= start) {
+          sumClickToAccept += (acceptedAt - start);
+          nClickToAccept++;
+        }
       }
 
       return acc;
@@ -166,8 +174,11 @@ const timeRunner = (() => {
     });
 
     const notOpened = Math.max(0, s.sent - s.opened);
-    const avgOpenToClickMs = nOpenToClick ? Math.round(sumOpenToClick / nOpenToClick) : null;
+    const avgOpenToClickMs   = nOpenToClick   ? Math.round(sumOpenToClick / nOpenToClick)     : null;
     const avgClickToAcceptMs = nClickToAccept ? Math.round(sumClickToAccept / nClickToAccept) : null;
+
+    // CHANGED: “Total akseptrate” = akseptert / åpnet
+    const acceptFromOpenRate = pct(s.accepted, s.opened || 1);
 
     return {
       // absolute
@@ -187,7 +198,7 @@ const timeRunner = (() => {
       openRate: pct(s.opened, s.sent || 1),
       ctr: pct(s.clicked, s.opened || s.sent || 1),
       acceptRateSent: pct(s.accepted, s.sent || 1),
-      acceptRateTotal: pct(s.accepted, s.total || 1),
+      acceptFromOpenRate,                             // NEW
       clickToAcceptRate: pct(s.accepted, s.clicked || 1),
       unsubRate: pct(s.unsubscribed, s.sent || 1),
       // progress (sendt -> akseptert)
@@ -238,7 +249,7 @@ const timeRunner = (() => {
               Klikk → Aksept: <b id="tro-avg-click-accept">—</b>
             </div>
           </div>
-          <div class="tro-sub">Beregnet blant rader med fullstendige tidsstempler</div>
+          <div class="tro-sub">Beregnet med robuste fallbacks (klikk→aksept, ellers åpnet→aksept, ellers sendt→aksept)</div>
         </div>
 
         <div class="tro-card wide">
@@ -253,12 +264,12 @@ const timeRunner = (() => {
           <div class="tro-value" id="tro-funnel">
             <span class="tro-chip">Åpning → Klikk: <b id="tro-ctr-chip">${m.ctr}%</b></span>
             <span class="tro-chip">Klikk → Aksept: <b id="tro-c2a-chip">${m.clickToAcceptRate}%</b></span>
-            <span class="tro-chip">Total akseptrate: <b id="tro-acc-total-chip">${m.acceptRateTotal}%</b></span>
+            <span class="tro-chip">Total akseptrate: <b id="tro-acc-total-chip">${m.acceptFromOpenRate}%</b></span>  <!-- CHANGED -->
           </div>
           <div class="tro-sub">Hjelper å se hvor det lekker i trakten</div>
         </div>
 
-        ${updatedRowHtml()} <!-- rad nederst, høyrejustert -->
+        ${updatedRowHtml()}
       </div>`;
   }
 
@@ -328,7 +339,8 @@ const timeRunner = (() => {
     prev = prev || {
       leads:0,total:0,sent:0,processing:0,nextMonth:0,stopped:0,
       opened:0, notOpened:0, clicked:0, accepted:0, unsubscribed:0,
-      progress:0, sentPct:0, openRate:0, ctr:0, acceptRateSent:0, acceptRateTotal:0,
+      progress:0, sentPct:0, openRate:0, ctr:0, acceptRateSent:0,
+      acceptFromOpenRate:0,                           // CHANGED default
       clickToAcceptRate:0, unsubRate:0
     };
 
@@ -359,7 +371,7 @@ const timeRunner = (() => {
     // “chips”
     animatePct(document.getElementById('tro-ctr-chip'), prev.ctr, curr.ctr, dur);
     animatePct(document.getElementById('tro-c2a-chip'), prev.clickToAcceptRate, curr.clickToAcceptRate, dur);
-    animatePct(document.getElementById('tro-acc-total-chip'), prev.acceptRateTotal, curr.acceptRateTotal, dur);
+    animatePct(document.getElementById('tro-acc-total-chip'), prev.acceptFromOpenRate, curr.acceptFromOpenRate, dur); // CHANGED
   }
 
   // ---------- Utils ----------
@@ -448,6 +460,7 @@ const timeRunner = (() => {
 
   return { init, loading, update, error };
 })();
+
 
 // ---- Init og bruk av TimeRunner-modul --------------------------------------
 timeRunner.init('#timeRunnerOverview');   // én gang ved mount
