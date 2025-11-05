@@ -658,7 +658,7 @@ function leadsResponse(data){
 
   if (!data || !data.fields || !data.fields.leadsjson || !Array.isArray(data.fields.leadsjson)) {
     console.error("Ugyldig dataformat: Forventet et objekt med 'fields.leadsjson' som en array.");
-    return; // Avbryt hvis data ikke er gyldig
+    data.fields.leadsjson = [];
   } 
 
   // Konverter JSON-strenger til objekter
