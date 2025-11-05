@@ -319,6 +319,8 @@ function renderReady(data) {
         try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gReadybedrifter)); } catch(e){}
   
         renderReady(gReadybedrifter);
+        //oppdater lokalteller på knapp
+        updateReadyCountElement(gReadybedrifter.length);
       };
     }
   
@@ -365,6 +367,8 @@ function renderReady(data) {
         //start massesendeprosess og lagring i db
         startMultisaveProcess(orgnrs);
         renderReady(gReadybedrifter);
+        //oppdater lokalteller på knspp
+        updateReadyCountElement(gReadybedrifter.length);
 
         }
 
