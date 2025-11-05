@@ -72,9 +72,7 @@ document.getElementById("groupEmailButton").addEventListener("click", function()
     document.getElementById("emailTabButton").click();
 });
 
-document.getElementById("runnTimeRunnerButton").addEventListener("click", function() {
-  triggerTimeRun();
-});
+
 
 
 
