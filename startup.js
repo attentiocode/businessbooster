@@ -710,44 +710,125 @@ function timeRunnerObjects(data){
 
 function mergeTimerunnerObject(gTimerunnerObjects) {
   const isTrue = v => String(v).toUpperCase() === "TRUE";
+  const toDate = v => (v ? new Date(v) : null);
 
-  // Lag et oppslag (hashmap) for rask matching
+  // Oppslag for selskaper
   const bedriftMap = new Map(
-    gProsessertBedrifter.map(b => [String(b.orgnr), b])
+    (gProsessertBedrifter || []).map(b => [String(b.orgnr), b])
   );
 
-  gTimerunnerObjects.forEach(trObj => {
-    if (!trObj.customerId) return; // hopp over rader uten ID
+  // Midlertidig aggregering per customerId
+  const acc = new Map();
 
-    const company = bedriftMap.get(String(trObj.customerId));
-    if (!company) return;
+  for (const tr of (gTimerunnerObjects || [])) {
+    const id = tr && tr.customerId ? String(tr.customerId) : "";
+    if (!id || !bedriftMap.has(id)) continue;
 
-    // --- totalt antall eposter ---
-    company.emailCount = (company.emailCount || 0) + 1;
-
-    // --- sendte eposter ---
-    if (isTrue(trObj.executed)) {
-      company.emailSentCount = (company.emailSentCount || 0) + 1;
+    if (!acc.has(id)) {
+      acc.set(id, {
+        emailCount: 0,
+        emailSentCount: 0,
+        emailAcceptedCount: 0,
+        openedCount: 0,
+        clickedCount: 0,
+        noInterest: false,
+        stopp: false,
+        unsubscribed: false,
+        lastAirtable: null,
+        lastWhen: null,
+        sumOpenToClick: 0,
+        nOpenToClick: 0,
+        sumClickToAccept: 0,
+        nClickToAccept: 0,
+      });
     }
 
-    // --- aksepterte eposter ---
-    if (isTrue(trObj.accepted)) {
-      company.emailAcceptedCount = (company.emailAcceptedCount || 0) + 1;
+    const a = acc.get(id);
+    const when = toDate(tr.when);
+    const openedAt = toDate(tr.openedAt);
+    const clickedAt = toDate(tr.clickedAt);
+    const acceptedAt = toDate(tr.acceptedAt);
+
+    a.emailCount++;
+    if (isTrue(tr.executed)) a.emailSentCount++;
+    if (isTrue(tr.accepted)) a.emailAcceptedCount++;
+    if (isTrue(tr.opened)) a.openedCount++;
+    if (isTrue(tr.clicked)) a.clickedCount++;
+
+    if (isTrue(tr.no_interest)) a.noInterest = true;
+    if (isTrue(tr.stopp)) a.stopp = true;
+
+    // Avmeldt (inkluderer stopp med "avmeld"/"unsub" i årsaken)
+    if (
+      isTrue(tr.no_interest) ||
+      (isTrue(tr.stopp) && /avmeld|unsub/i.test(String(tr.stopReason || "")))
+    ) {
+      a.unsubscribed = true;
     }
 
-    // --- no_interest ---
-    if (isTrue(trObj.no_interest)) {
-      company.noInterest = true;
+    // Beregn snitttider
+    if (openedAt && clickedAt && clickedAt > openedAt) {
+      a.sumOpenToClick += clickedAt - openedAt;
+      a.nOpenToClick++;
     }
-    
-    //Om den har stopp == true
-    if (isTrue(trObj.stopp)) {
-      company.stopp = true;
+    if (clickedAt && acceptedAt && acceptedAt > clickedAt) {
+      a.sumClickToAccept += acceptedAt - clickedAt;
+      a.nClickToAccept++;
     }
 
+    // Lagre metadata
+    const wts = when ? when.getTime() : 0;
+    if (!a.lastWhen || wts > a.lastWhen) {
+      a.lastWhen = wts;
+      a.lastAirtable = tr.airtable || null;
+    }
+  }
 
-  });
+  // Oppdater selskapene (idempotent)
+  for (const [orgnr, company] of bedriftMap) {
+    const a = acc.get(orgnr) || {
+      emailCount: 0,
+      emailSentCount: 0,
+      emailAcceptedCount: 0,
+      openedCount: 0,
+      clickedCount: 0,
+      noInterest: false,
+      stopp: false,
+      unsubscribed: false,
+      lastAirtable: null,
+      lastWhen: null,
+      sumOpenToClick: 0,
+      nOpenToClick: 0,
+      sumClickToAccept: 0,
+      nClickToAccept: 0,
+    };
+
+    // Overskriv alle felt
+    company.emailCount = a.emailCount;
+    company.emailSentCount = a.emailSentCount;
+    company.emailAcceptedCount = a.emailAcceptedCount;
+    company.openedCount = a.openedCount;
+    company.clickedCount = a.clickedCount;
+    company.noInterest = !!a.noInterest;
+    company.stopp = !!a.stopp;
+    company.unsubscribed = !!a.unsubscribed;
+
+    // Beregn snitttider per selskap
+    company.avgOpenToClickMs = a.nOpenToClick ? Math.round(a.sumOpenToClick / a.nOpenToClick) : null;
+    company.avgClickToAcceptMs = a.nClickToAccept ? Math.round(a.sumClickToAccept / a.nClickToAccept) : null;
+
+    // Metadata
+    company.timeRunnerLastWhen = a.lastWhen ? new Date(a.lastWhen).toISOString() : null;
+    company.timeRunnerAirtable = a.lastAirtable;
+
+    // Avledede rater (for oversikt/rapportering)
+    company.openRate = a.emailSentCount ? Math.round((a.openedCount / a.emailSentCount) * 100) : 0;
+    company.clickRate = a.openedCount ? Math.round((a.clickedCount / a.openedCount) * 100) : 0;
+    company.acceptRate = a.emailSentCount ? Math.round((a.emailAcceptedCount / a.emailSentCount) * 100) : 0;
+    company.unsubRate = a.emailSentCount ? Math.round((a.unsubscribed ? 1 : 0) * 100) : 0;
+  }
 }
+
 
 
 function updateAllLocalConterts(){
