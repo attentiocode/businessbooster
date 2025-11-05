@@ -1,7 +1,8 @@
 
 // ---- TimeRunner modul (full utvidet versjon) -------------------------------
+// ---- TimeRunner modul (full utvidet versjon + footer/knapp) ---------------
 const timeRunner = (() => {
-  const STATE = { el: null, prev: null, mounted: false, mode: 'idle' };
+  const STATE = { el: null, prev: null, mounted: false, mode: 'idle', lastUpdated: null, relTimer: null };
   const nf = new Intl.NumberFormat('nb-NO');
   const isTrue = v => String(v).toUpperCase() === "TRUE";
 
@@ -18,18 +19,23 @@ const timeRunner = (() => {
   function loading(){
     ensureMounted();
     STATE.mode = 'loading';
-    STATE.el.innerHTML = headerHtml() + `
+    const inner = headerHtml() + `
       <div class="tro-wrap">
         ${Array.from({length:10}).map(()=>skeletonCard()).join('')}
         <div class="tro-card wide">${skeletonBlock()}</div>
       </div>
     `;
+    STATE.el.innerHTML = hostWrap(inner, /*footerText*/ 'Oppdaterer …');
+    wireFooter();
+    startRelativeTicker();
   }
 
   function update(data){
     ensureMounted();
     const metrics = computeMetrics(data);
-    STATE.el.innerHTML = headerHtml() + overviewHtml(metrics);
+    const inner = headerHtml() + overviewHtml(metrics);
+
+    STATE.el.innerHTML = hostWrap(inner, relativeSince(new Date()));
     animateAll(metrics, STATE.prev);
 
     // Oppdater snitttider (ikke animert)
@@ -40,12 +46,16 @@ const timeRunner = (() => {
 
     STATE.prev = metrics;
     STATE.mode = 'ready';
+    STATE.lastUpdated = new Date();
+
+    wireFooter();
+    startRelativeTicker();
   }
 
   function error(message='Kunne ikke hente data'){
     ensureMounted();
     STATE.mode = 'error';
-    STATE.el.innerHTML = headerHtml() + `
+    const inner = headerHtml() + `
       <div class="tro-wrap">
         <div class="tro-card wide" style="grid-column:span 12">
           <div class="tro-title">Feil</div>
@@ -54,6 +64,72 @@ const timeRunner = (() => {
         </div>
       </div>
     `;
+    STATE.el.innerHTML = hostWrap(inner, '—');
+    wireFooter();
+    startRelativeTicker();
+  }
+
+  // ---------- Private: layout helpers ----------
+  function hostWrap(innerHtml, footerText){
+    return `
+      <div class="tro-host">
+        ${innerHtml}
+        ${footerHtml(footerText)}
+      </div>
+    `;
+  }
+
+  function footerHtml(text){
+    return `
+      <div class="tro-footer">
+        <button class="tro-refresh-btn" id="tro-refresh-btn" title="Hent siste tall">Oppdater</button>
+        <div class="tro-updated" id="tro-updated">${escapeHtml(text || '—')}</div>
+      </div>
+    `;
+  }
+
+  function wireFooter(){
+    const btn = document.getElementById('tro-refresh-btn');
+    if (btn){
+      btn.onclick = () => {
+        try {
+          if (typeof window !== 'undefined' && typeof window.getTimeRunnerObjects === 'function') {
+            window.getTimeRunnerObjects();
+          } else if (typeof getTimeRunnerObjects === 'function') {
+            getTimeRunnerObjects();
+          } else {
+            console.warn('getTimeRunnerObjects() ikke funnet i global scope');
+          }
+        } catch(e){
+          console.error('Klarte ikke å kjøre getTimeRunnerObjects()', e);
+        }
+      };
+    }
+  }
+
+  function startRelativeTicker(){
+    if (STATE.relTimer) clearInterval(STATE.relTimer);
+    STATE.relTimer = setInterval(() => {
+      const el = document.getElementById('tro-updated');
+      if (!el) return;
+      el.textContent = relativeSince(STATE.lastUpdated);
+    }, 60_000); // hvert minutt
+    // oppdater én gang med en gang
+    const el = document.getElementById('tro-updated');
+    if (el) el.textContent = relativeSince(STATE.lastUpdated);
+  }
+
+  function relativeSince(date){
+    if (!date) return '—';
+    const s = Math.max(0, Math.round((Date.now() - date.getTime())/1000));
+    if (s < 30) return 'Oppdatert nå';
+    if (s < 60) return `Oppdatert for ${s}s siden`;
+    const m = Math.floor(s/60);
+    if (m < 60) return `Oppdatert for ${m} min siden`;
+    const h = Math.floor(m/60);
+    if (h < 24) return `Oppdatert for ${h} t siden`;
+    const d = Math.floor(h/24);
+    return `Oppdatert for ${d} d siden`;
   }
 
   // ---------- Private: metrics & render ----------
@@ -181,7 +257,7 @@ const timeRunner = (() => {
         ${card('Neste måned', `<span id="tro-next">0</span>`, 'Planlagte utsendelser')}
         ${card('Stoppet', `<span id="tro-stop">0</span> <span class="tro-badge err">Stoppet</span>`, 'Utsendelser er stoppet')}
 
-        <!-- nytt kort for snitttider -->
+        <!-- nytt kort: snitttider -->
         <div class="tro-card">
           <div class="tro-title">Snitttider</div>
           <div class="tro-value">
@@ -190,7 +266,7 @@ const timeRunner = (() => {
               Klikk → Aksept: <b id="tro-avg-click-accept">—</b>
             </div>
           </div>
-          <div class="tro-sub"></div>
+          <div class="tro-sub">Beregnet blant rader med fullstendige tidsstempler</div>
         </div>
 
         <div class="tro-card wide">
@@ -207,7 +283,7 @@ const timeRunner = (() => {
             <span class="tro-chip">Klikk → Aksept: <b id="tro-c2a-chip">${m.clickToAcceptRate}%</b></span>
             <span class="tro-chip">Total akseptrate: <b id="tro-acc-total-chip">${m.acceptRateTotal}%</b></span>
           </div>
-          <div class="tro-sub"></div>
+          <div class="tro-sub">Hjelper å se hvor det lekker i trakten</div>
         </div>
       </div>`;
   }
@@ -292,11 +368,11 @@ const timeRunner = (() => {
     animatePct(document.getElementById('tro-acc-rate'), prev.acceptRateSent, curr.acceptRateSent, dur);
     animatePct(document.getElementById('tro-unsub-rate'), prev.unsubRate, curr.unsubRate, dur);
 
-    // progresjonsfelt
+    // progresjon
     animatePct(document.getElementById('tro-prog-text'), prev.progress, curr.progress, dur);
     animateWidth(document.getElementById('tro-prog-bar'), prev.progress, curr.progress, dur);
 
-    // “chips” i nedstrøms-trakt
+    // “chips”
     animatePct(document.getElementById('tro-ctr-chip'), prev.ctr, curr.ctr, dur);
     animatePct(document.getElementById('tro-c2a-chip'), prev.clickToAcceptRate, curr.clickToAcceptRate, dur);
     animatePct(document.getElementById('tro-acc-total-chip'), prev.acceptRateTotal, curr.acceptRateTotal, dur);
@@ -336,6 +412,7 @@ const timeRunner = (() => {
   function injectStylesOnce(){
     if(document.getElementById('timeRunnerOverviewStyles')) return;
     const css = `
+      .tro-host{position:relative; min-height: 120px;}
       .tro-wrap{display:grid;gap:16px}
       @media(min-width:900px){.tro-wrap{grid-template-columns:repeat(12,1fr)}}
       .tro-header{display:flex;align-items:center;gap:10px;margin:0 0 10px 2px}
@@ -355,6 +432,26 @@ const timeRunner = (() => {
         border-radius:999px;margin-right:10px;margin-top:8px;color:#e8f0ff;background:rgba(255,255,255,.03)}
       .tro-progress{height:8px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:10px}
       .tro-bar{height:100%;background:linear-gradient(90deg,#4f46e5,#06b6d4);width:0%}
+
+      /* footer (knapp + tekst) */
+      .tro-footer{
+        position:absolute; right:10px; bottom:10px;
+        display:flex; align-items:center; gap:10px;
+        background:rgba(11,22,35,.6); backdrop-filter: blur(6px);
+        border:1px solid rgba(255,255,255,.06);
+        padding:8px 10px; border-radius:12px;
+      }
+      .tro-refresh-btn{
+        appearance:none; border:none; cursor:pointer;
+        padding:6px 10px; border-radius:10px; font-weight:600;
+        color:#e8f0ff; background:linear-gradient(135deg,#1e293b,#0f172a);
+        border:1px solid rgba(255,255,255,.1); box-shadow:0 2px 8px rgba(0,0,0,.25);
+        transition: transform .06s ease, background .2s ease;
+      }
+      .tro-refresh-btn:hover{ transform: translateY(-1px); }
+      .tro-refresh-btn:active{ transform: translateY(0); }
+      .tro-updated{ color:#87a0b9; font-size:12px; white-space:nowrap; }
+
       /* skeleton / shimmer */
       .skel{position:relative;overflow:hidden;border-radius:8px}
       .skel-text{height:14px;background:rgba(255,255,255,.06)}
@@ -375,11 +472,6 @@ const timeRunner = (() => {
 
   return { init, loading, update, error };
 })();
-
-// Eksempel bruk:
-// timeRunner.init('#timeRunnerOverview');
-// timeRunner.loading();
-// fetch(...).then(r => r.json()).then(data => timeRunner.update(data)).catch(() => timeRunner.error());
 
 
 // ---- Init og bruk av TimeRunner-modul --------------------------------------
