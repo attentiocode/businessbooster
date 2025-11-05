@@ -207,7 +207,7 @@ const timeRunner = (() => {
             <span class="tro-chip">Klikk → Aksept: <b id="tro-c2a-chip">${m.clickToAcceptRate}%</b></span>
             <span class="tro-chip">Total akseptrate: <b id="tro-acc-total-chip">${m.acceptRateTotal}%</b></span>
           </div>
-          <div class="tro-sub">Hjelper å se hvor det lekker i trakten</div>
+          <div class="tro-sub"></div>
         </div>
       </div>`;
   }
