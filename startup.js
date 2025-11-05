@@ -694,9 +694,6 @@ function timeRunnerObjects(data){
   let timeRunnerObjects = converttimeRunnerObjectsToObjects(jsonStrings);
   gTimerunnerObjects = timeRunnerObjects;
 
-  //ingen handling nødvendig her foreløpig
-  console.log("timeRunnerObjects hentet:", timeRunnerObjects);
-
   //rendre oversikt
   timeRunner.update(timeRunnerObjects);
 

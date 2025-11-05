@@ -233,6 +233,11 @@ function multiReturnFromTimeRunnerAirtable(payload) {
 
     //Kjøre ny oppdatert liste på timeObjects
     getTimeRunnerObjects();
+    
+    //Kjøre en ny om 10 sekunders for å se om de første mailene ble sendt
+    setTimeout(() => {
+        getTimeRunnerObjects();
+    }, 10000);
      
 }
 
