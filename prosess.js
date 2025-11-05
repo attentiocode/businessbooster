@@ -272,31 +272,39 @@ function renderEmailFlows(flows = []) {
     const style = document.createElement('style');
     style.id = 'emailflows-compact-style';
     style.textContent = `
-      /* STEG | EMNE | STATUS | PLANLAGT/SENDT | DEAKTIVER */
+      /* STEG (50px) | EMNE (flex) | STATUS | PLANLAGT/SENDT | STOPP (helt høyre) */
       .flows-grid{
-        display:grid; gap:8px; align-items:center;
-        grid-template-columns: 64px 1fr 120px 168px 110px;
-        padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06);
+        display:grid; gap:10px; align-items:center;
+        grid-template-columns: 50px 1fr 120px 170px 110px;
+        padding:12px 0; border-bottom:1px solid rgba(255,255,255,.06);
       }
-      .flows-grid.header{ margin-bottom:6px; }
+      .flows-grid.header{ padding:6px 0 10px; margin-bottom:4px; }
+      .col-step{ text-align:center; }
       .hdr{ font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px; }
+      .nowrap{ white-space:nowrap }
+      .muted{ color:#87a0b9; font-size:11px }
+      .strike{ text-decoration: line-through; opacity:.7 }
+
+      /* Emnekolonnen: maks to linjer (tittel + meta) */
       .flow-title{
         font-weight:700; color:#e8f0ff; line-height:1.25;
         white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
       }
       .flow-meta{
-        color:#87a0b9; font-size:12px; line-height:1.25;
-        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-        margin-top:2px;
+        color:#9fb3c8; font-size:12px; line-height:1.25;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;
       }
-      .nowrap{ white-space:nowrap }
-      .muted{ color:#87a0b9; font-size:11px }
-      .strike{ text-decoration: line-through; opacity:.7 }
 
-      /* Badge – gjenbruker de samme klassene som kundelista */
-      .tag{ display:inline-block; padding:3px 8px; border-radius:999px;
+      /* Badge – samme fargelogikk som kundelista */
+      .tag{ display:inline-block; padding:4px 10px; border-radius:999px;
             font-size:11px; font-weight:700; color:#fff; white-space:nowrap; }
-      .tag.ok{} .tag.warn{} .tag.info{} .tag.gray{}
+      .ok{    background: rgba(  0,200, 83,.85); }   /* Akseptert */
+      .warn{  background: rgba(255, 82, 82,.90); }   /* Avmeldt/Feilet */
+      .info{  background: rgba( 59,130,246,.85); }   /* Åpnet/Klikket/Sendt */
+      .gray{  background: rgba(128,128,128,.55);}    /* Planlagt/Stoppet */
+
+      /* checkbox+label */
+      .stop-wrap{ display:inline-flex; align-items:center; gap:8px; }
     `;
     document.head.appendChild(style);
   }
@@ -323,8 +331,9 @@ function renderEmailFlows(flows = []) {
     const j  = safeJson(f.json);
     const p  = safeJson(f.payload);
 
-    const subject  = p.subject || f.title || '—';
-    const to       = p.epost || p.email || '';
+    const subject = p.subject || f.title || '—';
+    const to      = p.epost || p.email || '';
+
     const scheduledAt = f.when || j.when || null;
     const sentAt      = f.executedAt || j.executedAt || null;
     const executed    = (f.executed === true) || truthy(j.executed);
@@ -332,7 +341,7 @@ function renderEmailFlows(flows = []) {
     const opened   = truthy(f.opened)   || truthy(j.opened);
     const clicked  = truthy(f.clicked)  || truthy(j.clicked);
     const accepted = truthy(f.accepted) || truthy(j.accepted);
-    const avmeldt  = truthy(f.no_interest) || truthy(j.no_interest) ||
+    const unsub    = truthy(f.no_interest) || truthy(j.no_interest) ||
                      truthy(f.unsubscribed) || truthy(j.unsubscribed);
     const stopp    = truthy(f.stopp) || truthy(j.stopp);
     const failed   = String(f.status||'').toLowerCase() === 'failed' || truthy(f.failed);
@@ -341,21 +350,26 @@ function renderEmailFlows(flows = []) {
     const clickedAt  = f.clickedAt  || j.clickedAt  || null;
     const acceptedAt = f.acceptedAt || j.acceptedAt || null;
 
-    // status → klasse (som i kundelista: ok | warn | info | gray)
+    // status → klasse (ok|warn|info|gray)
     let status = 'Planlagt', cls = 'gray';
     if (failed)   { status='Feilet';   cls='warn'; }
     if (stopp)    { status='Stoppet';  cls='gray'; }
     if (executed) { status='Sendt';    cls='info'; }
     if (opened)   { status='Åpnet';    cls='info'; }
     if (clicked)  { status='Klikket';  cls='info'; }
-    if (avmeldt)  { status='Avmeldt';  cls='warn'; }
+    if (unsub)    { status='Avmeldt';  cls='warn'; }
     if (accepted) { status='Akseptert';cls='ok';   }
 
     const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr)))
-                  ? Number(f.internnr) : (f.step ?? '—');
+      ? Number(f.internnr) : (f.step ?? '—');
 
-    return { id, subject, to, step, status, cls, when: sentAt || scheduledAt,
-             sentAt, openedAt, clickedAt, acceptedAt, stopp };
+    return {
+      id, step, subject, to,
+      status, cls,
+      when: sentAt || scheduledAt,
+      openedAt, clickedAt, acceptedAt,
+      stopp
+    };
   });
 
   // sortér: steg → tid
@@ -369,7 +383,7 @@ function renderEmailFlows(flows = []) {
   // header i ønsket rekkefølge
   const hdr = `
     <div class="flows-grid header">
-      <div class="hdr nowrap">Steg</div>
+      <div class="hdr col-step">Steg</div>
       <div class="hdr">Emne</div>
       <div class="hdr">Status</div>
       <div class="hdr nowrap">Planlagt / Sendt</div>
@@ -377,7 +391,7 @@ function renderEmailFlows(flows = []) {
     </div>
   `;
 
-  // rader – maks to linjer i emnekolonnen
+  // rader – 2 linjer i emnekolonnen (tittel + e-post/event)
   const rows = norm.map(f => {
     const when = shortDT(f.when);
     const events = [
@@ -394,7 +408,7 @@ function renderEmailFlows(flows = []) {
 
     return `
       <div class="flows-grid">
-        <div class="nowrap">${isFinite(f.step) ? f.step : '—'}</div>
+        <div class="col-step">${isFinite(f.step) ? f.step : '—'}</div>
         <div>
           <div class="flow-title">${esc(f.subject)}</div>
           <div class="flow-meta">${esc(meta)}</div>
@@ -402,7 +416,7 @@ function renderEmailFlows(flows = []) {
         <div><span class="tag ${f.cls}">${esc(f.status)}</span></div>
         <div class="nowrap">${when}</div>
         <div>
-          <label class="muted nowrap ${strike}" style="display:inline-flex;align-items:center;gap:6px;">
+          <label class="stop-wrap muted nowrap ${strike}">
             <input type="checkbox"
                    class="flow-stop-toggle"
                    data-id="${escAttr(f.id)}"
@@ -417,6 +431,7 @@ function renderEmailFlows(flows = []) {
 
   return hdr + rows;
 }
+
 
 
 
