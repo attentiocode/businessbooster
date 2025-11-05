@@ -264,52 +264,60 @@ async function fetchEmailFlowsByAirtable(airtableId) {
 
 function renderEmailFlows(flows = []) {
   if (!Array.isArray(flows) || !flows.length) {
-    return `<div class="muted">Ingen epostforløp funnet for denne kunden.</div>`;
+    return `<div class="ef-scope"><div class="ef-empty">Ingen epostforløp funnet for denne kunden.</div></div>`;
   }
 
-  // styles (én gang)
-  if (!document.getElementById('emailflows-compact-style')) {
+  // --- 1) Styles (scopet til .ef-scope for å unngå lekkasje) ---
+  if (!document.getElementById('ef-style')) {
     const style = document.createElement('style');
-    style.id = 'emailflows-compact-style';
+    style.id = 'ef-style';
     style.textContent = `
-      /* STEG (50px) | EMNE (flex) | STATUS | PLANLAGT/SENDT | STOPP (helt høyre) */
-      .flows-grid{
-        display:grid; gap:10px; align-items:center;
-        grid-template-columns: 50px 1fr 120px 170px 110px;
-        padding:12px 0; border-bottom:1px solid rgba(255,255,255,.06);
-      }
-      .flows-grid.header{ padding:6px 0 10px; margin-bottom:4px; }
-      .col-step{ text-align:center; }
-      .hdr{ font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px; }
-      .nowrap{ white-space:nowrap }
-      .muted{ color:#87a0b9; font-size:11px }
-      .strike{ text-decoration: line-through; opacity:.7 }
+      .ef-scope { all: initial; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+      .ef-scope * { all: unset; display: revert; box-sizing: border-box; }
 
-      /* Emnekolonnen: maks to linjer (tittel + meta) */
-      .flow-title{
+      /* GRID: STEG (50) | EMNE (flex) | STATUS (120) | PLAN/ SENDT (170) | STOPP (110) */
+      .ef-grid{
+        display:grid; align-items:center; gap:10px;
+        grid-template-columns: 50px 1fr 120px 170px 110px;
+        padding:12px 0; border-bottom:1px solid rgba(255,255,255,.08);
+      }
+      .ef-grid.ef-header{ padding:6px 0 10px; margin-bottom:2px; border-bottom:1px solid rgba(255,255,255,.12); }
+      .ef-col-step{ text-align:center; }
+
+      .ef-hdr{
+        font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px;
+      }
+      .ef-nowrap{ white-space:nowrap }
+      .ef-muted{ color:#9fb3c8; font-size:12px }
+      .ef-empty{ color:#9fb3c8; font-size:13px; padding:8px 0; }
+
+      /* Emnekolonnen: 2-linjer (tittel + meta) */
+      .ef-title{
         font-weight:700; color:#e8f0ff; line-height:1.25;
         white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
       }
-      .flow-meta{
-        color:#9fb3c8; font-size:12px; line-height:1.25;
-        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;
+      .ef-meta{
+        color:#9fb3c8; font-size:12px; line-height:1.25; margin-top:2px;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
       }
 
-      /* Badge – samme fargelogikk som kundelista */
-      .tag{ display:inline-block; padding:4px 10px; border-radius:999px;
-            font-size:11px; font-weight:700; color:#fff; white-space:nowrap; }
-      .ok{    background: rgba(  0,200, 83,.85); }   /* Akseptert */
-      .warn{  background: rgba(255, 82, 82,.90); }   /* Avmeldt/Feilet */
-      .info{  background: rgba( 59,130,246,.85); }   /* Åpnet/Klikket/Sendt */
-      .gray{  background: rgba(128,128,128,.55);}    /* Planlagt/Stoppet */
+      /* Status-badges (samme semantikk som kundelista) */
+      .ef-badge{ display:inline-block; padding:4px 10px; border-radius:999px;
+                 font-size:11px; font-weight:700; color:#fff; white-space:nowrap; }
+      .ef-ok   { background: rgba(  0,200, 83,.85); } /* Akseptert */
+      .ef-warn { background: rgba(255, 82, 82,.90); } /* Avmeldt/Feilet */
+      .ef-info { background: rgba( 59,130,246,.85);}  /* Åpnet/Klikket/Sendt */
+      .ef-gray { background: rgba(128,128,128,.55);}  /* Planlagt/Stoppet */
 
-      /* checkbox+label */
-      .stop-wrap{ display:inline-flex; align-items:center; gap:8px; }
+      /* Stopp (checkbox + label) */
+      .ef-stop{ display:inline-flex; align-items:center; gap:8px; color:#9fb3c8; font-size:12px; }
+      .ef-stop input[type="checkbox"]{ width:16px; height:16px; cursor:pointer; }
+      .ef-stop.ef-disabled{ opacity:.7; text-decoration:line-through; }
     `;
     document.head.appendChild(style);
   }
 
-  // helpers
+  // --- 2) Helpers ---
   const truthy = x => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
   const safeJson = s => { try { return typeof s === 'string' ? JSON.parse(s) : (s || {}); } catch { return {}; } };
   const shortDT = iso => {
@@ -324,7 +332,7 @@ function renderEmailFlows(flows = []) {
     .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
   const escAttr = s => String(s ?? '').replace(/"/g,'&quot;');
 
-  // normaliser
+  // --- 3) Normaliser ---
   const norm = flows.map(row => {
     const id = row?.id || row?._rawJson?.id || null;
     const f  = row?.fields || row?._rawJson?.fields || row || {};
@@ -350,15 +358,15 @@ function renderEmailFlows(flows = []) {
     const clickedAt  = f.clickedAt  || j.clickedAt  || null;
     const acceptedAt = f.acceptedAt || j.acceptedAt || null;
 
-    // status → klasse (ok|warn|info|gray)
-    let status = 'Planlagt', cls = 'gray';
-    if (failed)   { status='Feilet';   cls='warn'; }
-    if (stopp)    { status='Stoppet';  cls='gray'; }
-    if (executed) { status='Sendt';    cls='info'; }
-    if (opened)   { status='Åpnet';    cls='info'; }
-    if (clicked)  { status='Klikket';  cls='info'; }
-    if (unsub)    { status='Avmeldt';  cls='warn'; }
-    if (accepted) { status='Akseptert';cls='ok';   }
+    // status + badge-klasse
+    let status = 'Planlagt', cls = 'ef-gray';
+    if (failed)   { status='Feilet';   cls='ef-warn'; }
+    if (stopp)    { status='Stoppet';  cls='ef-gray'; }
+    if (executed) { status='Sendt';    cls='ef-info'; }
+    if (opened)   { status='Åpnet';    cls='ef-info'; }
+    if (clicked)  { status='Klikket';  cls='ef-info'; }
+    if (unsub)    { status='Avmeldt';  cls='ef-warn'; }
+    if (accepted) { status='Akseptert';cls='ef-ok';   }
 
     const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr)))
       ? Number(f.internnr) : (f.step ?? '—');
@@ -380,18 +388,18 @@ function renderEmailFlows(flows = []) {
     return new Date(a.when || 0) - new Date(b.when || 0);
   });
 
-  // header i ønsket rekkefølge
+  // --- 4) Header i ønsket rekkefølge ---
   const hdr = `
-    <div class="flows-grid header">
-      <div class="hdr col-step">Steg</div>
-      <div class="hdr">Emne</div>
-      <div class="hdr">Status</div>
-      <div class="hdr nowrap">Planlagt / Sendt</div>
-      <div class="hdr nowrap">Deaktiver</div>
+    <div class="ef-grid ef-header">
+      <div class="ef-hdr ef-col-step">Steg</div>
+      <div class="ef-hdr">Emne</div>
+      <div class="ef-hdr">Status</div>
+      <div class="ef-hdr ef-nowrap">Planlagt / Sendt</div>
+      <div class="ef-hdr ef-nowrap">Deaktiver</div>
     </div>
   `;
 
-  // rader – 2 linjer i emnekolonnen (tittel + e-post/event)
+  // --- 5) Rader (2 linjer i emnekolonnen) ---
   const rows = norm.map(f => {
     const when = shortDT(f.when);
     const events = [
@@ -404,19 +412,19 @@ function renderEmailFlows(flows = []) {
     const disableToggle = ['Sendt','Åpnet','Klikket','Akseptert','Feilet'].includes(f.status);
     const checked  = f.stopp ? 'checked' : '';
     const disabled = disableToggle ? 'disabled' : '';
-    const strike   = disableToggle ? 'strike' : '';
+    const stopClass = `ef-stop${disableToggle ? ' ef-disabled' : ''}`;
 
     return `
-      <div class="flows-grid">
-        <div class="col-step">${isFinite(f.step) ? f.step : '—'}</div>
+      <div class="ef-grid">
+        <div class="ef-col-step">${isFinite(f.step) ? f.step : '—'}</div>
         <div>
-          <div class="flow-title">${esc(f.subject)}</div>
-          <div class="flow-meta">${esc(meta)}</div>
+          <div class="ef-title">${esc(f.subject)}</div>
+          <div class="ef-meta">${esc(meta)}</div>
         </div>
-        <div><span class="tag ${f.cls}">${esc(f.status)}</span></div>
-        <div class="nowrap">${when}</div>
+        <div><span class="ef-badge ${f.cls}">${esc(f.status)}</span></div>
+        <div class="ef-nowrap">${when}</div>
         <div>
-          <label class="stop-wrap muted nowrap ${strike}">
+          <label class="${stopClass}">
             <input type="checkbox"
                    class="flow-stop-toggle"
                    data-id="${escAttr(f.id)}"
@@ -429,8 +437,10 @@ function renderEmailFlows(flows = []) {
     `;
   }).join('');
 
-  return hdr + rows;
+  // pakk alt i en egen scope-container slik at CSS kun treffer her
+  return `<div class="ef-scope">${hdr}${rows}</div>`;
 }
+
 
 
 
