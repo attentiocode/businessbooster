@@ -899,7 +899,3 @@ function getEmailLoops(groupid = "rec6jilq4Xy1Huc9d"){
 
 
 }
-
-function emailLoopsResponse(data){
-  console.log("emailLoopsResponse",data);
-}
