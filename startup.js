@@ -682,7 +682,7 @@ function timeRunnerObjects(data){
 
   if (!data || !data.fields || !data.fields.runningjson || !Array.isArray(data.fields.runningjson)) {
     console.error("Ugyldig dataformat: Forventet et objekt med 'fields.runningjson' som en array.");
-    return; // Avbryt hvis data ikke er gyldig
+    data.fields.runningjson = [];
   } 
 
   // Konverter JSON-strenger til objekter
