@@ -38,7 +38,7 @@ function renderProsess(data){
   
     const fmtDate = (d) => (!d ? '—' : (isNaN(new Date(d)) ? d : new Date(d).toLocaleDateString('no-NO')));
   
-    // Ny: flate felt for adresse
+    // Flate adressefelt
     const fmtAddr = (b) => {
       const adr = b?.forretningsadresse_adresse || b?.postadresse_adresse;
       const postnr = b?.forretningsadresse_postnummer || b?.postadresse_postnummer;
@@ -50,46 +50,31 @@ function renderProsess(data){
     const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
     const getOrgnr = (obj) => normalizeOrgnr(obj?.orgnr ?? obj?.organisasjonsnummer ?? obj?.orgNr ?? obj?.OrganizationNumber);
   
-    // Avled status-nøkkel i henhold til den nye select-lista
-    // Mulige keys: "stoppet", "akseptert", "utgått", "i_prosess", "avmeldt", "åpnet", "sendt"
+    // Status for badge/label (visuell prioritet)
     function deriveStatus(b) {
-      const stopp = isTruthy(b?.stopp);
-      const avmeldt = isTruthy(b?.unsubscribed) || isTruthy(b?.noInterest);
-      const sent = Number(b?.emailSentCount ?? 0);
-      const total = Number(b?.emailCount ?? 0);
-      const accepted = Number(b?.emailAcceptedCount ?? 0);
-      const opened = Number(b?.openedCount ?? 0);
+      const stopp = !!b.stopp;
+      const avmeldt = !!b.unsubscribed || !!b.noInterest;
+      const sent = Number(b.emailSentCount ?? 0);
+      const total = Number(b.emailCount ?? 0);
+      const accepted = Number(b.emailAcceptedCount ?? 0);
+      const opened = Number(b.openedCount ?? 0);
   
       if (stopp) return { key: 'stoppet', label: 'Stoppet' };
       if (avmeldt) return { key: 'avmeldt', label: 'Avmeldt' };
       if (accepted > 0) return { key: 'akseptert', label: 'Akseptert' };
-  
-      // Ferdig løp uten aksept → "Utgått"
-      if (total > 0 && sent >= total && accepted === 0) {
-        return { key: 'utgått', label: 'Utgått' };
-      }
-  
-      // Åpnet (minst én åpning)
+      if (total > 0 && sent >= total && accepted === 0) return { key: 'utgått', label: 'Utgått' };
       if (opened > 0) return { key: 'åpnet', label: 'Åpnet' };
-  
-      // Sendt (minst én sendt)
       if (sent > 0) return { key: 'sendt', label: 'Sendt' };
-  
-      // Ellers i prosess (planlagt / ikke sendt)
       return { key: 'i_prosess', label: 'I prosess' };
     }
   
-    // Valgfritt: enkel "neste steg"-logikk (beholder om du bruker tooltips e.l.)
+    // Valgfritt: neste steg (om du vil bruke i tooltip)
     function deriveStep(b) {
       const explicit = b?.step ?? b?.prosessStep ?? b?.prosess_step ?? b?.internnr ?? b?.internNr ?? null;
       if (explicit != null && /^\d+$/.test(String(explicit))) return Number(explicit);
-  
       const sent = Number(b?.emailSentCount ?? 0);
       const total = Number(b?.emailCount ?? 0);
-      if (total > 0) {
-        const next = Math.min(sent + 1, total);
-        return next; // neste steg
-      }
+      if (total > 0) return Math.min(sent + 1, total);
       return null;
     }
   
@@ -107,12 +92,12 @@ function renderProsess(data){
     // --- Filtrer grunnlag ---
     let filteredData = Array.isArray(data) ? data.slice() : [];
   
-    // Gruppefilter (eksakt match på b.group)
+    // Gruppefilter
     if (!(filterGroup === '' || filterGroup.toLowerCase() === 'all')) {
       filteredData = filteredData.filter(b => String(b.group ?? '').trim() === filterGroup);
     }
   
-    // Søk (navn, orgnr, adresse, postnr, poststed, gruppenavn/bruker)
+    // Søk
     if (searchTerm) {
       filteredData = filteredData.filter(b => {
         const adr = fmtAddr(b);
@@ -126,9 +111,42 @@ function renderProsess(data){
       });
     }
   
-    // Statusfilter (direkte nøkkel)
+    // --- Statusfilter: dedikerte predikater ---
     if (statusFilter) {
-      filteredData = filteredData.filter(b => deriveStatus(b).key === statusFilter);
+      const isStoppet   = b => !!b.stopp;
+      const isAvmeldt   = b => !!b.unsubscribed || !!b.noInterest;
+      const isAkseptert = b => Number(b.emailAcceptedCount || 0) > 0;
+      const isUtgaatt   = b => {
+        const sent  = Number(b.emailSentCount || 0);
+        const total = Number(b.emailCount || 0);
+        const acc   = Number(b.emailAcceptedCount || 0);
+        return total > 0 && sent >= total && acc === 0;
+      };
+      const isAapnet    = b => Number(b.openedCount || 0) > 0;
+      // “Sendt” viser alle med minst én sendt (inkluderer også åpnet/akseptert/utgått)
+      const isSendt     = b => Number(b.emailSentCount || 0) > 0;
+      // I prosess = løp pågår, ikke stopp/avmeldt/akseptert/utgått
+      const isIProsess  = b => {
+        const sent  = Number(b.emailSentCount || 0);
+        const total = Number(b.emailCount || 0);
+        const acc   = Number(b.emailAcceptedCount || 0);
+        const stopp = !!b.stopp;
+        const avm   = !!b.unsubscribed || !!b.noInterest;
+        return total > 0 && sent < total && acc === 0 && !stopp && !avm;
+      };
+  
+      filteredData = filteredData.filter(b => {
+        switch (statusFilter) {
+          case 'stoppet':   return isStoppet(b);
+          case 'avmeldt':   return isAvmeldt(b);
+          case 'akseptert': return isAkseptert(b);
+          case 'utgått':    return isUtgaatt(b);
+          case 'åpnet':     return isAapnet(b);
+          case 'sendt':     return isSendt(b); // Vil du ha “strengt sendt”, bruk også opened=0/accepted=0
+          case 'i_prosess': return isIProsess(b);
+          default:          return true;
+        }
+      });
     }
   
     // oppdater teller
@@ -141,10 +159,9 @@ function renderProsess(data){
       tr.classList.add('default-row', 'prosess-row');
   
       const org = getOrgnr(b);
-      const g = (gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
+      const g = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
       const contactHtml = typeof renderContactIcons === 'function' ? renderContactIcons(b) : '';
   
-      // counts for badge
       const emailcount    = Number(b.emailCount ?? 0);
       const emailsendt    = Number(b.emailSentCount ?? 0);
       const emailAccepted = Number(b.emailAcceptedCount ?? 0);
@@ -167,32 +184,19 @@ function renderProsess(data){
         </td>
       `;
   
-      // Badge-farge etter status
+      // Badge-farge etter visuell status
       const badgeEl = tr.querySelector('.prosess-badge');
       const { key } = deriveStatus(b);
   
       if (badgeEl) {
         switch (key) {
-          case 'akseptert':
-            badgeEl.style.background = 'rgba(0, 200, 83, 0.75)';      // grønn
-            break;
-          case 'avmeldt':
-            badgeEl.style.background = 'rgba(255, 82, 82, 0.75)';     // rød
-            break;
-          case 'stoppet':
-            badgeEl.style.background = 'rgba(180, 180, 180, 0.65)';   // grå
-            break;
-          case 'utgått':
-            badgeEl.style.background = 'rgba(255, 165, 0, 0.75)';     // oransje
-            break;
-          case 'åpnet':
-            badgeEl.style.background = 'rgba(59, 130, 246, 0.75)';    // blå
-            break;
-          case 'sendt':
-            badgeEl.style.background = 'rgba(139, 92, 246, 0.75)';    // lilla
-            break;
-          default: // i_prosess
-            badgeEl.style.background = 'rgba(128, 128, 128, 0.5)';    // semigrå (default)
+          case 'akseptert': badgeEl.style.background = 'rgba(0, 200, 83, 0.75)'; break;   // grønn
+          case 'avmeldt':   badgeEl.style.background = 'rgba(255, 82, 82, 0.75)'; break;  // rød
+          case 'stoppet':   badgeEl.style.background = 'rgba(180, 180, 180, 0.65)'; break;// grå
+          case 'utgått':    badgeEl.style.background = 'rgba(255, 165, 0, 0.75)'; break;  // oransje
+          case 'åpnet':     badgeEl.style.background = 'rgba(59, 130, 246, 0.75)'; break; // blå
+          case 'sendt':     badgeEl.style.background = 'rgba(139, 92, 246, 0.75)'; break; // lilla
+          default:          badgeEl.style.background = 'rgba(128, 128, 128, 0.5)';        // semigrå
         }
       }
   
@@ -218,6 +222,7 @@ function renderProsess(data){
       tbody.appendChild(tr);
     });
   }
+  
   
   
   
