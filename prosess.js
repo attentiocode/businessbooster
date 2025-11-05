@@ -35,7 +35,6 @@ function renderProsess(data){
     const val = v => (v == null ? '' : String(v));
     const low = v => val(v).toLowerCase();
     const isTruthy = (x) => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
-  
     const fmtDate = (d) => (!d ? '—' : (isNaN(new Date(d)) ? d : new Date(d).toLocaleDateString('no-NO')));
   
     // Flate adressefelt
@@ -50,25 +49,41 @@ function renderProsess(data){
     const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
     const getOrgnr = (obj) => normalizeOrgnr(obj?.orgnr ?? obj?.organisasjonsnummer ?? obj?.orgNr ?? obj?.OrganizationNumber);
   
-    // Status for badge/label (visuell prioritet)
-    function deriveStatus(b) {
+    // --- Predikater (brukes til både filter og badge-prioritet) ---
+    const isStoppet   = b => !!b.stopp;
+    const isAvmeldt   = b => !!b.unsubscribed || !!b.noInterest;
+    const isAkseptert = b => Number(b.emailAcceptedCount || 0) > 0;
+    const isUtgaatt   = b => {
+      const sent  = Number(b.emailSentCount || 0);
+      const total = Number(b.emailCount || 0);
+      const acc   = Number(b.emailAcceptedCount || 0);
+      return total > 0 && sent >= total && acc === 0;
+    };
+    const isAapnet    = b => Number(b.openedCount || 0) > 0;
+    const isSendt     = b => Number(b.emailSentCount || 0) > 0;
+    const isIProsess  = b => {
+      const sent  = Number(b.emailSentCount || 0);
+      const total = Number(b.emailCount || 0);
+      const acc   = Number(b.emailAcceptedCount || 0);
       const stopp = !!b.stopp;
-      const avmeldt = !!b.unsubscribed || !!b.noInterest;
-      const sent = Number(b.emailSentCount ?? 0);
-      const total = Number(b.emailCount ?? 0);
-      const accepted = Number(b.emailAcceptedCount ?? 0);
-      const opened = Number(b.openedCount ?? 0);
+      const avm   = !!b.unsubscribed || !!b.noInterest;
+      // Pågår: har planlagte, ikke ferdig, ikke akseptert, ikke stopp/avmeldt
+      return total > 0 && sent < total && acc === 0 && !stopp && !avm;
+    };
   
-      if (stopp) return { key: 'stoppet', label: 'Stoppet' };
-      if (avmeldt) return { key: 'avmeldt', label: 'Avmeldt' };
-      if (accepted > 0) return { key: 'akseptert', label: 'Akseptert' };
-      if (total > 0 && sent >= total && accepted === 0) return { key: 'utgått', label: 'Utgått' };
-      if (opened > 0) return { key: 'åpnet', label: 'Åpnet' };
-      if (sent > 0) return { key: 'sendt', label: 'Sendt' };
-      return { key: 'i_prosess', label: 'I prosess' };
+    // --- Badge-prioritet (hard) ---
+    // 1) akseptert  2) avmeldt  3) sendt  4) stoppet  5) utgått  6) åpnet  7) i_prosess
+    function getBadgeKey(b){
+      if (isAkseptert(b)) return 'akseptert';
+      if (isAvmeldt(b))   return 'avmeldt';
+      if (isSendt(b))     return 'sendt';
+      if (isStoppet(b))   return 'stoppet';
+      if (isUtgaatt(b))   return 'utgått';
+      if (isAapnet(b))    return 'åpnet';
+      return 'i_prosess';
     }
   
-    // Valgfritt: neste steg (om du vil bruke i tooltip)
+    // Valgfritt: enkel “neste steg”
     function deriveStep(b) {
       const explicit = b?.step ?? b?.prosessStep ?? b?.prosess_step ?? b?.internnr ?? b?.internNr ?? null;
       if (explicit != null && /^\d+$/.test(String(explicit))) return Number(explicit);
@@ -111,30 +126,8 @@ function renderProsess(data){
       });
     }
   
-    // --- Statusfilter: dedikerte predikater ---
+    // Statusfilter – med dedikerte predikater (forutsigbart)
     if (statusFilter) {
-      const isStoppet   = b => !!b.stopp;
-      const isAvmeldt   = b => !!b.unsubscribed || !!b.noInterest;
-      const isAkseptert = b => Number(b.emailAcceptedCount || 0) > 0;
-      const isUtgaatt   = b => {
-        const sent  = Number(b.emailSentCount || 0);
-        const total = Number(b.emailCount || 0);
-        const acc   = Number(b.emailAcceptedCount || 0);
-        return total > 0 && sent >= total && acc === 0;
-      };
-      const isAapnet    = b => Number(b.openedCount || 0) > 0;
-      // “Sendt” viser alle med minst én sendt (inkluderer også åpnet/akseptert/utgått)
-      const isSendt     = b => Number(b.emailSentCount || 0) > 0;
-      // I prosess = løp pågår, ikke stopp/avmeldt/akseptert/utgått
-      const isIProsess  = b => {
-        const sent  = Number(b.emailSentCount || 0);
-        const total = Number(b.emailCount || 0);
-        const acc   = Number(b.emailAcceptedCount || 0);
-        const stopp = !!b.stopp;
-        const avm   = !!b.unsubscribed || !!b.noInterest;
-        return total > 0 && sent < total && acc === 0 && !stopp && !avm;
-      };
-  
       filteredData = filteredData.filter(b => {
         switch (statusFilter) {
           case 'stoppet':   return isStoppet(b);
@@ -142,14 +135,14 @@ function renderProsess(data){
           case 'akseptert': return isAkseptert(b);
           case 'utgått':    return isUtgaatt(b);
           case 'åpnet':     return isAapnet(b);
-          case 'sendt':     return isSendt(b); // Vil du ha “strengt sendt”, bruk også opened=0/accepted=0
+          case 'sendt':     return isSendt(b);   // vil du ha "strengt sendt", legg til opened=0 og accepted=0
           case 'i_prosess': return isIProsess(b);
           default:          return true;
         }
       });
     }
   
-    // oppdater teller
+    // Oppdater teller
     const counterEl = document.getElementById('counterlistprosess');
     if (counterEl) counterEl.innerText = `${filteredData.length} stk. bedrifter`;
   
@@ -164,7 +157,6 @@ function renderProsess(data){
   
       const emailcount    = Number(b.emailCount ?? 0);
       const emailsendt    = Number(b.emailSentCount ?? 0);
-      const emailAccepted = Number(b.emailAcceptedCount ?? 0);
       const counttext     = `${emailsendt}/${emailcount}`;
       const showBadge     = emailcount > 0;
   
@@ -184,18 +176,18 @@ function renderProsess(data){
         </td>
       `;
   
-      // Badge-farge etter visuell status
+      // Badge-farge etter HARD prioritet
       const badgeEl = tr.querySelector('.prosess-badge');
-      const { key } = deriveStatus(b);
+      const badgeKey = getBadgeKey(b);
   
       if (badgeEl) {
-        switch (key) {
+        switch (badgeKey) {
           case 'akseptert': badgeEl.style.background = 'rgba(0, 200, 83, 0.75)'; break;   // grønn
           case 'avmeldt':   badgeEl.style.background = 'rgba(255, 82, 82, 0.75)'; break;  // rød
+          case 'sendt':     badgeEl.style.background = 'rgba(139, 92, 246, 0.75)'; break; // lilla
           case 'stoppet':   badgeEl.style.background = 'rgba(180, 180, 180, 0.65)'; break;// grå
           case 'utgått':    badgeEl.style.background = 'rgba(255, 165, 0, 0.75)'; break;  // oransje
           case 'åpnet':     badgeEl.style.background = 'rgba(59, 130, 246, 0.75)'; break; // blå
-          case 'sendt':     badgeEl.style.background = 'rgba(139, 92, 246, 0.75)'; break; // lilla
           default:          badgeEl.style.background = 'rgba(128, 128, 128, 0.5)';        // semigrå
         }
       }
@@ -222,6 +214,7 @@ function renderProsess(data){
       tbody.appendChild(tr);
     });
   }
+  
   
   
   

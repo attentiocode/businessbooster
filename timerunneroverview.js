@@ -249,7 +249,7 @@ const timeRunner = (() => {
               Klikk → Aksept: <b id="tro-avg-click-accept">—</b>
             </div>
           </div>
-          <div class="tro-sub">Beregnet med robuste fallbacks (klikk→aksept, ellers åpnet→aksept, ellers sendt→aksept)</div>
+          <div class="tro-sub"></div>
         </div>
 
         <div class="tro-card wide">
