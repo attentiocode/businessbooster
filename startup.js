@@ -306,6 +306,8 @@ function ruteresponse(data,responseid){
       leadsResponse(data);
     }else if(responseid==="timeRunnerObjects"){
       timeRunnerObjects(data);
+    }else if(responseid==="emailLoopsResponse"){
+      emailLoopsResponse(data);
     }
 }
 
@@ -885,3 +887,19 @@ function updateProsessCountElement(count){
 
 updateCounter("label-selected-customers", gSelectbedrifter.length, 1000);
 updateAllLocalConterts();
+
+
+function getEmailLoops(groupid = "rec6jilq4Xy1Huc9d"){
+
+  let body = {groupairtable: groupid};
+  body = airtablebodylistAND(body);
+
+  //hente email loops
+  Getlistairtable("appEUYGzpBtxB0fFe","tblUML599clNbxHRq",body,"emailLoopsResponse",false);
+
+
+}
+
+function emailLoopsResponse(data){
+  console.log("emailLoopsResponse",data);
+}

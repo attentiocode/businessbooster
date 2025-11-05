@@ -55,6 +55,9 @@ cdnScripts.reduce((promise, script) => {
             //
             getAllallIndustri();
 
+            //hent epostløp
+            getEmailLoops();
+
         }else{
             console.log("Member is NOT logged in");
             //trykk på knappen logintabbutton
