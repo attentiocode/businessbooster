@@ -313,7 +313,7 @@ function renderReady(data) {
         if (!orgnrs.length) return;
         if (!confirm(`Fjerne ${orgnrs.length} bedrift(er) fra klar status?`)) return;
   
-        gSelectbedrifter = (gSelectbedrifter || []).filter(
+        gReadybedrifter = (gReadybedrifter || []).filter(
           b => !orgnrs.includes(normalizeOrgnr(b.organisasjonsnummer))
         );
         try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gReadybedrifter)); } catch(e){}
