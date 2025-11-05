@@ -264,131 +264,137 @@ async function fetchEmailFlowsByAirtable(airtableId) {
 
 function renderEmailFlows(flows = []) {
   if (!Array.isArray(flows) || !flows.length) {
-    return `<div class="ef2-wrap"><div class="ef2-empty">Ingen epostforløp funnet for denne kunden.</div></div>`;
+    return `<div class="ef3-wrap"><div class="ef3-empty">Ingen epostforløp funnet for denne kunden.</div></div>`;
   }
 
-  // én liten stilblokk (kun farger/typografi). Layout tvinges inline.
-  if (!document.getElementById('ef2-style')) {
+  // Kun typografi og “badge”-base – layout tvinges inline pr rad:
+  if (!document.getElementById('ef3-style')) {
     const s = document.createElement('style');
-    s.id = 'ef2-style';
+    s.id = 'ef3-style';
     s.textContent = `
-      .ef2-wrap{ font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
-      .ef2-hdr{ font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px; }
-      .ef2-step{ text-align:center; }
-      .ef2-title{ font-weight:700; color:#e8f0ff; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-      .ef2-meta{ color:#9fb3c8; font-size:12px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
-      .ef2-badge{ display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; color:#fff; white-space:nowrap; }
-      .ef2-ok{   background:rgba(0,200,83,.85); }
-      .ef2-warn{ background:rgba(255,82,82,.9); }
-      .ef2-info{ background:rgba(59,130,246,.85); }
-      .ef2-gray{ background:rgba(128,128,128,.55); }
-      .ef2-stop{ display:inline-flex; align-items:center; gap:8px; color:#9fb3c8; font-size:12px; }
-      .ef2-stop input{ width:16px; height:16px; cursor:pointer; }
-      .ef2-stop.ef2-disabled{ opacity:.7; text-decoration:line-through; }
-      .ef2-empty{ color:#9fb3c8; font-size:13px; padding:8px 0; }
-      .ef2-row{ border-bottom:1px solid rgba(255,255,255,.08); padding:12px 0; }
-      .ef2-header{ border-bottom:1px solid rgba(255,255,255,.12); padding:6px 0 10px; margin-bottom:2px; }
+      .ef3-wrap{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+      .ef3-header{border-bottom:1px solid rgba(255,255,255,.12);padding:6px 0 10px;margin-bottom:4px}
+      .ef3-row{border-bottom:1px solid rgba(255,255,255,.08);padding:12px 0}
+      .ef3-hdr{font-size:11px;color:#9fb3c8;text-transform:uppercase;letter-spacing:.5px}
+      .ef3-title{font-weight:700;color:#e8f0ff;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .ef3-meta{color:#9fb3c8;font-size:12px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+      .ef3-badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+      .ef3-stop{display:inline-flex;align-items:center;gap:8px;color:#9fb3c8;font-size:12px}
+      .ef3-stop input{width:16px;height:16px;cursor:pointer}
+      .ef3-stop.ef3-disabled{opacity:.7;text-decoration:line-through}
+      .ef3-empty{color:#9fb3c8;font-size:13px;padding:8px 0}
     `;
     document.head.appendChild(s);
   }
 
   const truthy = x => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
-  const safeJson = s => { try { return typeof s === 'string' ? JSON.parse(s) : (s || {}); } catch { return {}; } };
-  const shortDT = iso => {
+  const jparse = s => { try { return typeof s === 'string' ? JSON.parse(s) : (s||{}); } catch { return {}; } };
+  const fmt = iso => {
     if (!iso) return '—';
     const d = new Date(iso); if (isNaN(d)) return '—';
-    return d.toLocaleDateString('no-NO') + ', ' + d.toLocaleTimeString('no-NO', {hour:'2-digit',minute:'2-digit'});
+    return d.toLocaleDateString('no-NO')+', '+d.toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'});
   };
-  const esc = s => String(s ?? '').replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
-  const escAttr = s => String(s ?? '').replace(/"/g,'&quot;');
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  const eAttr = s => String(s ?? '').replace(/"/g,'&quot;');
+
+  // status → farge (inline bg for å matche «renderProsess»-paletten uten lekkasje)
+  const statusBg = (status) => {
+    switch(status){
+      case 'Akseptert': return 'background:#00c853';                 // grønn
+      case 'Avmeldt':   return 'background:#ff5252';                 // rød
+      case 'Klikket':   return 'background:#6366f1';                 // indigo
+      case 'Åpnet':     return 'background:#3b82f6';                 // blå
+      case 'Sendt':     return 'background:#8b5cf6';                 // lilla
+      case 'Stoppet':   return 'background:#9aa4af';                 // grå
+      case 'Utgått':    return 'background:#f59e0b';                 // oransje
+      case 'Feilet':    return 'background:#ff5252';                 // rød
+      default:          return 'background:rgba(128,128,128,.55)';   // planlagt
+    }
+  };
 
   // normaliser
   const norm = flows.map(row => {
     const id = row?.id || row?._rawJson?.id || null;
     const f  = row?.fields || row?._rawJson?.fields || row || {};
-    const j  = safeJson(f.json);
-    const p  = safeJson(f.payload);
+    const j  = jparse(f.json);
+    const p  = jparse(f.payload);
 
     const subject = p.subject || f.title || '—';
-    const to      = p.epost || p.email || '';
-
+    const to = p.epost || p.email || '';
     const scheduledAt = f.when || j.when || null;
-    const sentAt      = f.executedAt || j.executedAt || null;
-    const executed    = (f.executed === true) || truthy(j.executed);
-
+    const sentAt = f.executedAt || j.executedAt || null;
+    const executed = (f.executed === true) || truthy(j.executed);
     const opened   = truthy(f.opened)   || truthy(j.opened);
     const clicked  = truthy(f.clicked)  || truthy(j.clicked);
     const accepted = truthy(f.accepted) || truthy(j.accepted);
-    const unsub    = truthy(f.no_interest) || truthy(j.no_interest) ||
-                     truthy(f.unsubscribed) || truthy(j.unsubscribed);
+    const unsub    = truthy(f.no_interest) || truthy(j.no_interest) || truthy(f.unsubscribed) || truthy(j.unsubscribed);
     const stopp    = truthy(f.stopp) || truthy(j.stopp);
-    const failed   = String(f.status||'').toLowerCase() === 'failed' || truthy(f.failed);
+    const failed   = String(f.status||'').toLowerCase()==='failed' || truthy(f.failed);
 
     const openedAt   = f.openedAt   || j.openedAt   || null;
     const clickedAt  = f.clickedAt  || j.clickedAt  || null;
     const acceptedAt = f.acceptedAt || j.acceptedAt || null;
 
-    let status='Planlagt', cls='ef2-gray';
-    if (failed)   { status='Feilet';   cls='ef2-warn'; }
-    if (stopp)    { status='Stoppet';  cls='ef2-gray'; }
-    if (executed) { status='Sendt';    cls='ef2-info'; }
-    if (opened)   { status='Åpnet';    cls='ef2-info'; }
-    if (clicked)  { status='Klikket';  cls='ef2-info'; }
-    if (unsub)    { status='Avmeldt';  cls='ef2-warn'; }
-    if (accepted) { status='Akseptert';cls='ef2-ok';   }
+    let status='Planlagt';
+    if (failed)   status='Feilet';
+    if (stopp)    status='Stoppet';
+    if (executed) status='Sendt';
+    if (opened)   status='Åpnet';
+    if (clicked)  status='Klikket';
+    if (unsub)    status='Avmeldt';
+    if (accepted) status='Akseptert';
 
     const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr))) ? Number(f.internnr) : '—';
-    const when = shortDT(sentAt || scheduledAt);
+    const when = fmt(sentAt || scheduledAt);
     const events = [
-      openedAt   ? `Åpnet: ${shortDT(openedAt)}` : '',
-      clickedAt  ? `Klikket: ${shortDT(clickedAt)}` : '',
-      acceptedAt ? `Akseptert: ${shortDT(acceptedAt)}` : ''
+      openedAt   ? `Åpnet: ${fmt(openedAt)}` : '',
+      clickedAt  ? `Klikket: ${fmt(clickedAt)}` : '',
+      acceptedAt ? `Akseptert: ${fmt(acceptedAt)}` : ''
     ].filter(Boolean).join(' · ');
     const meta = [to, events].filter(Boolean).join(' · ');
+    const locked = ['Sendt','Åpnet','Klikket','Akseptert','Feilet'].includes(status);
 
-    return { id, step, subject, meta, status, cls, when, stopp,
-             locked: ['Sendt','Åpnet','Klikket','Akseptert','Feilet'].includes(status) };
+    return { id, step, subject, meta, status, when, stopp, locked };
   });
 
-  norm.sort((a,b) => (isFinite(a.step)?a.step:1e9) - (isFinite(b.step)?b.step:1e9));
+  norm.sort((a,b)=>(isFinite(a.step)?a.step:1e9)-(isFinite(b.step)?b.step:1e9));
 
-  // felles inline grid (tvinger 5 kolonner, uansett annen CSS)
-  const inlineGrid = `display:grid;align-items:center;gap:10px;grid-template-columns:50px 1fr 120px 170px 110px;`;
+  // ÉN sann kilde til layout – inline på alle rader:
+  const gridStyle = 'display:grid;align-items:center;gap:10px;grid-template-columns:50px 1fr 120px 170px 110px;';
 
   const header = `
-    <div class="ef2-header" style="${inlineGrid}">
-      <div class="ef2-hdr ef2-step">Steg</div>
-      <div class="ef2-hdr">Emne</div>
-      <div class="ef2-hdr">Status</div>
-      <div class="ef2-hdr">Planlagt / Sendt</div>
-      <div class="ef2-hdr">Deaktiver</div>
+    <div class="ef3-header" style="${gridStyle}">
+      <div class="ef3-hdr" style="text-align:center">Steg</div>
+      <div class="ef3-hdr">Emne</div>
+      <div class="ef3-hdr">Status</div>
+      <div class="ef3-hdr">Planlagt / Sendt</div>
+      <div class="ef3-hdr">Deaktiver</div>
     </div>
   `;
 
   const rows = norm.map(f => `
-    <div class="ef2-row" style="${inlineGrid}">
-      <div class="ef2-step">${isFinite(f.step) ? f.step : '—'}</div>
+    <div class="ef3-row" style="${gridStyle}">
+      <div style="text-align:center">${isFinite(f.step)?f.step:'—'}</div>
       <div>
-        <div class="ef2-title">${esc(f.subject)}</div>
-        <div class="ef2-meta">${esc(f.meta)}</div>
+        <div class="ef3-title">${esc(f.subject)}</div>
+        <div class="ef3-meta">${esc(f.meta)}</div>
       </div>
-      <div><span class="ef2-badge ${f.cls}">${esc(f.status)}</span></div>
+      <div><span class="ef3-badge" style="${statusBg(f.status)}">${esc(f.status)}</span></div>
       <div>${esc(f.when)}</div>
       <div>
-        <label class="ef2-stop ${f.locked ? 'ef2-disabled' : ''}">
-          <input type="checkbox"
-                 class="flow-stop-toggle"
-                 data-id="${escAttr(f.id)}"
-                 data-step="${escAttr(f.step)}"
-                 ${f.stopp ? 'checked' : ''} ${f.locked ? 'disabled' : ''}/>
+        <label class="ef3-stop ${f.locked?'ef3-disabled':''}">
+          <input type="checkbox" class="flow-stop-toggle"
+                 data-id="${eAttr(f.id)}" data-step="${eAttr(f.step)}"
+                 ${f.stopp?'checked':''} ${f.locked?'disabled':''}/>
           Stopp
         </label>
       </div>
     </div>
   `).join('');
 
-  return `<div class="ef2-wrap">${header}${rows}</div>`;
+  return `<div class="ef3-wrap">${header}${rows}</div>`;
 }
+
 
 
 
