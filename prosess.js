@@ -305,7 +305,7 @@ function renderEmailFlows(flows = []) {
       case 'Klikket':   return 'background:#6366f1';                 // indigo
       case 'Åpnet':     return 'background:#3b82f6';                 // blå
       case 'Sendt':     return 'background:#8b5cf6';                 // lilla
-      case 'Stoppet':   return 'background:#9aa4af';                 // grå
+      case 'Stoppet':   return 'background:#ff5252';                 // rød
       case 'Utgått':    return 'background:#f59e0b';                 // oransje
       case 'Feilet':    return 'background:#ff5252';                 // rød
       default:          return 'background:rgba(128,128,128,.55)';   // planlagt
@@ -568,17 +568,14 @@ document.addEventListener('change', (e) => {
   const row   = el.closest('.ef3-row');
   const badge = row?.querySelector('.ef3-badge');
   if (badge) {
-    // Nullstill ev. tidligere mod-klasser hvis du bruker dem
-    badge.classList.remove('ef3-ok','ef3-warn','ef3-info','ef3-gray');
+    badge.classList.remove('ef3-ok', 'ef3-warn', 'ef3-info', 'ef3-gray');
 
     if (isStopped) {
       badge.textContent = 'Stoppet';
-      badge.classList.add('ef3-gray');        // samme grå som i renderen
-      // eller: badge.style.background = '#9aa4af';
+      badge.style.background = '#ff5252'; // RØD for stoppet
     } else {
-      // Tilbake til nøytral planlagt til server evt. endrer status
       badge.textContent = 'Planlagt';
-      badge.classList.add('ef3-gray');
+      badge.style.background = 'rgba(128,128,128,.55)'; // Grå nøytral
     }
   }
 });
