@@ -1,5 +1,5 @@
 
-// ---- TimeRunner modul (utvidet) -------------------------------------------
+// ---- TimeRunner modul (full utvidet versjon) -------------------------------
 const timeRunner = (() => {
   const STATE = { el: null, prev: null, mounted: false, mode: 'idle' };
   const nf = new Intl.NumberFormat('nb-NO');
@@ -29,8 +29,15 @@ const timeRunner = (() => {
   function update(data){
     ensureMounted();
     const metrics = computeMetrics(data);
-    STATE.el.innerHTML = headerHtml() + overviewHtml(metrics); // kan bruke tall i subtitler
+    STATE.el.innerHTML = headerHtml() + overviewHtml(metrics);
     animateAll(metrics, STATE.prev);
+
+    // Oppdater snitttider (ikke animert)
+    const oc = document.getElementById('tro-avg-open-click');
+    const ca = document.getElementById('tro-avg-click-accept');
+    if (oc) oc.textContent = formatDuration(metrics.avgOpenToClickMs);
+    if (ca) ca.textContent = formatDuration(metrics.avgClickToAcceptMs);
+
     STATE.prev = metrics;
     STATE.mode = 'ready';
   }
@@ -63,6 +70,9 @@ const timeRunner = (() => {
     const pct = (n,d)=> d ? Math.round((n/d)*100) : 0;
 
     const leads = new Set();
+    let sumOpenToClick = 0, nOpenToClick = 0;
+    let sumClickToAccept = 0, nClickToAccept = 0;
+
     const s = rows.reduce((acc,row) => {
       const w  = toDate(row.when);
       const sent = isTrue(row.executed);
@@ -70,6 +80,11 @@ const timeRunner = (() => {
       const opened = isTrue(row.opened);
       const clicked = isTrue(row.clicked);
       const accepted = isTrue(row.accepted);
+
+      const openedAt = toDate(row.openedAt);
+      const clickedAt = toDate(row.clickedAt);
+      const acceptedAt = toDate(row.acceptedAt);
+
       const unsub =
         isTrue(row.no_interest) ||
         (stop && String(row.stopReason||'').toLowerCase().match(/unsub|avmeld/));
@@ -87,6 +102,16 @@ const timeRunner = (() => {
       if (accepted) acc.accepted++;
       if (unsub) acc.unsubscribed++;
 
+      // tidsintervaller
+      if (openedAt && clickedAt && clickedAt >= openedAt) {
+        sumOpenToClick += (clickedAt - openedAt);
+        nOpenToClick++;
+      }
+      if (clickedAt && acceptedAt && acceptedAt >= clickedAt) {
+        sumClickToAccept += (acceptedAt - clickedAt);
+        nClickToAccept++;
+      }
+
       return acc;
     }, {
       total:0, sent:0, processing:0, nextMonth:0, stopped:0,
@@ -94,6 +119,8 @@ const timeRunner = (() => {
     });
 
     const notOpened = Math.max(0, s.sent - s.opened);
+    const avgOpenToClickMs = nOpenToClick ? Math.round(sumOpenToClick / nOpenToClick) : null;
+    const avgClickToAcceptMs = nClickToAccept ? Math.round(sumClickToAccept / nClickToAccept) : null;
 
     return {
       // absolute
@@ -111,13 +138,16 @@ const timeRunner = (() => {
       // rates
       sentPct: pct(s.sent, s.total),
       openRate: pct(s.opened, s.sent || 1),
-      ctr: pct(s.clicked, s.opened || s.sent || 1),        // klikk blant åpne hvis finnes, ellers blant sendte
-      acceptRateSent: pct(s.accepted, s.sent || 1),        // aksept vs sendt (tidl. progress)
+      ctr: pct(s.clicked, s.opened || s.sent || 1),
+      acceptRateSent: pct(s.accepted, s.sent || 1),
       acceptRateTotal: pct(s.accepted, s.total || 1),
       clickToAcceptRate: pct(s.accepted, s.clicked || 1),
       unsubRate: pct(s.unsubscribed, s.sent || 1),
-      // for progressbar (viser accepted vs sent)
-      progress: Math.min(100, pct(s.accepted, s.sent || 1))
+      // progress (sendt -> akseptert)
+      progress: Math.min(100, pct(s.accepted, s.sent || 1)),
+      // snitttider (ms)
+      avgOpenToClickMs,
+      avgClickToAcceptMs
     };
   }
 
@@ -150,6 +180,18 @@ const timeRunner = (() => {
         ${card('I prosess', `<span id="tro-proc">0</span>`, 'Planlagt / ikke stoppet')}
         ${card('Neste måned', `<span id="tro-next">0</span>`, 'Planlagte utsendelser')}
         ${card('Stoppet', `<span id="tro-stop">0</span> <span class="tro-badge err">Stoppet</span>`, 'Utsendelser er stoppet')}
+
+        <!-- nytt kort for snitttider -->
+        <div class="tro-card">
+          <div class="tro-title">Snitttider</div>
+          <div class="tro-value">
+            <div style="font-size:16px; line-height:1.4">
+              Åpnet → Klikk: <b id="tro-avg-open-click">—</b><br/>
+              Klikk → Aksept: <b id="tro-avg-click-accept">—</b>
+            </div>
+          </div>
+          <div class="tro-sub">Beregnet blant rader med fullstendige tidsstempler</div>
+        </div>
 
         <div class="tro-card wide">
           <div class="tro-title">Progresjon</div>
@@ -226,41 +268,69 @@ const timeRunner = (() => {
     prev = prev || {
       leads:0,total:0,sent:0,processing:0,nextMonth:0,stopped:0,
       opened:0, notOpened:0, clicked:0, accepted:0, unsubscribed:0,
-      progress:0, sentPct:0, openRate:0, ctr:0, acceptRateSent:0, acceptRateTotal:0, clickToAcceptRate:0, unsubRate:0
+      progress:0, sentPct:0, openRate:0, ctr:0, acceptRateSent:0, acceptRateTotal:0,
+      clickToAcceptRate:0, unsubRate:0
     };
 
     // tall
-    animateNumber(document.getElementById('tro-leads'),     prev.leads,        curr.leads,        dur);
-    animateNumber(document.getElementById('tro-total'),     prev.total,        curr.total,        dur);
-    animateNumber(document.getElementById('tro-sent-num'),  prev.sent,         curr.sent,         dur);
-    animateNumber(document.getElementById('tro-open'),      prev.opened,       curr.opened,       dur);
-    animateNumber(document.getElementById('tro-notopen'),   prev.notOpened,    curr.notOpened,    dur);
-    animateNumber(document.getElementById('tro-click'),     prev.clicked,      curr.clicked,      dur);
-    animateNumber(document.getElementById('tro-acc'),       prev.accepted,     curr.accepted,     dur);
-    animateNumber(document.getElementById('tro-unsub'),     prev.unsubscribed, curr.unsubscribed, dur);
-    animateNumber(document.getElementById('tro-proc'),      prev.processing,   curr.processing,   dur);
-    animateNumber(document.getElementById('tro-next'),      prev.nextMonth,    curr.nextMonth,    dur);
-    animateNumber(document.getElementById('tro-stop'),      prev.stopped,      curr.stopped,      dur);
+    animateNumber(document.getElementById('tro-leads'), prev.leads, curr.leads, dur);
+    animateNumber(document.getElementById('tro-total'), prev.total, curr.total, dur);
+    animateNumber(document.getElementById('tro-sent-num'), prev.sent, curr.sent, dur);
+    animateNumber(document.getElementById('tro-open'), prev.opened, curr.opened, dur);
+    animateNumber(document.getElementById('tro-notopen'), prev.notOpened, curr.notOpened, dur);
+    animateNumber(document.getElementById('tro-click'), prev.clicked, curr.clicked, dur);
+    animateNumber(document.getElementById('tro-acc'), prev.accepted, curr.accepted, dur);
+    animateNumber(document.getElementById('tro-unsub'), prev.unsubscribed, curr.unsubscribed, dur);
+    animateNumber(document.getElementById('tro-proc'), prev.processing, curr.processing, dur);
+    animateNumber(document.getElementById('tro-next'), prev.nextMonth, curr.nextMonth, dur);
+    animateNumber(document.getElementById('tro-stop'), prev.stopped, curr.stopped, dur);
 
     // badges / prosenter
-    animatePct(document.getElementById('tro-sent-pct'),     prev.sentPct,          curr.sentPct,          dur);
-    animatePct(document.getElementById('tro-open-rate'),    prev.openRate,         curr.openRate,         dur);
-    animatePct(document.getElementById('tro-ctr'),          prev.ctr,              curr.ctr,              dur);
-    animatePct(document.getElementById('tro-acc-rate'),     prev.acceptRateSent,   curr.acceptRateSent,   dur);
-    animatePct(document.getElementById('tro-unsub-rate'),   prev.unsubRate,        curr.unsubRate,        dur);
+    animatePct(document.getElementById('tro-sent-pct'), prev.sentPct, curr.sentPct, dur);
+    animatePct(document.getElementById('tro-open-rate'), prev.openRate, curr.openRate, dur);
+    animatePct(document.getElementById('tro-ctr'), prev.ctr, curr.ctr, dur);
+    animatePct(document.getElementById('tro-acc-rate'), prev.acceptRateSent, curr.acceptRateSent, dur);
+    animatePct(document.getElementById('tro-unsub-rate'), prev.unsubRate, curr.unsubRate, dur);
 
-    animatePct(  document.getElementById('tro-prog-text'),  prev.progress,         curr.progress, dur);
-    animateWidth(document.getElementById('tro-prog-bar'),   prev.progress,         curr.progress, dur);
+    // progresjonsfelt
+    animatePct(document.getElementById('tro-prog-text'), prev.progress, curr.progress, dur);
+    animateWidth(document.getElementById('tro-prog-bar'), prev.progress, curr.progress, dur);
 
     // “chips” i nedstrøms-trakt
-    animatePct(document.getElementById('tro-ctr-chip'),         prev.ctr,              curr.ctr, dur);
-    animatePct(document.getElementById('tro-c2a-chip'),         prev.clickToAcceptRate,curr.clickToAcceptRate, dur);
-    animatePct(document.getElementById('tro-acc-total-chip'),   prev.acceptRateTotal,  curr.acceptRateTotal,  dur);
+    animatePct(document.getElementById('tro-ctr-chip'), prev.ctr, curr.ctr, dur);
+    animatePct(document.getElementById('tro-c2a-chip'), prev.clickToAcceptRate, curr.clickToAcceptRate, dur);
+    animatePct(document.getElementById('tro-acc-total-chip'), prev.acceptRateTotal, curr.acceptRateTotal, dur);
   }
 
   // ---------- Utils ----------
+  function formatDuration(ms){
+    if (ms == null) return '—';
+    const sec = Math.round(ms/1000);
+    if (sec < 60) return `${sec}s`;
+    const min = Math.floor(sec/60), s = sec % 60;
+    if (min < 60) return s ? `${min}m ${s}s` : `${min}m`;
+    const h = Math.floor(min/60), m = min % 60;
+    return m ? `${h}t ${m}m` : `${h}t`;
+  }
+
   function ensureMounted(){ if(!STATE.mounted) throw new Error('timeRunner: call init() first'); }
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  // ---------- Skeletons ----------
+  function skeletonCard(){
+    return `<div class="tro-card">
+      <div class="tro-title skel skel-text"></div>
+      <div class="tro-value skel skel-text skel-lg"></div>
+      <div class="tro-sub skel skel-text"></div>
+    </div>`;
+  }
+  function skeletonBlock(){
+    return `<div class="skel skel-text skel-lg" style="width:15%"></div>
+            <div class="tro-progress" style="margin-top:14px">
+              <div class="skel skel-bar"></div>
+            </div>
+            <div class="tro-sub skel skel-text" style="width:30%"></div>`;
+  }
 
   // ---------- Styles ----------
   function injectStylesOnce(){
@@ -272,7 +342,7 @@ const timeRunner = (() => {
       .tro-header svg{width:18px;height:18px;opacity:.85}
       .tro-header-title{color:#e8f0ff;font-weight:700;letter-spacing:.3px}
       .tro-card{grid-column:span 3;background:linear-gradient(135deg,#0e1b2b 0%,#0b1623 100%);
-        border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:16px 18px; 
+        border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:16px 18px;
         box-shadow:0 10px 30px rgba(0,0,0,.25)}
       .tro-card.wide{grid-column:span 6}
       .tro-title{color:#9fb3c8;font-size:12px;letter-spacing:.6px;text-transform:uppercase}
@@ -305,6 +375,12 @@ const timeRunner = (() => {
 
   return { init, loading, update, error };
 })();
+
+// Eksempel bruk:
+// timeRunner.init('#timeRunnerOverview');
+// timeRunner.loading();
+// fetch(...).then(r => r.json()).then(data => timeRunner.update(data)).catch(() => timeRunner.error());
+
 
 // ---- Init og bruk av TimeRunner-modul --------------------------------------
 timeRunner.init('#timeRunnerOverview');   // én gang ved mount
