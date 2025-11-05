@@ -16,10 +16,6 @@ var emailbody3 = "";
 var emailbody4 = "";
 var emailbody5 = "";
 
-
-
-
-
 var mailSettings = [
     {
         stepp: 0,
@@ -47,16 +43,6 @@ var mailSettings = [
         body: emailbody5
     }
 ];
-
-
-  //recordId (Airtable id, f.eks. "recABC123…")
-const recordId = company.rawId || company.airtableId || 'unknownId';
-
-const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || 'https://din-app.vercel.app';
-const destTrial = 'https://www.innkjops-gruppen.no/prov-gratis';
-
-const openPixelSrc = `${PUBLIC_BASE_URL}/api/open.gif?rid=${encodeURIComponent(recordId)}`;
-const ctaHrefTrial = `${PUBLIC_BASE_URL}/api/clk?rid=${encodeURIComponent(recordId)}&to=${encodeURIComponent(destTrial)}`;
 
 
 function sendEmailToCompany(company, totalRows, uploadedRows) {
