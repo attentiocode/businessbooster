@@ -266,7 +266,7 @@ const timeRunner = (() => {
             <span class="tro-chip">Klikk → Aksept: <b id="tro-c2a-chip">${m.clickToAcceptRate}%</b></span>
             <span class="tro-chip">Åpnet → Aksept: <b id="tro-acc-total-chip">${m.acceptFromOpenRate}%</b></span>  <!-- CHANGED -->
           </div>
-          <div class="tro-sub">Hjelper å se hvor det lekker i trakten</div>
+          <div class="tro-sub"></div>
         </div>
 
         ${updatedRowHtml()}
