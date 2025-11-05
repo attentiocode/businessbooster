@@ -200,7 +200,7 @@ function multiReturnfromAirtable(payload) {
 
    
   //oppdater lokalteller på knspp
-   updateReadyCountElement(gReadybedrifter.length);
+   updateAllLocalConterts();
 
   localStorage.setItem("gReadybedrifter", JSON.stringify(gReadybedrifter));
 
