@@ -267,107 +267,104 @@ function renderEmailFlows(flows = []) {
       return `<div class="muted">Ingen epostforløp funnet for denne kunden.</div>`;
     }
   
-    // --- styles (én gang) ---
-    if (!document.getElementById('emailflows-style')) {
+    // ---- styles (én gang) ----
+    if (!document.getElementById('emailflows-compact-style')) {
       const style = document.createElement('style');
-      style.id = 'emailflows-style';
+      style.id = 'emailflows-compact-style';
       style.textContent = `
         .flows-grid{
-          display:grid; gap:10px; align-items:center;
-          grid-template-columns:auto 1fr auto auto auto auto;
+          display:grid; gap:8px; align-items:center;
+          grid-template-columns: 56px 1fr 56px 94px 168px 94px;
           padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06);
         }
         .flows-grid:first-of-type{ border-top:1px solid rgba(255,255,255,.06); }
         .hdr{ font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px; }
-        .tag{
-          display:inline-block; padding:4px 8px; border-radius:999px;
-          font-size:11px; font-weight:700; color:#fff;
+        /* TO LINJER: tittel + meta */
+        .flow-title{
+          font-weight:700; color:#e8f0ff; line-height:1.25;
+          white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
-        .chip{
-          display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px;
-          color:#e8f0ff; border:1px solid rgba(255,255,255,.1); margin-left:6px; opacity:.9
+        .flow-meta{
+          color:#87a0b9; font-size:12px; line-height:1.25;
+          white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+          margin-top:2px;
+        }
+        .tag{
+          display:inline-block; padding:3px 8px; border-radius:999px;
+          font-size:11px; font-weight:700; color:#fff; white-space:nowrap;
         }
         /* Samme farger som i renderProsess */
         .tag-akseptert{ background: rgba(0, 200, 83, 0.75); }
-        .tag-avmeldt  { background: rgba(255, 82, 82, 0.75); }
-        .tag-sendt    { background: rgba(139, 92, 246, 0.75); } /* lilla */
-        .tag-stoppet  { background: rgba(180, 180, 180, 0.65); }
-        .tag-utgått   { background: rgba(255, 165, 0, 0.75); }
-        .tag-åpnet    { background: rgba(59, 130, 246, 0.75); }
-        .tag-planlagt { background: rgba(128, 128, 128, 0.50); }
-        .tag-feilet   { background: rgba(255, 82, 82, 0.75); }
+        .tag-avmeldt  { background: rgba(255, 82, 82, 0.80); }
+        .tag-sendt    { background: rgba(139, 92, 246, 0.80); } /* lilla */
+        .tag-åpnet    { background: rgba(59, 130, 246, 0.85); } /* blå */
+        .tag-klikket  { background: rgba(99, 102, 241, 0.85); } /* egen for klikk */
+        .tag-stoppet  { background: rgba(180,180,180, 0.65); }
+        .tag-utgått   { background: rgba(255,165,  0, 0.85); }
+        .tag-feilet   { background: rgba(255, 82, 82, 0.90); }
+        .tag-planlagt { background: rgba(128,128,128, 0.50); }
         .muted{ color:#87a0b9; font-size:11px }
+        .nowwrap{ white-space:nowrap }
+        .strike{ text-decoration: line-through; opacity:.7 }
       `;
       document.head.appendChild(style);
     }
   
-    // --- helpers ---
-    const val = v => (v == null ? '' : String(v));
-    const truthy = (x) => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
-    const fmtDT = (iso) => {
+    // ---- helpers ----
+    const truthy = x => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
+    const safeJson = s => { try { return typeof s === 'string' ? JSON.parse(s) : (s || {}); } catch { return {}; } };
+    const shortDT = iso => {
       if (!iso) return '—';
-      const d = new Date(iso);
-      return isNaN(d) ? '—' : d.toLocaleString('no-NO');
+      const d = new Date(iso); if (isNaN(d)) return '—';
+      // kort norsk: 5.11.2025, 13:03
+      const dd = d.toLocaleDateString('no-NO');
+      const tt = d.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+      return `${dd}, ${tt}`;
     };
-    const safeJson = s => {
-      try { return typeof s === 'string' ? JSON.parse(s) : (s || {}); }
-      catch { return {}; }
-    };
+    const escapeHtml = s => String(s ?? '')
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+    const escapeAttr = s => String(s ?? '').replace(/"/g,'&quot;');
   
-    // --- normaliser rader ---
+    // ---- normaliser ----
     const norm = flows.map(row => {
       const id = row?.id || row?._rawJson?.id || null;
       const f  = row?.fields || row?._rawJson?.fields || row || {};
       const j  = safeJson(f.json);
-  
-      // payload
       const payload = safeJson(f.payload);
+  
       const subject = payload.subject || f.title || '—';
       const emailTo = payload.epost || payload.email || '';
   
-      // tidsstempler
       const scheduledAt = f.when || j.when || null;
-      const executed = (f.executed === true) || truthy(j.executed);
-      const executedAt = f.executedAt || j.executedAt || null;
+      const executedAt  = f.executedAt || j.executedAt || null;
+      const executed    = (f.executed === true) || truthy(j.executed);
   
       const opened   = truthy(f.opened)   || truthy(j.opened);
       const clicked  = truthy(f.clicked)  || truthy(j.clicked);
       const accepted = truthy(f.accepted) || truthy(j.accepted);
-  
       const openedAt   = f.openedAt   || j.openedAt   || null;
       const clickedAt  = f.clickedAt  || j.clickedAt  || null;
       const acceptedAt = f.acceptedAt || j.acceptedAt || null;
   
-      const stopp = truthy(f.stopp) || truthy(j.stopp);
-      const no_interest = truthy(f.no_interest) || truthy(j.no_interest);
-      const unsubscribed = truthy(f.unsubscribed) || truthy(j.unsubscribed);
-      const avmeldt = no_interest || unsubscribed;
+      const stopp       = truthy(f.stopp) || truthy(j.stopp);
+      const avmeldt     = truthy(f.no_interest) || truthy(j.no_interest) || truthy(f.unsubscribed) || truthy(j.unsubscribed);
+      const failed      = String(f.status||'').toLowerCase() === 'failed' || truthy(f.failed);
   
+      // Prioritet: Akseptert → Avmeldt → Klikket → Åpnet → Sendt → Stoppet → Utgått → Planlagt → Feilet
       let status = 'Planlagt';
-      if (truthy(f.failed) || String(f.status||'').toLowerCase()==='failed') status = 'Feilet';
-      if (stopp) status = 'Stoppet';
+      if (failed)  status = 'Feilet';
+      if (stopp)   status = 'Stoppet';
       if (executed) status = 'Sendt';
-      if (opened) status = 'Åpnet';
+      if (opened)  status = 'Åpnet';
       if (clicked) status = 'Klikket';
       if (avmeldt) status = 'Avmeldt';
-      if (accepted) status = 'Akseptert'; // høyest
+      if (accepted)status = 'Akseptert';
   
       const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr)))
-        ? Number(f.internnr)
-        : (f.step ?? null);
+        ? Number(f.internnr) : (f.step ?? null);
   
-      return {
-        id,
-        subject,
-        to: emailTo,
-        step,
-        status,
-        scheduledAt,
-        sentAt: executedAt,
-        openedAt, clickedAt, acceptedAt,
-        stopp,
-        rawStatus: String(f.status||'').toLowerCase()
-      };
+      return { id, subject, to: emailTo, step, status, scheduledAt, sentAt: executedAt, openedAt, clickedAt, acceptedAt, stopp };
     });
   
     // sortér pr steg → tid
@@ -385,59 +382,52 @@ function renderEmailFlows(flows = []) {
       <div class="flows-grid" style="margin-bottom:6px;">
         <div class="hdr">#</div>
         <div class="hdr">Emne</div>
-        <div class="hdr">Steg</div>
-        <div class="hdr">Status</div>
-        <div class="hdr">Planlagt / Sendt</div>
-        <div class="hdr">Deaktiver</div>
+        <div class="hdr nowwrap">Steg</div>
+        <div class="hdr nowwrap">Status</div>
+        <div class="hdr nowwrap">Planlagt / Sendt</div>
+        <div class="hdr nowwrap">Deaktiver</div>
       </div>
     `;
   
-    // rader
+    // rader (maks 2 linjer i emnekolonnen)
     const rows = norm.map((f, idx) => {
-      // css-klasse for status
-      const key = f.status.toLowerCase()
-        .replace(/\s+/g,'_')
-        .replace('å','å'); // bevar norsk key
-  
       const tagClass =
-        key.includes('akseptert') ? 'tag-akseptert' :
-        key.includes('avmeldt')   ? 'tag-avmeldt'   :
-        key.includes('klikket')   ? 'tag-åpnet'     : // egen farge? bruk blå som for åpnet
-        key.includes('åpnet')     ? 'tag-åpnet'     :
-        key.includes('sendt')     ? 'tag-sendt'     :
-        key.includes('stoppet')   ? 'tag-stoppet'   :
-        key.includes('utgått')    ? 'tag-utgått'    :
-        key.includes('feilet')    ? 'tag-feilet'    :
-                                    'tag-planlagt';
+        f.status === 'Akseptert' ? 'tag-akseptert' :
+        f.status === 'Avmeldt'   ? 'tag-avmeldt'   :
+        f.status === 'Klikket'   ? 'tag-klikket'   :
+        f.status === 'Åpnet'     ? 'tag-åpnet'     :
+        f.status === 'Sendt'     ? 'tag-sendt'     :
+        f.status === 'Stoppet'   ? 'tag-stoppet'   :
+        f.status === 'Utgått'    ? 'tag-utgått'    :
+        f.status === 'Feilet'    ? 'tag-feilet'    : 'tag-planlagt';
   
-      const when = f.sentAt ? fmtDT(f.sentAt) : fmtDT(f.scheduledAt);
+      const when = f.sentAt ? shortDT(f.sentAt) : shortDT(f.scheduledAt);
   
-      const disableToggle = ['sendt','åpnet','klikket','akseptert','feilet']
-        .includes(f.status.toLowerCase());
+      // KOMPakt meta-linje: epost · (Åpnet/Klikket/Akseptert kort)
+      const events = [
+        f.openedAt   ? `Åpnet: ${shortDT(f.openedAt)}` : '',
+        f.clickedAt  ? `Klikket: ${shortDT(f.clickedAt)}` : '',
+        f.acceptedAt ? `Akseptert: ${shortDT(f.acceptedAt)}` : ''
+      ].filter(Boolean).join(' · ');
+      const metaLine = [f.to, events].filter(Boolean).join(' · ');
+  
+      const disableToggle = ['Sendt','Åpnet','Klikket','Akseptert','Feilet'].includes(f.status);
       const checked  = f.stopp ? 'checked' : '';
       const disabled = disableToggle ? 'disabled' : '';
-      const strikeStyle = disableToggle ? 'text-decoration: line-through; opacity:0.7;' : '';
-  
-      // chips for hendelser
-      const chips = [
-        f.openedAt   ? `<span class="chip">Åpnet: ${escapeHtml(fmtDT(f.openedAt))}</span>` : '',
-        f.clickedAt  ? `<span class="chip">Klikket: ${escapeHtml(fmtDT(f.clickedAt))}</span>` : '',
-        f.acceptedAt ? `<span class="chip">Akseptert: ${escapeHtml(fmtDT(f.acceptedAt))}</span>` : '',
-      ].join('');
+      const strike   = disableToggle ? 'strike' : '';
   
       return `
         <div class="flows-grid">
           <div>${idx + 1}</div>
           <div>
-            <strong>${escapeHtml(f.subject)}</strong>
-            <div class="muted">${escapeHtml(f.to)}</div>
-            ${chips}
+            <div class="flow-title">${escapeHtml(f.subject)}</div>
+            <div class="flow-meta">${escapeHtml(metaLine)}</div>
           </div>
-          <div>${Number.isFinite(+f.step) ? f.step : '—'}</div>
+          <div class="nowrap">${Number.isFinite(+f.step) ? f.step : '—'}</div>
           <div><span class="tag ${tagClass}">${escapeHtml(f.status)}</span></div>
-          <div>${when}</div>
+          <div class="nowrap">${when}</div>
           <div>
-            <label class="muted" style="display:inline-flex;align-items:center;gap:6px;${strikeStyle}">
+            <label class="muted nowwrap ${strike}" style="display:inline-flex;align-items:center;gap:6px;">
               <input type="checkbox"
                      class="flow-stop-toggle"
                      data-id="${escapeAttr(f.id)}"
@@ -453,20 +443,8 @@ function renderEmailFlows(flows = []) {
     }).join('');
   
     return hdr + rows;
-  
-    // --- local helpers ---
-    function escapeHtml(s) {
-      return String(s ?? '')
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-    function escapeAttr(s) {
-      return String(s ?? '').replace(/"/g, '&quot;');
-    }
   }
+  
   
   
   
