@@ -129,7 +129,7 @@ function getEmailBody(company, type = 'trial') {
   const PUBLIC_BASE_URL = 'https://airtable-time-runner.vercel.app'; // API-base
   const rawCtaTrial     = 'https://ikg-businessbooster.webflow.io/response';
   const rawCtaContact   = 'mailto:post@innkjops-gruppen.no';
-  const rawUnsubscribe  = 'https://www.innkjops-gruppen.no/unsubscribe';
+  const rawUnsubscribe  = 'https://ikg-businessbooster.webflow.io/unsubscribe';
 
   // CTA via clk (tracker click) -> dest m/ rid i query
   const ctaHrefTrial =
