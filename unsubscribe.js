@@ -106,7 +106,7 @@
     try {
       const data = await unsubscribe({ rid, reason });
       btn.textContent = 'Avmelding registrert ✔';
-      safeFeedback(`Vi har stoppet ${data.stoppedCount ?? 0} planlagte eposter for denne kunden.`, 'success');
+      safeFeedback(`Vi har stoppet planlagte eposter.`, 'success');
     } catch (e) {
       console.error(e);
       btn.textContent = original;
