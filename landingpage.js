@@ -12,7 +12,6 @@
     return;
   }
 
-  // Hent firmainfo trygt fra eget API
   async function loadCompany() {
     try {
       const api = `https://airtable-time-runner.vercel.app/api/company-info?rid=${encodeURIComponent(rid)}`;
@@ -24,6 +23,7 @@
       const org  = data.company?.orgnr ? ` (org.nr ${data.company.orgnr})` : '';
 
       if (infoEl) {
+        infoEl.style.display = 'block';
         infoEl.innerHTML = `
           <h2 style="font-size:20px;margin-bottom:8px;">Velkommen, ${name}!</h2>
           <p style="color:#94a3b8;">${org ? org : ''}</p>
