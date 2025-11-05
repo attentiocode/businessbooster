@@ -264,75 +264,45 @@ async function fetchEmailFlowsByAirtable(airtableId) {
 
 function renderEmailFlows(flows = []) {
   if (!Array.isArray(flows) || !flows.length) {
-    return `<div class="ef-scope"><div class="ef-empty">Ingen epostforløp funnet for denne kunden.</div></div>`;
+    return `<div class="ef2-wrap"><div class="ef2-empty">Ingen epostforløp funnet for denne kunden.</div></div>`;
   }
 
-  // --- 1) Styles (scopet til .ef-scope for å unngå lekkasje) ---
-  if (!document.getElementById('ef-style')) {
-    const style = document.createElement('style');
-    style.id = 'ef-style';
-    style.textContent = `
-      .ef-scope { all: initial; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-      .ef-scope * { all: unset; display: revert; box-sizing: border-box; }
-
-      /* GRID: STEG (50) | EMNE (flex) | STATUS (120) | PLAN/ SENDT (170) | STOPP (110) */
-      .ef-grid{
-        display:grid; align-items:center; gap:10px;
-        grid-template-columns: 50px 1fr 120px 170px 110px;
-        padding:12px 0; border-bottom:1px solid rgba(255,255,255,.08);
-      }
-      .ef-grid.ef-header{ padding:6px 0 10px; margin-bottom:2px; border-bottom:1px solid rgba(255,255,255,.12); }
-      .ef-col-step{ text-align:center; }
-
-      .ef-hdr{
-        font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px;
-      }
-      .ef-nowrap{ white-space:nowrap }
-      .ef-muted{ color:#9fb3c8; font-size:12px }
-      .ef-empty{ color:#9fb3c8; font-size:13px; padding:8px 0; }
-
-      /* Emnekolonnen: 2-linjer (tittel + meta) */
-      .ef-title{
-        font-weight:700; color:#e8f0ff; line-height:1.25;
-        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      }
-      .ef-meta{
-        color:#9fb3c8; font-size:12px; line-height:1.25; margin-top:2px;
-        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      }
-
-      /* Status-badges (samme semantikk som kundelista) */
-      .ef-badge{ display:inline-block; padding:4px 10px; border-radius:999px;
-                 font-size:11px; font-weight:700; color:#fff; white-space:nowrap; }
-      .ef-ok   { background: rgba(  0,200, 83,.85); } /* Akseptert */
-      .ef-warn { background: rgba(255, 82, 82,.90); } /* Avmeldt/Feilet */
-      .ef-info { background: rgba( 59,130,246,.85);}  /* Åpnet/Klikket/Sendt */
-      .ef-gray { background: rgba(128,128,128,.55);}  /* Planlagt/Stoppet */
-
-      /* Stopp (checkbox + label) */
-      .ef-stop{ display:inline-flex; align-items:center; gap:8px; color:#9fb3c8; font-size:12px; }
-      .ef-stop input[type="checkbox"]{ width:16px; height:16px; cursor:pointer; }
-      .ef-stop.ef-disabled{ opacity:.7; text-decoration:line-through; }
+  // én liten stilblokk (kun farger/typografi). Layout tvinges inline.
+  if (!document.getElementById('ef2-style')) {
+    const s = document.createElement('style');
+    s.id = 'ef2-style';
+    s.textContent = `
+      .ef2-wrap{ font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+      .ef2-hdr{ font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px; }
+      .ef2-step{ text-align:center; }
+      .ef2-title{ font-weight:700; color:#e8f0ff; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .ef2-meta{ color:#9fb3c8; font-size:12px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+      .ef2-badge{ display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; color:#fff; white-space:nowrap; }
+      .ef2-ok{   background:rgba(0,200,83,.85); }
+      .ef2-warn{ background:rgba(255,82,82,.9); }
+      .ef2-info{ background:rgba(59,130,246,.85); }
+      .ef2-gray{ background:rgba(128,128,128,.55); }
+      .ef2-stop{ display:inline-flex; align-items:center; gap:8px; color:#9fb3c8; font-size:12px; }
+      .ef2-stop input{ width:16px; height:16px; cursor:pointer; }
+      .ef2-stop.ef2-disabled{ opacity:.7; text-decoration:line-through; }
+      .ef2-empty{ color:#9fb3c8; font-size:13px; padding:8px 0; }
+      .ef2-row{ border-bottom:1px solid rgba(255,255,255,.08); padding:12px 0; }
+      .ef2-header{ border-bottom:1px solid rgba(255,255,255,.12); padding:6px 0 10px; margin-bottom:2px; }
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(s);
   }
 
-  // --- 2) Helpers ---
   const truthy = x => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
   const safeJson = s => { try { return typeof s === 'string' ? JSON.parse(s) : (s || {}); } catch { return {}; } };
   const shortDT = iso => {
     if (!iso) return '—';
     const d = new Date(iso); if (isNaN(d)) return '—';
-    const dd = d.toLocaleDateString('no-NO');
-    const tt = d.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-    return `${dd}, ${tt}`;
+    return d.toLocaleDateString('no-NO') + ', ' + d.toLocaleTimeString('no-NO', {hour:'2-digit',minute:'2-digit'});
   };
-  const esc = s => String(s ?? '')
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  const esc = s => String(s ?? '').replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
   const escAttr = s => String(s ?? '').replace(/"/g,'&quot;');
 
-  // --- 3) Normaliser ---
+  // normaliser
   const norm = flows.map(row => {
     const id = row?.id || row?._rawJson?.id || null;
     const f  = row?.fields || row?._rawJson?.fields || row || {};
@@ -358,88 +328,68 @@ function renderEmailFlows(flows = []) {
     const clickedAt  = f.clickedAt  || j.clickedAt  || null;
     const acceptedAt = f.acceptedAt || j.acceptedAt || null;
 
-    // status + badge-klasse
-    let status = 'Planlagt', cls = 'ef-gray';
-    if (failed)   { status='Feilet';   cls='ef-warn'; }
-    if (stopp)    { status='Stoppet';  cls='ef-gray'; }
-    if (executed) { status='Sendt';    cls='ef-info'; }
-    if (opened)   { status='Åpnet';    cls='ef-info'; }
-    if (clicked)  { status='Klikket';  cls='ef-info'; }
-    if (unsub)    { status='Avmeldt';  cls='ef-warn'; }
-    if (accepted) { status='Akseptert';cls='ef-ok';   }
+    let status='Planlagt', cls='ef2-gray';
+    if (failed)   { status='Feilet';   cls='ef2-warn'; }
+    if (stopp)    { status='Stoppet';  cls='ef2-gray'; }
+    if (executed) { status='Sendt';    cls='ef2-info'; }
+    if (opened)   { status='Åpnet';    cls='ef2-info'; }
+    if (clicked)  { status='Klikket';  cls='ef2-info'; }
+    if (unsub)    { status='Avmeldt';  cls='ef2-warn'; }
+    if (accepted) { status='Akseptert';cls='ef2-ok';   }
 
-    const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr)))
-      ? Number(f.internnr) : (f.step ?? '—');
+    const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr))) ? Number(f.internnr) : '—';
+    const when = shortDT(sentAt || scheduledAt);
+    const events = [
+      openedAt   ? `Åpnet: ${shortDT(openedAt)}` : '',
+      clickedAt  ? `Klikket: ${shortDT(clickedAt)}` : '',
+      acceptedAt ? `Akseptert: ${shortDT(acceptedAt)}` : ''
+    ].filter(Boolean).join(' · ');
+    const meta = [to, events].filter(Boolean).join(' · ');
 
-    return {
-      id, step, subject, to,
-      status, cls,
-      when: sentAt || scheduledAt,
-      openedAt, clickedAt, acceptedAt,
-      stopp
-    };
+    return { id, step, subject, meta, status, cls, when, stopp,
+             locked: ['Sendt','Åpnet','Klikket','Akseptert','Feilet'].includes(status) };
   });
 
-  // sortér: steg → tid
-  norm.sort((a,b) => {
-    const sa = (isFinite(a.step) ? a.step : 1e9);
-    const sb = (isFinite(b.step) ? b.step : 1e9);
-    if (sa !== sb) return sa - sb;
-    return new Date(a.when || 0) - new Date(b.when || 0);
-  });
+  norm.sort((a,b) => (isFinite(a.step)?a.step:1e9) - (isFinite(b.step)?b.step:1e9));
 
-  // --- 4) Header i ønsket rekkefølge ---
-  const hdr = `
-    <div class="ef-grid ef-header">
-      <div class="ef-hdr ef-col-step">Steg</div>
-      <div class="ef-hdr">Emne</div>
-      <div class="ef-hdr">Status</div>
-      <div class="ef-hdr ef-nowrap">Planlagt / Sendt</div>
-      <div class="ef-hdr ef-nowrap">Deaktiver</div>
+  // felles inline grid (tvinger 5 kolonner, uansett annen CSS)
+  const inlineGrid = `display:grid;align-items:center;gap:10px;grid-template-columns:50px 1fr 120px 170px 110px;`;
+
+  const header = `
+    <div class="ef2-header" style="${inlineGrid}">
+      <div class="ef2-hdr ef2-step">Steg</div>
+      <div class="ef2-hdr">Emne</div>
+      <div class="ef2-hdr">Status</div>
+      <div class="ef2-hdr">Planlagt / Sendt</div>
+      <div class="ef2-hdr">Deaktiver</div>
     </div>
   `;
 
-  // --- 5) Rader (2 linjer i emnekolonnen) ---
-  const rows = norm.map(f => {
-    const when = shortDT(f.when);
-    const events = [
-      f.openedAt   ? `Åpnet: ${shortDT(f.openedAt)}` : '',
-      f.clickedAt  ? `Klikket: ${shortDT(f.clickedAt)}` : '',
-      f.acceptedAt ? `Akseptert: ${shortDT(f.acceptedAt)}` : ''
-    ].filter(Boolean).join(' · ');
-    const meta = [f.to, events].filter(Boolean).join(' · ');
-
-    const disableToggle = ['Sendt','Åpnet','Klikket','Akseptert','Feilet'].includes(f.status);
-    const checked  = f.stopp ? 'checked' : '';
-    const disabled = disableToggle ? 'disabled' : '';
-    const stopClass = `ef-stop${disableToggle ? ' ef-disabled' : ''}`;
-
-    return `
-      <div class="ef-grid">
-        <div class="ef-col-step">${isFinite(f.step) ? f.step : '—'}</div>
-        <div>
-          <div class="ef-title">${esc(f.subject)}</div>
-          <div class="ef-meta">${esc(meta)}</div>
-        </div>
-        <div><span class="ef-badge ${f.cls}">${esc(f.status)}</span></div>
-        <div class="ef-nowrap">${when}</div>
-        <div>
-          <label class="${stopClass}">
-            <input type="checkbox"
-                   class="flow-stop-toggle"
-                   data-id="${escAttr(f.id)}"
-                   data-step="${escAttr(f.step)}"
-                   ${checked} ${disabled}/>
-            Stopp
-          </label>
-        </div>
+  const rows = norm.map(f => `
+    <div class="ef2-row" style="${inlineGrid}">
+      <div class="ef2-step">${isFinite(f.step) ? f.step : '—'}</div>
+      <div>
+        <div class="ef2-title">${esc(f.subject)}</div>
+        <div class="ef2-meta">${esc(f.meta)}</div>
       </div>
-    `;
-  }).join('');
+      <div><span class="ef2-badge ${f.cls}">${esc(f.status)}</span></div>
+      <div>${esc(f.when)}</div>
+      <div>
+        <label class="ef2-stop ${f.locked ? 'ef2-disabled' : ''}">
+          <input type="checkbox"
+                 class="flow-stop-toggle"
+                 data-id="${escAttr(f.id)}"
+                 data-step="${escAttr(f.step)}"
+                 ${f.stopp ? 'checked' : ''} ${f.locked ? 'disabled' : ''}/>
+          Stopp
+        </label>
+      </div>
+    </div>
+  `).join('');
 
-  // pakk alt i en egen scope-container slik at CSS kun treffer her
-  return `<div class="ef-scope">${hdr}${rows}</div>`;
+  return `<div class="ef2-wrap">${header}${rows}</div>`;
 }
+
 
 
 
