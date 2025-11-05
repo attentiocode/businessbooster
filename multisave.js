@@ -431,3 +431,57 @@ async function triggerTimeRun() {
     console.log("Result trigger:", data);
 }
   
+
+// Global controller for auto-refresh av TimeRunner (unik namespace)
+const __attentioTimeRunnerAuto__ = (() => {
+  let __timerRef = null;
+  const __intervalMs = 5 * 60 * 1000; // 5 minutter
+
+  function start() {
+    if (__timerRef) {
+      console.log('⏱️ Auto-refresh for TimeRunner kjører allerede.');
+      return;
+    }
+    console.log('▶️ Starter auto-refresh for TimeRunner (hvert 5. minutt)');
+    
+    // Kjør første gang umiddelbart
+    if (typeof getTimeRunnerObjects === 'function') {
+      try {
+        getTimeRunnerObjects();
+      } catch (err) {
+        console.warn('Feil ved første kall til getTimeRunnerObjects()', err);
+      }
+    }
+
+    // Start intervall
+    __timerRef = setInterval(() => {
+      try {
+        console.log('🔁 Kjører TimeRunner auto-refresh...');
+        getTimeRunnerObjects();
+      } catch (err) {
+        console.error('Feil i auto-refresh:', err);
+      }
+    }, __intervalMs);
+  }
+
+  function stop() {
+    if (__timerRef) {
+      clearInterval(__timerRef);
+      __timerRef = null;
+      console.log('⏹️ Auto-refresh for TimeRunner stoppet.');
+    } else {
+      console.log('⚪ Ingen aktiv TimeRunner auto-refresh funnet.');
+    }
+  }
+
+  function isRunning() {
+    return !!__timerRef;
+  }
+
+  return { start, stop, isRunning };
+})();
+
+
+window.addEventListener('DOMContentLoaded', () => {
+  __attentioTimeRunnerAuto__.start();
+});
