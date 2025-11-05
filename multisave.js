@@ -198,7 +198,8 @@ function multiReturnfromAirtable(payload) {
       );
   });
 
-   //oppdater lokalteller på knspp
+   
+  //oppdater lokalteller på knspp
    updateReadyCountElement(gReadybedrifter.length);
 
   localStorage.setItem("gReadybedrifter", JSON.stringify(gReadybedrifter));

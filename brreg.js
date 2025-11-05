@@ -633,35 +633,7 @@ function startBrregList(data) {
   updateBulkUI();
 }
 
-/*
-document.getElementById("brregmastercheckbox").addEventListener("change", function() {
-    const container = document.getElementById("rowlist");
-    const checkboxes = container.querySelectorAll(".selectcheckbox")
-    checkboxes.forEach(cb => {
-      // kun de som ikke er disabled
-      if (!cb.disabled){
-      cb.checked = this.checked;
-      }
-    });
 
-    //hvis det er mer en 1 checkbox som er valgt så gjør maassbehandling synlig
-    const bulkBar   = document.getElementById('select-bulk-actions-brreg');
-    //linjen under bør få tak i alle selectedchexbox også filtrere vekk disabled chackboxer
-    const checkboxesChecked = container.querySelectorAll(".selectcheckbox:checked:not([disabled])");
-
-    if (checkboxesChecked.length > 0){
-      bulkBar.style.display = "flex";
-      const bulkCount = document.getElementById('select-bulk-count-brreg');
-      //finne ut hvor mange chackboxer som er checked i listen med id rowlistSelect
-      const checkedCount = checkboxes.length;
-      bulkCount.textContent = `${checkedCount} valgt`;
-
-    }else{
-      bulkBar.style.display = "none";
-    }
-    
-});
-*/
 let sentToSelectButton = document.getElementById("sentToSelect");
 sentToSelectButton.addEventListener("click", function() {
   dataFromBrregToSelect();

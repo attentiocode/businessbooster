@@ -438,8 +438,11 @@ async function dataFromBrregToSelect() {
   // oppdatere listevisning (din funksjon)
   if (typeof startBrregList === 'function') startBrregList(gBrregbedrifter);
   persistAll();
-  console.log('Valgt groupId:', groupId);
-  console.log('gSelectbedrifter:', gSelectbedrifter);
+
+
+
+  //oppdater gSelectbedrifter antall
+  updateSelectCountElement(gSelectbedrifter.length);
 }
 
 // (Valgfritt) last fra localStorage hvis du bruker persist
@@ -657,7 +660,6 @@ function leadsResponse(data){
   //ingen handling nødvendig her foreløpig
 
   if (!data || !data.fields || !data.fields.leadsjson || !Array.isArray(data.fields.leadsjson)) {
-    console.error("Ugyldig dataformat: Forventet et objekt med 'fields.leadsjson' som en array.");
     data.fields.leadsjson = [];
   } 
 
@@ -681,7 +683,6 @@ function getTimeRunnerObjects(){
 function timeRunnerObjects(data){
 
   if (!data || !data.fields || !data.fields.runningjson || !Array.isArray(data.fields.runningjson)) {
-    console.error("Ugyldig dataformat: Forventet et objekt med 'fields.runningjson' som en array.");
     data.fields.runningjson = [];
   } 
 
@@ -748,8 +749,11 @@ function mergeTimerunnerObject(gTimerunnerObjects) {
   });
 }
 
-updateCounter("label-selected-customers", gSelectbedrifter.length, 1000);
-updateReadyCountElement(gReadybedrifter.length);
+
+function updateAllLocalConterts(){
+  updateReadyCountElement(gReadybedrifter.length);
+  updateSelectCountElement(gSelectbedrifter.length);
+}
 
 function updateReadyCountElement(count){
   //readyCountElement
@@ -764,3 +768,22 @@ function updateReadyCountElement(count){
   }
 
 }
+
+
+function updateSelectCountElement(count){
+  //readyCountElement
+  const readyCountElement = document.getElementById("selectCountElement");
+  readyCountElement.textContent = count.toLocaleString("no-NO");
+
+  //hvis det er mer en 0 så vises forelderelementet
+  if(count>0){
+    readyCountElement.parentElement.style.display = "inline-block";
+  }else{
+    readyCountElement.parentElement.style.display = "none";
+  }
+
+}
+
+
+updateCounter("label-selected-customers", gSelectbedrifter.length, 1000);
+updateAllLocalConterts();

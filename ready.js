@@ -366,7 +366,7 @@ function renderReady(data) {
 
         //start massesendeprosess og lagring i db
         startMultisaveProcess(orgnrs);
-        renderReady(gReadybedrifter);
+
         }
 
     }

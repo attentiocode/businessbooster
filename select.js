@@ -463,13 +463,15 @@ function renderSelect(data) {
       // Re-render (nå vil de få class "ready" + disabled checkbox)
       renderSelect(gSelectbedrifter || data);
     };
+
+      //oppdater lokalteller
+      updateAllLocalConterts();
   }
 
   // Ev. annen teller
   updateCounter("label-selected-customers", (gSelectbedrifter || []).length, 1000);
 
-  //oppdater lokalteller på knspp
-  updateReadyCountElement(gReadybedrifter.length);
+
 }
 
 function initContactInfoSelectFilter() {
