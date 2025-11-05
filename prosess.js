@@ -274,10 +274,12 @@ function renderEmailFlows(flows = []) {
       style.textContent = `
         .flows-grid{
           display:grid; gap:8px; align-items:center;
-          grid-template-columns: 56px 1fr 56px 94px 168px 94px;
+          /* Matcher hovedoverskrift: # | Planlagt/Sent | Emne | Steg | Status | Deaktiver */
+          grid-template-columns: 56px 168px 1fr 64px 120px 100px;
           padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06);
         }
-        .flows-grid:first-of-type{ border-top:1px solid rgba(255,255,255,.06); }
+        .flows-grid.header{ margin-bottom:6px; }
+        .flows-grid.header > div{ padding-top:2px; padding-bottom:2px; }
         .hdr{ font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px; }
         /* TO LINJER: tittel + meta */
         .flow-title{
@@ -289,23 +291,31 @@ function renderEmailFlows(flows = []) {
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
           margin-top:2px;
         }
+        .nowrap{ white-space:nowrap }
+        .muted{ color:#87a0b9; font-size:11px }
+        .strike{ text-decoration: line-through; opacity:.7 }
         .tag{
           display:inline-block; padding:3px 8px; border-radius:999px;
           font-size:11px; font-weight:700; color:#fff; white-space:nowrap;
         }
-        /* Samme farger som i renderProsess */
-        .tag-akseptert{ background: rgba(0, 200, 83, 0.75); }
-        .tag-avmeldt  { background: rgba(255, 82, 82, 0.80); }
-        .tag-sendt    { background: rgba(139, 92, 246, 0.80); } /* lilla */
-        .tag-åpnet    { background: rgba(59, 130, 246, 0.85); } /* blå */
-        .tag-klikket  { background: rgba(99, 102, 241, 0.85); } /* egen for klikk */
-        .tag-stoppet  { background: rgba(180,180,180, 0.65); }
-        .tag-utgått   { background: rgba(255,165,  0, 0.85); }
-        .tag-feilet   { background: rgba(255, 82, 82, 0.90); }
-        .tag-planlagt { background: rgba(128,128,128, 0.50); }
-        .muted{ color:#87a0b9; font-size:11px }
-        .nowwrap{ white-space:nowrap }
-        .strike{ text-decoration: line-through; opacity:.7 }
+        /* Farger i tråd med renderProsess */
+        .tag-akseptert{ background: rgba(  0,200, 83,.75); }
+        .tag-avmeldt  { background: rgba(255, 82, 82,.85); }
+        .tag-klikket  { background: rgba( 99,102,241,.85); }
+        .tag-åpnet    { background: rgba( 59,130,246,.85); }
+        .tag-sendt    { background: rgba(139, 92,246,.80); }
+        .tag-stoppet  { background: rgba(180,180,180,.65); }
+        .tag-utgått   { background: rgba(255,165,  0,.85); }
+        .tag-feilet   { background: rgba(255, 82, 82,.90); }
+        .tag-planlagt { background: rgba(128,128,128,.50); }
+  
+        /* Smalere skjermer: gi mer plass til emne */
+        @media (max-width: 1100px){
+          .flows-grid{ grid-template-columns: 44px 160px 1fr 56px 112px 90px; }
+        }
+        @media (max-width: 900px){
+          .flows-grid{ grid-template-columns: 40px 150px 1fr 52px 108px 86px; }
+        }
       `;
       document.head.appendChild(style);
     }
@@ -316,7 +326,6 @@ function renderEmailFlows(flows = []) {
     const shortDT = iso => {
       if (!iso) return '—';
       const d = new Date(iso); if (isNaN(d)) return '—';
-      // kort norsk: 5.11.2025, 13:03
       const dd = d.toLocaleDateString('no-NO');
       const tt = d.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
       return `${dd}, ${tt}`;
@@ -337,34 +346,36 @@ function renderEmailFlows(flows = []) {
       const emailTo = payload.epost || payload.email || '';
   
       const scheduledAt = f.when || j.when || null;
-      const executedAt  = f.executedAt || j.executedAt || null;
+      const sentAt      = f.executedAt || j.executedAt || null;
       const executed    = (f.executed === true) || truthy(j.executed);
   
-      const opened   = truthy(f.opened)   || truthy(j.opened);
-      const clicked  = truthy(f.clicked)  || truthy(j.clicked);
-      const accepted = truthy(f.accepted) || truthy(j.accepted);
-      const openedAt   = f.openedAt   || j.openedAt   || null;
-      const clickedAt  = f.clickedAt  || j.clickedAt  || null;
-      const acceptedAt = f.acceptedAt || j.acceptedAt || null;
+      const opened      = truthy(f.opened)   || truthy(j.opened);
+      const clicked     = truthy(f.clicked)  || truthy(j.clicked);
+      const accepted    = truthy(f.accepted) || truthy(j.accepted);
+  
+      const openedAt    = f.openedAt   || j.openedAt   || null;
+      const clickedAt   = f.clickedAt  || j.clickedAt  || null;
+      const acceptedAt  = f.acceptedAt || j.acceptedAt || null;
   
       const stopp       = truthy(f.stopp) || truthy(j.stopp);
-      const avmeldt     = truthy(f.no_interest) || truthy(j.no_interest) || truthy(f.unsubscribed) || truthy(j.unsubscribed);
+      const avmeldt     = truthy(f.no_interest) || truthy(j.no_interest) ||
+                          truthy(f.unsubscribed) || truthy(j.unsubscribed);
       const failed      = String(f.status||'').toLowerCase() === 'failed' || truthy(f.failed);
   
-      // Prioritet: Akseptert → Avmeldt → Klikket → Åpnet → Sendt → Stoppet → Utgått → Planlagt → Feilet
+      // Prioritet: Akseptert → Avmeldt → Klikket → Åpnet → Sendt → Stoppet → Utgått → Feilet → Planlagt
       let status = 'Planlagt';
-      if (failed)  status = 'Feilet';
-      if (stopp)   status = 'Stoppet';
+      if (failed)   status = 'Feilet';
+      if (stopp)    status = 'Stoppet';
       if (executed) status = 'Sendt';
-      if (opened)  status = 'Åpnet';
-      if (clicked) status = 'Klikket';
-      if (avmeldt) status = 'Avmeldt';
-      if (accepted)status = 'Akseptert';
+      if (opened)   status = 'Åpnet';
+      if (clicked)  status = 'Klikket';
+      if (avmeldt)  status = 'Avmeldt';
+      if (accepted) status = 'Akseptert';
   
       const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr)))
         ? Number(f.internnr) : (f.step ?? null);
   
-      return { id, subject, to: emailTo, step, status, scheduledAt, sentAt: executedAt, openedAt, clickedAt, acceptedAt, stopp };
+      return { id, subject, to: emailTo, step, status, scheduledAt, sentAt, openedAt, clickedAt, acceptedAt, stopp };
     });
   
     // sortér pr steg → tid
@@ -377,19 +388,19 @@ function renderEmailFlows(flows = []) {
       return new Date(ta) - new Date(tb);
     });
   
-    // header
+    // header (rekkefølge matcher hovedtabell)
     const hdr = `
-      <div class="flows-grid" style="margin-bottom:6px;">
+      <div class="flows-grid header">
         <div class="hdr">#</div>
+        <div class="hdr nowrap">Planlagt / Sendt</div>
         <div class="hdr">Emne</div>
-        <div class="hdr nowwrap">Steg</div>
-        <div class="hdr nowwrap">Status</div>
-        <div class="hdr nowwrap">Planlagt / Sendt</div>
-        <div class="hdr nowwrap">Deaktiver</div>
+        <div class="hdr nowrap">Steg</div>
+        <div class="hdr nowrap">Status</div>
+        <div class="hdr nowrap">Deaktiver</div>
       </div>
     `;
   
-    // rader (maks 2 linjer i emnekolonnen)
+    // rader (kompakt: maks to linjer i emnefeltet)
     const rows = norm.map((f, idx) => {
       const tagClass =
         f.status === 'Akseptert' ? 'tag-akseptert' :
@@ -403,7 +414,6 @@ function renderEmailFlows(flows = []) {
   
       const when = f.sentAt ? shortDT(f.sentAt) : shortDT(f.scheduledAt);
   
-      // KOMPakt meta-linje: epost · (Åpnet/Klikket/Akseptert kort)
       const events = [
         f.openedAt   ? `Åpnet: ${shortDT(f.openedAt)}` : '',
         f.clickedAt  ? `Klikket: ${shortDT(f.clickedAt)}` : '',
@@ -419,15 +429,15 @@ function renderEmailFlows(flows = []) {
       return `
         <div class="flows-grid">
           <div>${idx + 1}</div>
+          <div class="nowrap">${when}</div>
           <div>
             <div class="flow-title">${escapeHtml(f.subject)}</div>
             <div class="flow-meta">${escapeHtml(metaLine)}</div>
           </div>
           <div class="nowrap">${Number.isFinite(+f.step) ? f.step : '—'}</div>
           <div><span class="tag ${tagClass}">${escapeHtml(f.status)}</span></div>
-          <div class="nowrap">${when}</div>
           <div>
-            <label class="muted nowwrap ${strike}" style="display:inline-flex;align-items:center;gap:6px;">
+            <label class="muted nowrap ${strike}" style="display:inline-flex;align-items:center;gap:6px;">
               <input type="checkbox"
                      class="flow-stop-toggle"
                      data-id="${escapeAttr(f.id)}"
@@ -444,9 +454,6 @@ function renderEmailFlows(flows = []) {
   
     return hdr + rows;
   }
-  
-  
-  
   
 
 // Oppretter / toggler en ekspansjonsrad etter gitt <tr>
@@ -508,8 +515,6 @@ async function handleRowClick(tr, bedriftObj) {
       replaceExpandContent(tr, `<div class="tag warn">Feil ved henting</div> <span class="muted">${String(err?.message || err)}</span>`);
     }
   }
-
-  
 
   // ---- Expand helpers (ikke toggle i samme fn) ----
 function isRowOpen(tr) {
@@ -598,24 +603,25 @@ function onToggleFlowStop(flowId, isStopped, step) {
 document.addEventListener('change', (e) => {
     const el = e.target;
     if (!el.matches('.flow-stop-toggle')) return;
+  
     const flowId = el.getAttribute('data-id') || null;
     const step   = el.getAttribute('data-step') || null;
     const isStopped = !!el.checked;
     onToggleFlowStop(flowId, isStopped, step);
-
-    //finne nærmeste element med class="tag info"
-    const tagEl = el.closest('.flows-grid').querySelector('.tag');
+  
+    // oppdater status-badge i samme rad
+    const tagEl = el.closest('.flows-grid')?.querySelector('.tag');
     if (tagEl) {
       if (isStopped) {
-        tagEl.className = 'tag warn';
+        tagEl.className = 'tag tag-stoppet';
         tagEl.innerText = 'Stoppet';
       } else {
-        tagEl.className = 'tag';
-        tagEl.innerText = 'queued';
+        // tilbake til nøytral planlagt (server-siden kan senere oppdatere til Sendt/Åpnet/…)
+        tagEl.className = 'tag tag-planlagt';
+        tagEl.innerText = 'Planlagt';
       }
     }
-
-
-});
+  });
+  
 
   
