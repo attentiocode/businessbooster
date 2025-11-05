@@ -367,9 +367,6 @@ function renderReady(data) {
         //start massesendeprosess og lagring i db
         startMultisaveProcess(orgnrs);
         renderReady(gReadybedrifter);
-        //oppdater lokalteller på knspp
-        updateReadyCountElement(gReadybedrifter.length);
-
         }
 
     }

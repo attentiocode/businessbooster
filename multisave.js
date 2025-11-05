@@ -188,6 +188,8 @@ function multiReturnfromAirtable(payload) {
   // Lagre lokalt
   localStorage.setItem("gProsessertBedrifter", JSON.stringify(gProsessertBedrifter));
 
+   
+
   // Slette rader fra gReadybedrifter
   cleanerData.forEach(row => {
       const orgnr = row.orgnr || row.organisasjonsnummer;
@@ -195,6 +197,9 @@ function multiReturnfromAirtable(payload) {
           bedrift => bedrift.orgnr !== orgnr && bedrift.organisasjonsnummer !== orgnr
       );
   });
+
+   //oppdater lokalteller på knspp
+   updateReadyCountElement(gReadybedrifter.length);
 
   localStorage.setItem("gReadybedrifter", JSON.stringify(gReadybedrifter));
 
