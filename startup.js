@@ -669,7 +669,10 @@ function leadsResponse(data){
   let boosterLeads = convertLeadsJsonStringsToObjects(jsonStrings);
   gProsessertBedrifter = boosterLeads;
  
-  //lagre i global variabel
+  //oppdater teller
+  updateProsessCountElement(gProsessertBedrifter.length);
+
+
   getTimeRunnerObjects();
 }
 
@@ -753,6 +756,7 @@ function mergeTimerunnerObject(gTimerunnerObjects) {
 function updateAllLocalConterts(){
   updateReadyCountElement(gReadybedrifter.length);
   updateSelectCountElement(gSelectbedrifter.length);
+  updateProsessCountElement(gProsessertBedrifter.length);
 }
 
 function updateReadyCountElement(count){
@@ -783,6 +787,22 @@ function updateSelectCountElement(count){
   }
 
 }
+
+function updateProsessCountElement(count){
+  //readyCountElement
+  const readyCountElement = document.getElementById("prosessCountElement");
+  readyCountElement.textContent = count.toLocaleString("no-NO");
+
+  //hvis det er mer en 0 så vises forelderelementet
+  if(count>0){
+    readyCountElement.parentElement.style.display = "inline-block";
+  }else{
+    readyCountElement.parentElement.style.display = "none";
+  }
+
+}
+
+
 
 
 updateCounter("label-selected-customers", gSelectbedrifter.length, 1000);
