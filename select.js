@@ -456,12 +456,15 @@ function renderSelect(data) {
           `${okMsg}\n\nDisse ble IKKE overført pga. manglende/ugyldig e-post.\n` +
           `Legg inn gyldig e-post før flytting:\n\n${lines.join('\n')}`
         );
-      } 
+      }else{
+        //fjerne de som ble flyttet til klar fra gSelectbedrifter
+        gSelectbedrifter = (gSelectbedrifter || []).filter(
+          b => !orgnrs.includes(normalizeOrgnr(b.organisasjonsnummer))
+        );
 
-      //fjerne de som ble flyttet til klar fra gSelectbedrifter
-      gSelectbedrifter = (gSelectbedrifter || []).filter(
-        b => !orgnrs.includes(normalizeOrgnr(b.organisasjonsnummer))
-      );
+      }
+
+      
       try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
 
       // Re-render (nå vil de få class "ready" + disabled checkbox)
