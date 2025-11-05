@@ -106,7 +106,6 @@ async function sendDataToZapierWebhook(data,url) {
     }
 }
 
-
 function getEmailBody(company, type = 'trial') {
   // --- helpers --------------------------------------------------------------
   const escapeHtml = (s) =>
@@ -126,16 +125,26 @@ function getEmailBody(company, type = 'trial') {
   const kontakt = company?.kontaktperson?.navn || company?.lederNavn || '';
   const greetingName = kontakt || navn || 'der';
 
-  // --- sporing (Zapier fyller inn {{trackingId}} senere) --------------------
-  const PUBLIC_BASE_URL = 'https://airtable-time-runner.vercel.app'; // ev. bytt til eget domene
-  const rawCtaTrial   = 'https://ikg-businessbooster.webflow.io/response';
-  const rawCtaContact = 'mailto:post@innkjops-gruppen.no';
+  // --- sporing (Zapier fyller inn {{trackingId}}) ---------------------------
+  const PUBLIC_BASE_URL = 'https://airtable-time-runner.vercel.app'; // API-base
+  const rawCtaTrial     = 'https://ikg-businessbooster.webflow.io/response';
+  const rawCtaContact   = 'mailto:post@innkjops-gruppen.no';
+  const rawUnsubscribe  = 'https://www.innkjops-gruppen.no/unsubscribe';
 
-  // lenker MED plassholder for trackingId som Zapier bytter ut:
-  const ctaHrefTrial   =
-    `${PUBLIC_BASE_URL}/api/clk?rid={{trackingId}}&to=${encodeURIComponent(rawCtaTrial)}`;
-  const openPixelSrc   =
-    `${PUBLIC_BASE_URL}/api/open.gif?rid={{trackingId}}`;
+  // CTA via clk (tracker click) -> dest m/ rid i query
+  const ctaHrefTrial =
+    `${PUBLIC_BASE_URL}/api/clk?rid={{trackingId}}&to=${
+      encodeURIComponent(`${rawCtaTrial}${rawCtaTrial.includes('?') ? '&' : '?'}rid={{trackingId}}`)
+    }`;
+
+  // Avmelding via clk (tracker click) -> din unsub-side m/ rid i query
+  const unsubHref =
+    `${PUBLIC_BASE_URL}/api/clk?rid={{trackingId}}&to=${
+      encodeURIComponent(`${rawUnsubscribe}${rawUnsubscribe.includes('?') ? '&' : '?'}rid={{trackingId}}`)
+    }`;
+
+  // Åpningspiksel
+  const openPixelSrc = `${PUBLIC_BASE_URL}/api/open.gif?rid={{trackingId}}`;
 
   // --- content --------------------------------------------------------------
   const preheader =
@@ -168,11 +177,6 @@ function getEmailBody(company, type = 'trial') {
     .content { padding:24px; line-height:1.55; font-size:14px; color:#E5E7EB; }
     .list { margin:12px 0 18px; padding-left:18px; }
     .list li { margin:6px 0; }
-    .chip {
-      display:inline-block; font-size:12px; padding:4px 10px; border-radius:9999px;
-      background:rgba(37,99,235,0.12); color:#93C5FD; border:1px solid rgba(37,99,235,0.35);
-      margin-right:6px; margin-top:8px;
-    }
     .cta {
       display:inline-block; margin-top:18px; padding:12px 22px; font-weight:700;
       background:#2563EB; color:#ffffff; border-radius:8px; border:1px solid #1D4ED8;
@@ -187,6 +191,10 @@ function getEmailBody(company, type = 'trial') {
       margin-top:20px; text-align:center;
     }
     .signature { padding:20px 24px; border-top:1px solid #1F2937; background:#0B1220; }
+    /* Diskret footer for avmelding */
+    .footer { width:100%; max-width:640px; margin:12px auto 0; color:#8FA2B8; font-size:12px; text-align:center; }
+    .unsub { color:#8FA2B8 !important; text-decoration:underline; }
+    .mute { color:#6B7E95; font-size:11px; }
     @media (max-width:480px) {
       .content { padding:20px; }
       .header { padding:16px 20px; }
@@ -257,22 +265,27 @@ function getEmailBody(company, type = 'trial') {
                 </p>
               </td>
             </tr>
-
           </table>
+
+          <!-- Diskret avmelding i bunn -->
+          <div class="footer">
+            <span class="mute">Ønsker du ikke flere e-poster?</span>
+            &nbsp;<a class="unsub" href="${unsubHref}" target="_blank" rel="noopener">Avmelding</a>
+          </div>
+
         </td>
       </tr>
     </table>
   </div>
 
-  <!-- Åpningspiksel med Zapier-plassholder -->
-  <img src="${openPixelSrc}" width="1" height="1" style="display:none;" alt="" />
+  <!-- Åpningspiksel (unngå display:none for bedre treff) -->
+  <img src="${openPixelSrc}" width="1" height="1" style="opacity:0;width:1px;height:1px;border:0;" alt="" />
 </body>
 </html>
 `;
 }
 
 
-  
 function escapeHtml(s) {
     return String(s || '').replace(/[&<>"']/g, m => (
       { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]
