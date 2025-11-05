@@ -266,7 +266,7 @@ function maketimerunnerObjects(companyes) {
                     orgnr: company.orgnr || '',
                     navn: company.navn || '',
                     epost: company.epostadresse || '',
-                    telefon: company.telefon || '',
+                    telefon: company.telefon || company.mobil || '',
                     hjemmeside: company.hjemmeside || '',
                     emailBody: emailBody,
                     subject: subject
