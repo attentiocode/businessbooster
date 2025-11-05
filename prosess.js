@@ -272,10 +272,10 @@ function renderEmailFlows(flows = []) {
     const style = document.createElement('style');
     style.id = 'emailflows-compact-style';
     style.textContent = `
-      /* Matcher header: STATUS | PLANLAGT/SENDT | EMNE | STEG | DEAKTIVER */
+      /* STEG | EMNE | STATUS | PLANLAGT/SENDT | DEAKTIVER */
       .flows-grid{
         display:grid; gap:8px; align-items:center;
-        grid-template-columns: 120px 168px 1fr 64px 110px;
+        grid-template-columns: 64px 1fr 120px 168px 110px;
         padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06);
       }
       .flows-grid.header{ margin-bottom:6px; }
@@ -293,18 +293,10 @@ function renderEmailFlows(flows = []) {
       .muted{ color:#87a0b9; font-size:11px }
       .strike{ text-decoration: line-through; opacity:.7 }
 
-      /* Badge – bruk samme utility-klassene som i kundelista */
+      /* Badge – gjenbruker de samme klassene som kundelista */
       .tag{ display:inline-block; padding:3px 8px; border-radius:999px;
             font-size:11px; font-weight:700; color:#fff; white-space:nowrap; }
-      /* Fargene styres av eksisterende CSS i appen: ok | warn | info | gray */
       .tag.ok{} .tag.warn{} .tag.info{} .tag.gray{}
-
-      @media (max-width: 1100px){
-        .flows-grid{ grid-template-columns: 110px 160px 1fr 56px 100px; }
-      }
-      @media (max-width: 900px){
-        .flows-grid{ grid-template-columns: 100px 150px 1fr 52px 96px; }
-      }
     `;
     document.head.appendChild(style);
   }
@@ -349,7 +341,7 @@ function renderEmailFlows(flows = []) {
     const clickedAt  = f.clickedAt  || j.clickedAt  || null;
     const acceptedAt = f.acceptedAt || j.acceptedAt || null;
 
-    // status (samme prioritet du ønsket)
+    // status → klasse (som i kundelista: ok | warn | info | gray)
     let status = 'Planlagt', cls = 'gray';
     if (failed)   { status='Feilet';   cls='warn'; }
     if (stopp)    { status='Stoppet';  cls='gray'; }
@@ -362,10 +354,11 @@ function renderEmailFlows(flows = []) {
     const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr)))
                   ? Number(f.internnr) : (f.step ?? '—');
 
-    return { id, subject, to, step, status, cls, when: sentAt || scheduledAt, sentAt, openedAt, clickedAt, acceptedAt, stopp };
+    return { id, subject, to, step, status, cls, when: sentAt || scheduledAt,
+             sentAt, openedAt, clickedAt, acceptedAt, stopp };
   });
 
-  // sortér pr steg → tid
+  // sortér: steg → tid
   norm.sort((a,b) => {
     const sa = (isFinite(a.step) ? a.step : 1e9);
     const sb = (isFinite(b.step) ? b.step : 1e9);
@@ -373,18 +366,18 @@ function renderEmailFlows(flows = []) {
     return new Date(a.when || 0) - new Date(b.when || 0);
   });
 
-  // header
+  // header i ønsket rekkefølge
   const hdr = `
     <div class="flows-grid header">
+      <div class="hdr nowrap">Steg</div>
+      <div class="hdr">Emne</div>
       <div class="hdr">Status</div>
       <div class="hdr nowrap">Planlagt / Sendt</div>
-      <div class="hdr">Emne</div>
-      <div class="hdr nowrap">Steg</div>
       <div class="hdr nowrap">Deaktiver</div>
     </div>
   `;
 
-  // rader (maks to linjer i emne)
+  // rader – maks to linjer i emnekolonnen
   const rows = norm.map(f => {
     const when = shortDT(f.when);
     const events = [
@@ -401,13 +394,13 @@ function renderEmailFlows(flows = []) {
 
     return `
       <div class="flows-grid">
-        <div><span class="tag ${' ' + (f.cls ? ' ' + f.cls : '')}">${esc(f.status)}</span></div>
-        <div class="nowrap">${when}</div>
+        <div class="nowrap">${isFinite(f.step) ? f.step : '—'}</div>
         <div>
           <div class="flow-title">${esc(f.subject)}</div>
           <div class="flow-meta">${esc(meta)}</div>
         </div>
-        <div class="nowrap">${isFinite(f.step) ? f.step : '—'}</div>
+        <div><span class="tag ${f.cls}">${esc(f.status)}</span></div>
+        <div class="nowrap">${when}</div>
         <div>
           <label class="muted nowrap ${strike}" style="display:inline-flex;align-items:center;gap:6px;">
             <input type="checkbox"
@@ -424,6 +417,7 @@ function renderEmailFlows(flows = []) {
 
   return hdr + rows;
 }
+
 
 
 // Oppretter / toggler en ekspansjonsrad etter gitt <tr>
