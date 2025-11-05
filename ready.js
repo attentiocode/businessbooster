@@ -366,9 +366,6 @@ function renderReady(data) {
         }
 
     }
-  
-    // Ev. annen teller
-    updateCounter("label-ready-customers", (gReadybedrifter || []).length, 1000);
   }
 
 

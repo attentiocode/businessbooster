@@ -190,7 +190,7 @@ const timeRunner = (() => {
               Klikk → Aksept: <b id="tro-avg-click-accept">—</b>
             </div>
           </div>
-          <div class="tro-sub">Beregnet blant rader med fullstendige tidsstempler</div>
+          <div class="tro-sub"></div>
         </div>
 
         <div class="tro-card wide">
