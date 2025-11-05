@@ -544,26 +544,41 @@ function onToggleFlowStop(flowId, isStopped, step) {
 }
 
   
-// Lytt globalt etter endringer på checkbokser i utvidelsen
+// Hindre at klikk på checkbox/label åpner/lukker raden
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.ef3-wrap input[type="checkbox"], .ef3-wrap label')) {
+    e.stopPropagation();
+  }
+});
+
+// Lytt globalt etter endringer på stop-checkbox
 document.addEventListener('change', (e) => {
   const el = e.target;
   if (!el.matches('.flow-stop-toggle')) return;
+  e.stopPropagation();
 
-  const flowId = el.getAttribute('data-id') || null;
-  const step   = el.getAttribute('data-step') || null;
+  const flowId   = el.getAttribute('data-id')  || null;
+  const step     = el.getAttribute('data-step')|| null;
   const isStopped = !!el.checked;
+
+  // Oppdater backend / lokalt cachet objekt
   onToggleFlowStop(flowId, isStopped, step);
 
-  const tagEl = el.closest('.flows-grid')?.querySelector('.tag');
-  if (tagEl) {
-    // fjern ev. tidligere mod-klasser
-    tagEl.classList.remove('ok','warn','info','gray');
+  // Oppdater badge i samme rad (nye klassenavn)
+  const row   = el.closest('.ef3-row');
+  const badge = row?.querySelector('.ef3-badge');
+  if (badge) {
+    // Nullstill ev. tidligere mod-klasser hvis du bruker dem
+    badge.classList.remove('ef3-ok','ef3-warn','ef3-info','ef3-gray');
+
     if (isStopped) {
-      tagEl.textContent = 'Stoppet';
-      tagEl.classList.add('gray');
+      badge.textContent = 'Stoppet';
+      badge.classList.add('ef3-gray');        // samme grå som i renderen
+      // eller: badge.style.background = '#9aa4af';
     } else {
-      tagEl.textContent = 'Planlagt';
-      tagEl.classList.add('gray'); // nøytral til backend oppdaterer
+      // Tilbake til nøytral planlagt til server evt. endrer status
+      badge.textContent = 'Planlagt';
+      badge.classList.add('ef3-gray');
     }
   }
 });
