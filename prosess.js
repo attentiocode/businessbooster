@@ -263,198 +263,168 @@ async function fetchEmailFlowsByAirtable(airtableId) {
 // Presenter flows i en liten tabell-grid
 
 function renderEmailFlows(flows = []) {
-    if (!Array.isArray(flows) || !flows.length) {
-      return `<div class="muted">Ingen epostforløp funnet for denne kunden.</div>`;
-    }
-  
-    // ---- styles (én gang) ----
-    if (!document.getElementById('emailflows-compact-style')) {
-      const style = document.createElement('style');
-      style.id = 'emailflows-compact-style';
-      style.textContent = `
-        .flows-grid{
-          display:grid; gap:8px; align-items:center;
-          /* Matcher hovedoverskrift: # | Planlagt/Sent | Emne | Steg | Status | Deaktiver */
-          grid-template-columns: 56px 168px 1fr 64px 120px 100px;
-          padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06);
-        }
-        .flows-grid.header{ margin-bottom:6px; }
-        .flows-grid.header > div{ padding-top:2px; padding-bottom:2px; }
-        .hdr{ font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px; }
-        /* TO LINJER: tittel + meta */
-        .flow-title{
-          font-weight:700; color:#e8f0ff; line-height:1.25;
-          white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-        }
-        .flow-meta{
-          color:#87a0b9; font-size:12px; line-height:1.25;
-          white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-          margin-top:2px;
-        }
-        .nowrap{ white-space:nowrap }
-        .muted{ color:#87a0b9; font-size:11px }
-        .strike{ text-decoration: line-through; opacity:.7 }
-        .tag{
-          display:inline-block; padding:3px 8px; border-radius:999px;
-          font-size:11px; font-weight:700; color:#fff; white-space:nowrap;
-        }
-        /* Farger i tråd med renderProsess */
-        .tag-akseptert{ background: rgba(  0,200, 83,.75); }
-        .tag-avmeldt  { background: rgba(255, 82, 82,.85); }
-        .tag-klikket  { background: rgba( 99,102,241,.85); }
-        .tag-åpnet    { background: rgba( 59,130,246,.85); }
-        .tag-sendt    { background: rgba(139, 92,246,.80); }
-        .tag-stoppet  { background: rgba(180,180,180,.65); }
-        .tag-utgått   { background: rgba(255,165,  0,.85); }
-        .tag-feilet   { background: rgba(255, 82, 82,.90); }
-        .tag-planlagt { background: rgba(128,128,128,.50); }
-  
-        /* Smalere skjermer: gi mer plass til emne */
-        @media (max-width: 1100px){
-          .flows-grid{ grid-template-columns: 44px 160px 1fr 56px 112px 90px; }
-        }
-        @media (max-width: 900px){
-          .flows-grid{ grid-template-columns: 40px 150px 1fr 52px 108px 86px; }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-  
-    // ---- helpers ----
-    const truthy = x => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
-    const safeJson = s => { try { return typeof s === 'string' ? JSON.parse(s) : (s || {}); } catch { return {}; } };
-    const shortDT = iso => {
-      if (!iso) return '—';
-      const d = new Date(iso); if (isNaN(d)) return '—';
-      const dd = d.toLocaleDateString('no-NO');
-      const tt = d.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-      return `${dd}, ${tt}`;
-    };
-    const escapeHtml = s => String(s ?? '')
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
-    const escapeAttr = s => String(s ?? '').replace(/"/g,'&quot;');
-  
-    // ---- normaliser ----
-    const norm = flows.map(row => {
-      const id = row?.id || row?._rawJson?.id || null;
-      const f  = row?.fields || row?._rawJson?.fields || row || {};
-      const j  = safeJson(f.json);
-      const payload = safeJson(f.payload);
-  
-      const subject = payload.subject || f.title || '—';
-      const emailTo = payload.epost || payload.email || '';
-  
-      const scheduledAt = f.when || j.when || null;
-      const sentAt      = f.executedAt || j.executedAt || null;
-      const executed    = (f.executed === true) || truthy(j.executed);
-  
-      const opened      = truthy(f.opened)   || truthy(j.opened);
-      const clicked     = truthy(f.clicked)  || truthy(j.clicked);
-      const accepted    = truthy(f.accepted) || truthy(j.accepted);
-  
-      const openedAt    = f.openedAt   || j.openedAt   || null;
-      const clickedAt   = f.clickedAt  || j.clickedAt  || null;
-      const acceptedAt  = f.acceptedAt || j.acceptedAt || null;
-  
-      const stopp       = truthy(f.stopp) || truthy(j.stopp);
-      const avmeldt     = truthy(f.no_interest) || truthy(j.no_interest) ||
-                          truthy(f.unsubscribed) || truthy(j.unsubscribed);
-      const failed      = String(f.status||'').toLowerCase() === 'failed' || truthy(f.failed);
-  
-      // Prioritet: Akseptert → Avmeldt → Klikket → Åpnet → Sendt → Stoppet → Utgått → Feilet → Planlagt
-      let status = 'Planlagt';
-      if (failed)   status = 'Feilet';
-      if (stopp)    status = 'Stoppet';
-      if (executed) status = 'Sendt';
-      if (opened)   status = 'Åpnet';
-      if (clicked)  status = 'Klikket';
-      if (avmeldt)  status = 'Avmeldt';
-      if (accepted) status = 'Akseptert';
-  
-      const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr)))
-        ? Number(f.internnr) : (f.step ?? null);
-  
-      return { id, subject, to: emailTo, step, status, scheduledAt, sentAt, openedAt, clickedAt, acceptedAt, stopp };
-    });
-  
-    // sortér pr steg → tid
-    norm.sort((a,b) => {
-      const sa = (a.step ?? Number.POSITIVE_INFINITY);
-      const sb = (b.step ?? Number.POSITIVE_INFINITY);
-      if (sa !== sb) return sa - sb;
-      const ta = a.sentAt || a.scheduledAt || 0;
-      const tb = b.sentAt || b.scheduledAt || 0;
-      return new Date(ta) - new Date(tb);
-    });
-  
-    // header (rekkefølge matcher hovedtabell)
-    const hdr = `
-      <div class="flows-grid header">
-        <div class="hdr">#</div>
-        <div class="hdr nowrap">Planlagt / Sendt</div>
-        <div class="hdr">Emne</div>
-        <div class="hdr nowrap">Steg</div>
-        <div class="hdr nowrap">Status</div>
-        <div class="hdr nowrap">Deaktiver</div>
+  if (!Array.isArray(flows) || !flows.length) {
+    return `<div class="muted">Ingen epostforløp funnet for denne kunden.</div>`;
+  }
+
+  // styles (én gang)
+  if (!document.getElementById('emailflows-compact-style')) {
+    const style = document.createElement('style');
+    style.id = 'emailflows-compact-style';
+    style.textContent = `
+      /* Matcher header: STATUS | PLANLAGT/SENDT | EMNE | STEG | DEAKTIVER */
+      .flows-grid{
+        display:grid; gap:8px; align-items:center;
+        grid-template-columns: 120px 168px 1fr 64px 110px;
+        padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06);
+      }
+      .flows-grid.header{ margin-bottom:6px; }
+      .hdr{ font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px; }
+      .flow-title{
+        font-weight:700; color:#e8f0ff; line-height:1.25;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      }
+      .flow-meta{
+        color:#87a0b9; font-size:12px; line-height:1.25;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        margin-top:2px;
+      }
+      .nowrap{ white-space:nowrap }
+      .muted{ color:#87a0b9; font-size:11px }
+      .strike{ text-decoration: line-through; opacity:.7 }
+
+      /* Badge – bruk samme utility-klassene som i kundelista */
+      .tag{ display:inline-block; padding:3px 8px; border-radius:999px;
+            font-size:11px; font-weight:700; color:#fff; white-space:nowrap; }
+      /* Fargene styres av eksisterende CSS i appen: ok | warn | info | gray */
+      .tag.ok{} .tag.warn{} .tag.info{} .tag.gray{}
+
+      @media (max-width: 1100px){
+        .flows-grid{ grid-template-columns: 110px 160px 1fr 56px 100px; }
+      }
+      @media (max-width: 900px){
+        .flows-grid{ grid-template-columns: 100px 150px 1fr 52px 96px; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // helpers
+  const truthy = x => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
+  const safeJson = s => { try { return typeof s === 'string' ? JSON.parse(s) : (s || {}); } catch { return {}; } };
+  const shortDT = iso => {
+    if (!iso) return '—';
+    const d = new Date(iso); if (isNaN(d)) return '—';
+    const dd = d.toLocaleDateString('no-NO');
+    const tt = d.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+    return `${dd}, ${tt}`;
+  };
+  const esc = s => String(s ?? '')
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  const escAttr = s => String(s ?? '').replace(/"/g,'&quot;');
+
+  // normaliser
+  const norm = flows.map(row => {
+    const id = row?.id || row?._rawJson?.id || null;
+    const f  = row?.fields || row?._rawJson?.fields || row || {};
+    const j  = safeJson(f.json);
+    const p  = safeJson(f.payload);
+
+    const subject  = p.subject || f.title || '—';
+    const to       = p.epost || p.email || '';
+    const scheduledAt = f.when || j.when || null;
+    const sentAt      = f.executedAt || j.executedAt || null;
+    const executed    = (f.executed === true) || truthy(j.executed);
+
+    const opened   = truthy(f.opened)   || truthy(j.opened);
+    const clicked  = truthy(f.clicked)  || truthy(j.clicked);
+    const accepted = truthy(f.accepted) || truthy(j.accepted);
+    const avmeldt  = truthy(f.no_interest) || truthy(j.no_interest) ||
+                     truthy(f.unsubscribed) || truthy(j.unsubscribed);
+    const stopp    = truthy(f.stopp) || truthy(j.stopp);
+    const failed   = String(f.status||'').toLowerCase() === 'failed' || truthy(f.failed);
+
+    const openedAt   = f.openedAt   || j.openedAt   || null;
+    const clickedAt  = f.clickedAt  || j.clickedAt  || null;
+    const acceptedAt = f.acceptedAt || j.acceptedAt || null;
+
+    // status (samme prioritet du ønsket)
+    let status = 'Planlagt', cls = 'gray';
+    if (failed)   { status='Feilet';   cls='warn'; }
+    if (stopp)    { status='Stoppet';  cls='gray'; }
+    if (executed) { status='Sendt';    cls='info'; }
+    if (opened)   { status='Åpnet';    cls='info'; }
+    if (clicked)  { status='Klikket';  cls='info'; }
+    if (avmeldt)  { status='Avmeldt';  cls='warn'; }
+    if (accepted) { status='Akseptert';cls='ok';   }
+
+    const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr)))
+                  ? Number(f.internnr) : (f.step ?? '—');
+
+    return { id, subject, to, step, status, cls, when: sentAt || scheduledAt, sentAt, openedAt, clickedAt, acceptedAt, stopp };
+  });
+
+  // sortér pr steg → tid
+  norm.sort((a,b) => {
+    const sa = (isFinite(a.step) ? a.step : 1e9);
+    const sb = (isFinite(b.step) ? b.step : 1e9);
+    if (sa !== sb) return sa - sb;
+    return new Date(a.when || 0) - new Date(b.when || 0);
+  });
+
+  // header
+  const hdr = `
+    <div class="flows-grid header">
+      <div class="hdr">Status</div>
+      <div class="hdr nowrap">Planlagt / Sendt</div>
+      <div class="hdr">Emne</div>
+      <div class="hdr nowrap">Steg</div>
+      <div class="hdr nowrap">Deaktiver</div>
+    </div>
+  `;
+
+  // rader (maks to linjer i emne)
+  const rows = norm.map(f => {
+    const when = shortDT(f.when);
+    const events = [
+      f.openedAt   ? `Åpnet: ${shortDT(f.openedAt)}` : '',
+      f.clickedAt  ? `Klikket: ${shortDT(f.clickedAt)}` : '',
+      f.acceptedAt ? `Akseptert: ${shortDT(f.acceptedAt)}` : ''
+    ].filter(Boolean).join(' · ');
+    const meta = [f.to, events].filter(Boolean).join(' · ');
+
+    const disableToggle = ['Sendt','Åpnet','Klikket','Akseptert','Feilet'].includes(f.status);
+    const checked  = f.stopp ? 'checked' : '';
+    const disabled = disableToggle ? 'disabled' : '';
+    const strike   = disableToggle ? 'strike' : '';
+
+    return `
+      <div class="flows-grid">
+        <div><span class="tag ${' ' + (f.cls ? ' ' + f.cls : '')}">${esc(f.status)}</span></div>
+        <div class="nowrap">${when}</div>
+        <div>
+          <div class="flow-title">${esc(f.subject)}</div>
+          <div class="flow-meta">${esc(meta)}</div>
+        </div>
+        <div class="nowrap">${isFinite(f.step) ? f.step : '—'}</div>
+        <div>
+          <label class="muted nowrap ${strike}" style="display:inline-flex;align-items:center;gap:6px;">
+            <input type="checkbox"
+                   class="flow-stop-toggle"
+                   data-id="${escAttr(f.id)}"
+                   data-step="${escAttr(f.step)}"
+                   ${checked} ${disabled}/>
+            Stopp
+          </label>
+        </div>
       </div>
     `;
-  
-    // rader (kompakt: maks to linjer i emnefeltet)
-    const rows = norm.map((f, idx) => {
-      const tagClass =
-        f.status === 'Akseptert' ? 'tag-akseptert' :
-        f.status === 'Avmeldt'   ? 'tag-avmeldt'   :
-        f.status === 'Klikket'   ? 'tag-klikket'   :
-        f.status === 'Åpnet'     ? 'tag-åpnet'     :
-        f.status === 'Sendt'     ? 'tag-sendt'     :
-        f.status === 'Stoppet'   ? 'tag-stoppet'   :
-        f.status === 'Utgått'    ? 'tag-utgått'    :
-        f.status === 'Feilet'    ? 'tag-feilet'    : 'tag-planlagt';
-  
-      const when = f.sentAt ? shortDT(f.sentAt) : shortDT(f.scheduledAt);
-  
-      const events = [
-        f.openedAt   ? `Åpnet: ${shortDT(f.openedAt)}` : '',
-        f.clickedAt  ? `Klikket: ${shortDT(f.clickedAt)}` : '',
-        f.acceptedAt ? `Akseptert: ${shortDT(f.acceptedAt)}` : ''
-      ].filter(Boolean).join(' · ');
-      const metaLine = [f.to, events].filter(Boolean).join(' · ');
-  
-      const disableToggle = ['Sendt','Åpnet','Klikket','Akseptert','Feilet'].includes(f.status);
-      const checked  = f.stopp ? 'checked' : '';
-      const disabled = disableToggle ? 'disabled' : '';
-      const strike   = disableToggle ? 'strike' : '';
-  
-      return `
-        <div class="flows-grid">
-          <div>${idx + 1}</div>
-          <div class="nowrap">${when}</div>
-          <div>
-            <div class="flow-title">${escapeHtml(f.subject)}</div>
-            <div class="flow-meta">${escapeHtml(metaLine)}</div>
-          </div>
-          <div class="nowrap">${Number.isFinite(+f.step) ? f.step : '—'}</div>
-          <div><span class="tag ${tagClass}">${escapeHtml(f.status)}</span></div>
-          <div>
-            <label class="muted nowrap ${strike}" style="display:inline-flex;align-items:center;gap:6px;">
-              <input type="checkbox"
-                     class="flow-stop-toggle"
-                     data-id="${escapeAttr(f.id)}"
-                     data-step="${escapeAttr(f.step)}"
-                     ${checked}
-                     ${disabled}
-              />
-              Stopp
-            </label>
-          </div>
-        </div>
-      `;
-    }).join('');
-  
-    return hdr + rows;
-  }
-  
+  }).join('');
+
+  return hdr + rows;
+}
+
 
 // Oppretter / toggler en ekspansjonsrad etter gitt <tr>
 function toggleExpandRowAfter(tr, contentHTML, open = true) {
@@ -601,27 +571,28 @@ function onToggleFlowStop(flowId, isStopped, step) {
   
 // Lytt globalt etter endringer på checkbokser i utvidelsen
 document.addEventListener('change', (e) => {
-    const el = e.target;
-    if (!el.matches('.flow-stop-toggle')) return;
-  
-    const flowId = el.getAttribute('data-id') || null;
-    const step   = el.getAttribute('data-step') || null;
-    const isStopped = !!el.checked;
-    onToggleFlowStop(flowId, isStopped, step);
-  
-    // oppdater status-badge i samme rad
-    const tagEl = el.closest('.flows-grid')?.querySelector('.tag');
-    if (tagEl) {
-      if (isStopped) {
-        tagEl.className = 'tag tag-stoppet';
-        tagEl.innerText = 'Stoppet';
-      } else {
-        // tilbake til nøytral planlagt (server-siden kan senere oppdatere til Sendt/Åpnet/…)
-        tagEl.className = 'tag tag-planlagt';
-        tagEl.innerText = 'Planlagt';
-      }
+  const el = e.target;
+  if (!el.matches('.flow-stop-toggle')) return;
+
+  const flowId = el.getAttribute('data-id') || null;
+  const step   = el.getAttribute('data-step') || null;
+  const isStopped = !!el.checked;
+  onToggleFlowStop(flowId, isStopped, step);
+
+  const tagEl = el.closest('.flows-grid')?.querySelector('.tag');
+  if (tagEl) {
+    // fjern ev. tidligere mod-klasser
+    tagEl.classList.remove('ok','warn','info','gray');
+    if (isStopped) {
+      tagEl.textContent = 'Stoppet';
+      tagEl.classList.add('gray');
+    } else {
+      tagEl.textContent = 'Planlagt';
+      tagEl.classList.add('gray'); // nøytral til backend oppdaterer
     }
-  });
+  }
+});
+
   
 
   
