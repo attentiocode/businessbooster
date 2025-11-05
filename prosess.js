@@ -18,7 +18,7 @@ function renderProsess(data){
           height: 18px;
           padding: 0 6px;
           border-radius: 9999px;
-          background:'rgba(128, 128, 128, 0.5)'; 
+          background: rgba(128, 128, 128, 0.5);
           color: #fff;
           font-size: 11px;
           line-height: 18px;
@@ -37,60 +37,58 @@ function renderProsess(data){
     const isTruthy = (x) => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
   
     const fmtDate = (d) => (!d ? '—' : (isNaN(new Date(d)) ? d : new Date(d).toLocaleDateString('no-NO')));
+  
+    // Ny: flate felt for adresse
     const fmtAddr = (b) => {
-      const a = b?.forretningsadresse || b?.postadresse || {};
-      const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
-      return [adr, a.postnummer, a.poststed].filter(Boolean).join(', ') || '—';
+      const adr = b?.forretningsadresse_adresse || b?.postadresse_adresse;
+      const postnr = b?.forretningsadresse_postnummer || b?.postadresse_postnummer;
+      const poststed = b?.forretningsadresse_poststed || b?.postadresse_poststed;
+      const parts = [adr, postnr, poststed].filter(Boolean);
+      return parts.length ? parts.join(', ') : '—';
     };
+  
     const normalizeOrgnr = (v) => String(v ?? '').replace(/\D/g, '').padStart(9, '0');
-    const getOrgnr = (obj) =>
-      normalizeOrgnr(obj?.organisasjonsnummer ?? obj?.orgnr ?? obj?.orgNr ?? obj?.OrganizationNumber);
+    const getOrgnr = (obj) => normalizeOrgnr(obj?.orgnr ?? obj?.organisasjonsnummer ?? obj?.orgNr ?? obj?.OrganizationNumber);
   
-    // Avled status-nøkkel + label for hver rad (selskap)
+    // Avled status-nøkkel i henhold til den nye select-lista
+    // Mulige keys: "stoppet", "akseptert", "utgått", "i_prosess", "avmeldt", "åpnet", "sendt"
     function deriveStatus(b) {
-      const stopp = isTruthy(b?.stopp ?? b?.stop ?? b?.stopped ?? b?.disabled);
-      const noInterested = isTruthy(b?.noInterest ?? b?.no_interested ?? b?.no_interest);
-      const emailsendt = Number(b?.emailSentCount ?? 0);
-      const emailcount = Number(b?.emailCount ?? 0);
-      const emailAccepted = Number(b?.emailAcceptedCount ?? 0);
+      const stopp = isTruthy(b?.stopp);
+      const avmeldt = isTruthy(b?.unsubscribed) || isTruthy(b?.noInterest);
+      const sent = Number(b?.emailSentCount ?? 0);
+      const total = Number(b?.emailCount ?? 0);
+      const accepted = Number(b?.emailAcceptedCount ?? 0);
+      const opened = Number(b?.openedCount ?? 0);
   
-      if (stopp)              return { key: 'stoppet',   label: 'Stoppet' };
-      if (noInterested)       return { key: 'avmeldt',   label: 'Avmeldt' };
-      if (emailAccepted > 0)  return { key: 'akseptert', label: 'Akseptert' };
+      if (stopp) return { key: 'stoppet', label: 'Stoppet' };
+      if (avmeldt) return { key: 'avmeldt', label: 'Avmeldt' };
+      if (accepted > 0) return { key: 'akseptert', label: 'Akseptert' };
   
       // Ferdig løp uten aksept → "Utgått"
-      if (emailcount > 0 && emailsendt >= emailcount && emailAccepted === 0) {
+      if (total > 0 && sent >= total && accepted === 0) {
         return { key: 'utgått', label: 'Utgått' };
       }
   
-      // Ingen sendt ennå, men har planlagte
-      if (emailcount > 0 && emailsendt === 0) {
-        return { key: 'i_prosess', label: 'I prosess' };
-      }
+      // Åpnet (minst én åpning)
+      if (opened > 0) return { key: 'åpnet', label: 'Åpnet' };
   
-      // Underveis
-      if (emailcount > 0 && emailsendt > 0 && emailsendt < emailcount) {
-        return { key: 'i_prosess', label: 'I prosess' };
-      }
+      // Sendt (minst én sendt)
+      if (sent > 0) return { key: 'sendt', label: 'Sendt' };
   
-      // Fallback
+      // Ellers i prosess (planlagt / ikke sendt)
       return { key: 'i_prosess', label: 'I prosess' };
     }
   
-    // Avled "current step" hvis mulig, ellers gjett fra counts
+    // Valgfritt: enkel "neste steg"-logikk (beholder om du bruker tooltips e.l.)
     function deriveStep(b) {
-      const explicit =
-        b?.step ?? b?.prosessStep ?? b?.prosess_step ?? b?.internnr ?? b?.internNr ?? null;
+      const explicit = b?.step ?? b?.prosessStep ?? b?.prosess_step ?? b?.internnr ?? b?.internNr ?? null;
+      if (explicit != null && /^\d+$/.test(String(explicit))) return Number(explicit);
   
-      if (explicit != null && /^\d+$/.test(String(explicit))) {
-        return Number(explicit);
-      }
-  
-      const emailsendt = Number(b?.emailSentCount ?? 0);
-      const emailcount = Number(b?.emailCount ?? 0);
-      if (emailcount > 0) {
-        const next = Math.min(emailsendt + 1, emailcount);
-        return next; // "neste steg" eller siste hvis ferdig
+      const sent = Number(b?.emailSentCount ?? 0);
+      const total = Number(b?.emailCount ?? 0);
+      if (total > 0) {
+        const next = Math.min(sent + 1, total);
+        return next; // neste steg
       }
       return null;
     }
@@ -104,53 +102,33 @@ function renderProsess(data){
     const filterGroup = String(rawFilter || '').trim();
   
     const statusSel     = document.getElementById('filterStatusProsess');
-    const statusFilter  = low(statusSel ? statusSel.value : ''); // "", "stoppet", "akseptert", "stepp3", ...
+    const statusFilter  = low(statusSel ? statusSel.value : ''); // "", "stoppet", "akseptert", "utgått", "i_prosess", "avmeldt", "åpnet", "sendt"
   
     // --- Filtrer grunnlag ---
     let filteredData = Array.isArray(data) ? data.slice() : [];
   
-    // Gruppefilter
+    // Gruppefilter (eksakt match på b.group)
     if (!(filterGroup === '' || filterGroup.toLowerCase() === 'all')) {
       filteredData = filteredData.filter(b => String(b.group ?? '').trim() === filterGroup);
     }
   
-    // Søk
+    // Søk (navn, orgnr, adresse, postnr, poststed, gruppenavn/bruker)
     if (searchTerm) {
       filteredData = filteredData.filter(b => {
-        const a   = b?.forretningsadresse || b?.postadresse || {};
-        const adr = Array.isArray(a.adresse) ? a.adresse.join(', ') : a.adresse;
+        const adr = fmtAddr(b);
         const grp = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
         return (
           low(b?.navn).includes(searchTerm) ||
-          val(b?.organisasjonsnummer).includes(searchTerm) ||
+          val(getOrgnr(b)).includes(searchTerm) ||
           low(adr).includes(searchTerm) ||
-          val(a?.postnummer).includes(searchTerm) ||
-          low(a?.poststed).includes(searchTerm) ||
           (grp && (low(grp.name).includes(searchTerm) || low(grp.user).includes(searchTerm)))
         );
       });
     }
   
-    // Statusfilter (fra select)
+    // Statusfilter (direkte nøkkel)
     if (statusFilter) {
-      filteredData = filteredData.filter(b => {
-        const { key } = deriveStatus(b);
-  
-        // steppN
-        if (statusFilter.startsWith('stepp')) {
-          const n = Number(statusFilter.replace('stepp', ''));
-          const step = deriveStep(b);
-          return Number.isFinite(n) && step === n;
-        }
-  
-        // alias for i_prosess: "i_prosess", "køet", "i prosess"
-        if (statusFilter === 'i_prosess' || statusFilter === 'køet' || statusFilter === 'i prosess') {
-          return key === 'i_prosess';
-        }
-  
-        // direkte nøkkelmatch: stoppet / akseptert / avmeldt / utgått
-        return key === statusFilter;
-      });
+      filteredData = filteredData.filter(b => deriveStatus(b).key === statusFilter);
     }
   
     // oppdater teller
@@ -166,15 +144,12 @@ function renderProsess(data){
       const g = (gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
       const contactHtml = typeof renderContactIcons === 'function' ? renderContactIcons(b) : '';
   
-      // Normaliser counts
-      let emailcount      = Number(b.emailCount ?? 0);
-      let emailsendt      = Number(b.emailSentCount ?? 0);
-      let emailAccepted   = Number(b.emailAcceptedCount ?? 0);
-      let counttext       = `${emailsendt}/${emailcount}`;
-      let noInterested    = isTruthy(b.noInterest ?? b.no_interested ?? b.no_interest);
-      let stoppet         = b.stopp || false;
-  
-      const showBadge = emailcount > 0;
+      // counts for badge
+      const emailcount    = Number(b.emailCount ?? 0);
+      const emailsendt    = Number(b.emailSentCount ?? 0);
+      const emailAccepted = Number(b.emailAcceptedCount ?? 0);
+      const counttext     = `${emailsendt}/${emailcount}`;
+      const showBadge     = emailcount > 0;
   
       tr.innerHTML = `
         <td style="width:40px;">
@@ -192,21 +167,33 @@ function renderProsess(data){
         </td>
       `;
   
-      // Farge på badge basert på status
+      // Badge-farge etter status
       const badgeEl = tr.querySelector('.prosess-badge');
       const { key } = deriveStatus(b);
   
       if (badgeEl) {
-        if (key === 'akseptert') {
-          badgeEl.style.background = 'rgba(0, 200, 83, 0.7)';       // grønn
-        } else if (noInterested) {
-          badgeEl.style.background = 'rgba(255, 82, 82, 0.7)';      // rød
-        } else if (key === 'utgått') {
-          badgeEl.style.background = 'rgba(255, 165, 0, 0.7)';      // oransje
-        } else if (stoppet) {
-          badgeEl.style.background = 'rgba(255, 82, 82, 0.7)';     // grå
+        switch (key) {
+          case 'akseptert':
+            badgeEl.style.background = 'rgba(0, 200, 83, 0.75)';      // grønn
+            break;
+          case 'avmeldt':
+            badgeEl.style.background = 'rgba(255, 82, 82, 0.75)';     // rød
+            break;
+          case 'stoppet':
+            badgeEl.style.background = 'rgba(180, 180, 180, 0.65)';   // grå
+            break;
+          case 'utgått':
+            badgeEl.style.background = 'rgba(255, 165, 0, 0.75)';     // oransje
+            break;
+          case 'åpnet':
+            badgeEl.style.background = 'rgba(59, 130, 246, 0.75)';    // blå
+            break;
+          case 'sendt':
+            badgeEl.style.background = 'rgba(139, 92, 246, 0.75)';    // lilla
+            break;
+          default: // i_prosess
+            badgeEl.style.background = 'rgba(128, 128, 128, 0.5)';    // semigrå (default)
         }
-        // ellers behold default (semigrå)
       }
   
       tr.style.cursor = 'pointer';
@@ -225,13 +212,13 @@ function renderProsess(data){
         const t = e.target;
         if (t.closest('input[type="checkbox"]') || t.closest('a')) return;
         clearTimeout(clickTimer);
-        const org = getOrgnr(b);
         if (typeof openEditPopup === 'function') openEditPopup(b, org);
       });
   
       tbody.appendChild(tr);
     });
   }
+  
   
   
 
