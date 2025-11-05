@@ -261,62 +261,117 @@ async function fetchEmailFlowsByAirtable(airtableId) {
 }
 
 // Presenter flows i en liten tabell-grid
-// Presenter flows i en liten tabell-grid (tilpasset Airtable-responsen over)
-// Presenter flows i en tabell-grid med # og "Deaktiver" (stopp)
+
 function renderEmailFlows(flows = []) {
     if (!Array.isArray(flows) || !flows.length) {
       return `<div class="muted">Ingen epostforløp funnet for denne kunden.</div>`;
     }
   
-    // Normaliser datastruktur pr rad
+    // --- styles (én gang) ---
+    if (!document.getElementById('emailflows-style')) {
+      const style = document.createElement('style');
+      style.id = 'emailflows-style';
+      style.textContent = `
+        .flows-grid{
+          display:grid; gap:10px; align-items:center;
+          grid-template-columns:auto 1fr auto auto auto auto;
+          padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06);
+        }
+        .flows-grid:first-of-type{ border-top:1px solid rgba(255,255,255,.06); }
+        .hdr{ font-size:11px; color:#9fb3c8; text-transform:uppercase; letter-spacing:.5px; }
+        .tag{
+          display:inline-block; padding:4px 8px; border-radius:999px;
+          font-size:11px; font-weight:700; color:#fff;
+        }
+        .chip{
+          display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px;
+          color:#e8f0ff; border:1px solid rgba(255,255,255,.1); margin-left:6px; opacity:.9
+        }
+        /* Samme farger som i renderProsess */
+        .tag-akseptert{ background: rgba(0, 200, 83, 0.75); }
+        .tag-avmeldt  { background: rgba(255, 82, 82, 0.75); }
+        .tag-sendt    { background: rgba(139, 92, 246, 0.75); } /* lilla */
+        .tag-stoppet  { background: rgba(180, 180, 180, 0.65); }
+        .tag-utgått   { background: rgba(255, 165, 0, 0.75); }
+        .tag-åpnet    { background: rgba(59, 130, 246, 0.75); }
+        .tag-planlagt { background: rgba(128, 128, 128, 0.50); }
+        .tag-feilet   { background: rgba(255, 82, 82, 0.75); }
+        .muted{ color:#87a0b9; font-size:11px }
+      `;
+      document.head.appendChild(style);
+    }
+  
+    // --- helpers ---
+    const val = v => (v == null ? '' : String(v));
+    const truthy = (x) => x === true || x === 1 || x === '1' || String(x).toLowerCase() === 'true';
+    const fmtDT = (iso) => {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return isNaN(d) ? '—' : d.toLocaleString('no-NO');
+    };
+    const safeJson = s => {
+      try { return typeof s === 'string' ? JSON.parse(s) : (s || {}); }
+      catch { return {}; }
+    };
+  
+    // --- normaliser rader ---
     const norm = flows.map(row => {
       const id = row?.id || row?._rawJson?.id || null;
-      const f = row?.fields || row?._rawJson?.fields || row || {};
+      const f  = row?.fields || row?._rawJson?.fields || row || {};
+      const j  = safeJson(f.json);
   
-      // payload kan være JSON-streng
-      let payload = {};
-      try {
-        if (typeof f.payload === 'string') payload = JSON.parse(f.payload);
-        else if (f.payload && typeof f.payload === 'object') payload = f.payload;
-      } catch { /* ignorér parsefeil */ }
+      // payload
+      const payload = safeJson(f.payload);
+      const subject = payload.subject || f.title || '—';
+      const emailTo = payload.epost || payload.email || '';
   
-      // status
-      let status = 'queued';
-      if (f.executed === true) status = 'sent';
-      else if (typeof f.status === 'string') {
-        const s = f.status.toLowerCase();
-        if (s === 'pending') status = 'queued';
-        else if (['sent','opened','clicked','failed','queued'].includes(s)) status = s;
-      }
+      // tidsstempler
+      const scheduledAt = f.when || j.when || null;
+      const executed = (f.executed === true) || truthy(j.executed);
+      const executedAt = f.executedAt || j.executedAt || null;
   
-      // stopp (truthy => stoppet)
-      const stoppRaw = f.stopp;
-      const stopp = stoppRaw === true || stoppRaw === 1 || stoppRaw === '1' || String(stoppRaw).toLowerCase() === 'true';
+      const opened   = truthy(f.opened)   || truthy(j.opened);
+      const clicked  = truthy(f.clicked)  || truthy(j.clicked);
+      const accepted = truthy(f.accepted) || truthy(j.accepted);
   
-      if (stopp) {
-        status = 'Stoppet';
-      } else if (f.no_interest === true || f.no_interest === 1 || f.no_interest === '1' || String(f.no_interest).toLowerCase() === 'true') {
-        status = 'Avmeldt';
-      } else if (f.accepted === true || f.accepted === 1 || String(f.accepted).toLowerCase() === 'true') {
-        status = 'Akseptert';
-      } else if (f.open === true || f.open === 1 || String(f.open).toLowerCase() === 'true') {
-        status = 'Åpnet';
-      }
+      const openedAt   = f.openedAt   || j.openedAt   || null;
+      const clickedAt  = f.clickedAt  || j.clickedAt  || null;
+      const acceptedAt = f.acceptedAt || j.acceptedAt || null;
+  
+      const stopp = truthy(f.stopp) || truthy(j.stopp);
+      const no_interest = truthy(f.no_interest) || truthy(j.no_interest);
+      const unsubscribed = truthy(f.unsubscribed) || truthy(j.unsubscribed);
+      const avmeldt = no_interest || unsubscribed;
+  
+      let status = 'Planlagt';
+      if (truthy(f.failed) || String(f.status||'').toLowerCase()==='failed') status = 'Feilet';
+      if (stopp) status = 'Stoppet';
+      if (executed) status = 'Sendt';
+      if (opened) status = 'Åpnet';
+      if (clicked) status = 'Klikket';
+      if (avmeldt) status = 'Avmeldt';
+      if (accepted) status = 'Akseptert'; // høyest
+  
+      const step = (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr)))
+        ? Number(f.internnr)
+        : (f.step ?? null);
   
       return {
         id,
-        subject: payload.subject || f.title || '—',
-        to: payload.epost || payload.email || '',
-        step: (typeof f.internnr === 'number' || /^\d+$/.test(String(f.internnr))) ? Number(f.internnr) : (f.step ?? null),
+        subject,
+        to: emailTo,
+        step,
         status,
-        scheduledAt: f.when || null,
-        sentAt: f.executedAt || null,
-        stopp
+        scheduledAt,
+        sentAt: executedAt,
+        openedAt, clickedAt, acceptedAt,
+        stopp,
+        rawStatus: String(f.status||'').toLowerCase()
       };
     });
   
-    // Sortér fornuftig (steg stigende)
-    norm.sort((a, b) => {
+    // sortér pr steg → tid
+    norm.sort((a,b) => {
       const sa = (a.step ?? Number.POSITIVE_INFINITY);
       const sb = (b.step ?? Number.POSITIVE_INFINITY);
       if (sa !== sb) return sa - sb;
@@ -325,15 +380,9 @@ function renderEmailFlows(flows = []) {
       return new Date(ta) - new Date(tb);
     });
   
-    const fmtDT = (iso) => {
-      if (!iso) return '—';
-      const d = new Date(iso);
-      return isNaN(d) ? '—' : d.toLocaleString('no-NO');
-    };
-  
-    // Header
+    // header
     const hdr = `
-      <div class="flows-grid" style="margin-bottom:6px;grid-template-columns:auto 1fr auto auto auto auto;">
+      <div class="flows-grid" style="margin-bottom:6px;">
         <div class="hdr">#</div>
         <div class="hdr">Emne</div>
         <div class="hdr">Steg</div>
@@ -343,34 +392,49 @@ function renderEmailFlows(flows = []) {
       </div>
     `;
   
-    // Rader
+    // rader
     const rows = norm.map((f, idx) => {
-      const statusTag = (() => {
-        const base = 'tag';
-        if (f.status === 'Akseptert') return `${base} ok`;
-        if (f.accepted === true) return `${base} ok`;
-        if (f.open === true) return `${base} info`;
-        if (f.stopp === true) return `${base} warn`;
-        if (f.status === 'Avmeldt') return `${base} warn`;
-        if (['sent','opened','clicked'].includes(f.status)) return `${base} info`;
-        if (f.status === 'failed') return `${base} warn`;
-        return base;
-      })();
+      // css-klasse for status
+      const key = f.status.toLowerCase()
+        .replace(/\s+/g,'_')
+        .replace('å','å'); // bevar norsk key
+  
+      const tagClass =
+        key.includes('akseptert') ? 'tag-akseptert' :
+        key.includes('avmeldt')   ? 'tag-avmeldt'   :
+        key.includes('klikket')   ? 'tag-åpnet'     : // egen farge? bruk blå som for åpnet
+        key.includes('åpnet')     ? 'tag-åpnet'     :
+        key.includes('sendt')     ? 'tag-sendt'     :
+        key.includes('stoppet')   ? 'tag-stoppet'   :
+        key.includes('utgått')    ? 'tag-utgått'    :
+        key.includes('feilet')    ? 'tag-feilet'    :
+                                    'tag-planlagt';
   
       const when = f.sentAt ? fmtDT(f.sentAt) : fmtDT(f.scheduledAt);
+  
+      const disableToggle = ['sendt','åpnet','klikket','akseptert','feilet']
+        .includes(f.status.toLowerCase());
       const checked  = f.stopp ? 'checked' : '';
-      const disabled = ['sent','opened','clicked'].includes(f.status) ? 'disabled' : '';
-      const strikeStyle = disabled ? 'text-decoration: line-through; opacity:0.7;' : '';
+      const disabled = disableToggle ? 'disabled' : '';
+      const strikeStyle = disableToggle ? 'text-decoration: line-through; opacity:0.7;' : '';
+  
+      // chips for hendelser
+      const chips = [
+        f.openedAt   ? `<span class="chip">Åpnet: ${escapeHtml(fmtDT(f.openedAt))}</span>` : '',
+        f.clickedAt  ? `<span class="chip">Klikket: ${escapeHtml(fmtDT(f.clickedAt))}</span>` : '',
+        f.acceptedAt ? `<span class="chip">Akseptert: ${escapeHtml(fmtDT(f.acceptedAt))}</span>` : '',
+      ].join('');
   
       return `
-        <div class="flows-grid" style="grid-template-columns:auto 1fr auto auto auto auto;">
+        <div class="flows-grid">
           <div>${idx + 1}</div>
           <div>
             <strong>${escapeHtml(f.subject)}</strong>
             <div class="muted">${escapeHtml(f.to)}</div>
+            ${chips}
           </div>
           <div>${Number.isFinite(+f.step) ? f.step : '—'}</div>
-          <div><span class="${statusTag}">${escapeHtml(f.status)}</span></div>
+          <div><span class="tag ${tagClass}">${escapeHtml(f.status)}</span></div>
           <div>${when}</div>
           <div>
             <label class="muted" style="display:inline-flex;align-items:center;gap:6px;${strikeStyle}">
@@ -390,7 +454,7 @@ function renderEmailFlows(flows = []) {
   
     return hdr + rows;
   
-    // helpers
+    // --- local helpers ---
     function escapeHtml(s) {
       return String(s ?? '')
         .replace(/&/g, "&amp;")
