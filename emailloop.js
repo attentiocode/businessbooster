@@ -117,8 +117,7 @@
       sync(stepObj);
     });
 
-    // — Quill init —
-    const q = new Quill(`#${editorDiv.id}`, {
+    const q = new Quill(editorDiv, {
       theme: 'snow',
       placeholder: 'Skriv e-postinnhold her …',
       modules: {
@@ -130,6 +129,7 @@
         ]
       }
     });
+
     q.root.innerHTML = stepObj.body || "";
     q.on('text-change', debounce(() => {
       stepObj.body = q.root.innerHTML;
