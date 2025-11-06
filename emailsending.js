@@ -1,20 +1,4 @@
-var stepp1 = 0; //Første utsending
-var stepp2 = 2;
-var stepp3 = 3;
-var stepp4 = 4;
-var stepp5 = 5;
 
-var subject1 = "Slik kan Innkjøps-gruppen hjelpe dere med bedre innkjøpsbetingelser";
-var subject2 = "Har dere vurdert Innkjøps-gruppen for bedre innkjøpsbetingelser?";
-var subject3 = "Få bedre innkjøpsbetingelser med Innkjøps-gruppen";
-var subject4 = "Siste sjanse til å forbedre innkjøpsbetingelsene deres";
-var subject5 = "Avsluttende tilbud: Forbedre innkjøpsbetingelsene deres i dag";
-
-var emailbody1 = "";
-var emailbody2 = "";
-var emailbody3 = "";
-var emailbody4 = "";
-var emailbody5 = "";
 
 var mailSettings = [
     {
@@ -92,7 +76,7 @@ async function sendDataToZapierWebhook(data,url) {
     }
 }
 
-function getEmailBody(company, type = 'trial') {
+function getEmailBody(company, stepp) {
   // --- helpers --------------------------------------------------------------
   const escapeHtml = (s) =>
     String(s ?? '')
@@ -110,6 +94,10 @@ function getEmailBody(company, type = 'trial') {
   const navn    = company?.navn || '';
   const kontakt = company?.kontaktperson?.navn || company?.lederNavn || '';
   const greetingName = kontakt || navn || 'der';
+
+  //Stepp detaljer
+  const ctatext = stepp?.cta || 'Prøv oss helt uforpliktet i 30 dager';
+  const bodyInnerHtml = stepp?.body || '';
 
   // --- sporing (Zapier fyller inn {{trackingId}}) ---------------------------
   const PUBLIC_BASE_URL = 'https://airtable-time-runner.vercel.app'; // API-base
@@ -134,7 +122,7 @@ function getEmailBody(company, type = 'trial') {
 
   // --- content --------------------------------------------------------------
   const preheader =
-    'Prøv Innkjøps-gruppen helt uforpliktet i 30 dager – sparer du ikke, betaler du ikke.';
+    '';
 
   // --- HTML -----------------------------------------------------------------
   return `
@@ -208,35 +196,15 @@ function getEmailBody(company, type = 'trial') {
 
             <tr>
               <td class="content">
-                <p>Hei ${escapeHtml(greetingName)},</p>
-                <p style="margin-top:10px;">
-                  Vi i <strong>Innkjøps-gruppen</strong> hjelper bedrifter å redusere kostnader og oppnå bedre avtaler –
-                  helt uten binding. Dere får tilgang til fremforhandlede priser og rammeavtaler med solide leverandører
-                  innenfor de viktigste innkjøpsområdene.
-                </p>
-
-                <ul class="list">
-                  <li><strong>Lavere priser</strong> gjennom felles volum</li>
-                  <li><strong>Forutsigbare vilkår</strong> og enklere administrasjon</li>
-                  <li><strong>Ingen binding</strong> – prøv oss risikofritt</li>
-                  <li><strong>Personlig oppfølging</strong> fra vårt erfarne team</li>
-                </ul>
-
-                <div class="highlight">
-                  Sparer du ikke – betaler du ikke.
-                </div>
+                ${bodyInnerHtml}
 
                 <a href="${ctaHrefTrial}" class="cta" target="_blank" rel="noopener">
-                  Prøv oss helt uforpliktet i 30 dager
+                  ${escapeHtml(ctatext)}
                 </a>
 
                 <a href="${escapeHtml(rawCtaContact)}" class="cta-secondary" target="_blank" rel="noopener">
                   Har du spørsmål? Ta gjerne kontakt her
                 </a>
-
-                <div class="meta">
-                  Mange bedrifter sparer betydelige summer allerede første måned – la oss vise deg hvordan.
-                </div>
               </td>
             </tr>
 

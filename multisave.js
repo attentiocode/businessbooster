@@ -249,50 +249,57 @@ function maketimerunnerObjects(companyes) {
 
     companyes.forEach(company => {
 
-        for (var i = 0; i < mailSettings.length; i++) {
+        for (var i = 0; i < gEmailLoopSettings.length; i++) {
 
-            let daystepp = mailSettings[i].stepp;
-            const nextSteppDate = new Date();
+          //finne riktig stepp fra gEmailLoopSettings som matcher i stepp nr og i+1
+          let stepp = gEmailLoopSettings.find(s => s.stepnr === (i + 1));
+          if (!stepp) continue; //hopp over hvis ikke funnet
+
+          let subject = stepp.subject || '';
+          let cta = stepp.cta || '';
+          let daystepp = stepp.delay || 0;
+
+          let emailBody = getEmailBody(company,stepp);
+          const nextSteppDate = new Date();
+          
+          if (daystepp == 0) {
+            // Spol 10 minutter tilbake fra nå
+            nextSteppDate.setMinutes(nextSteppDate.getMinutes() - 10);
+          } else {
+            // Legg til antall dager frem i tid
+            nextSteppDate.setDate(nextSteppDate.getDate() + parseInt(daystepp || 0));
+          }
+
             
-            if (daystepp == 0) {
-              // Spol 10 minutter tilbake fra nå
-              nextSteppDate.setMinutes(nextSteppDate.getMinutes() - 10);
-            } else {
-              // Legg til antall dager frem i tid
-              nextSteppDate.setDate(nextSteppDate.getDate() + parseInt(daystepp || 0));
-            }
-
-
-            let emailBody = getEmailBody(company,null);
-            let subject = mailSettings[i].subject || '';
+          //Hvilke gruppe epostene tilhører
             let group = ["rec7so5TB9qPCgf1w"];
 
 
-            let timerunnerObject = {
-                when: nextSteppDate.toISOString(),
-                externalId: company.navn || '',
-                hookUrl: "https://hooks.zapier.com/hooks/catch/24993663/uragru1/",
-                method: "POST",
-                payload: JSON.stringify({
-                    orgnr: company.orgnr || '',
-                    navn: company.navn || '',
-                    epost: company.epostadresse || '',
-                    telefon: company.telefon || company.mobil || '',
-                    hjemmeside: company.hjemmeside || '',
-                    emailBody: emailBody,
-                    subject: subject
-                }),
-                title: `Epost steg ${i + 1} til ${company.navn || company.organisasjonsnummer}`,
-                description: `Automatisk epost steg ${i + 1}}`,
-                customerId:company.orgnr,
-                status: "pending",
-                external_databaseId: baseid,
-                external_tableId: tabelid,
-                external_rawId: company.id || '',
-                internnr:i + 1,
-                group:group
-            };
-            timerunnerObjects.push(timerunnerObject);
+          let timerunnerObject = {
+              when: nextSteppDate.toISOString(),
+              externalId: company.navn || '',
+              hookUrl: "https://hooks.zapier.com/hooks/catch/24993663/uragru1/",
+              method: "POST",
+              payload: JSON.stringify({
+                  orgnr: company.orgnr || '',
+                  navn: company.navn || '',
+                  epost: company.epostadresse || '',
+                  telefon: company.telefon || company.mobil || '',
+                  hjemmeside: company.hjemmeside || '',
+                  emailBody: emailBody,
+                  subject: subject
+              }),
+              title: `Epost steg ${i + 1} til ${company.navn || company.organisasjonsnummer}`,
+              description: `Automatisk epost steg ${i + 1}}`,
+              customerId:company.orgnr,
+              status: "pending",
+              external_databaseId: baseid,
+              external_tableId: tabelid,
+              external_rawId: company.id || '',
+              internnr:i + 1,
+              group:group
+          };
+          timerunnerObjects.push(timerunnerObject);
 
         }
 
