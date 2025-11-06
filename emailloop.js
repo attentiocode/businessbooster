@@ -180,4 +180,21 @@ function emailLoopUpdate(field, value, stepp) {
   // TODO: lagre / PATCH mot Airtable her
   // console.log('oppdater', { field, value, stepnr });
   console.log('emailLoopUpdate called:', { field, value, stepp });
+
+  //finne riktig steg i gEmailLoopSettings med feltet airtable
+  let airtableid = stepp.airtable;
+  const stepToUpdate = gEmailLoopSettings.find(s => s.airtableid === airtableid);
+  if (stepToUpdate) {
+    stepToUpdate[field] = value;
+  } 
+  //lag body for oppdatering
+  let body = {[field]: value};
+
+  //oppdater på server
+  PATCHairtable("baseId","tableId",airtableid,body,"responsUpdateServerEmailLoop");
+}
+
+function responsUpdateServerEmailLoop(data){
+
+  console.log("responsUpdateServerEmailLoop:",data);
 }

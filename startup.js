@@ -309,6 +309,8 @@ function ruteresponse(data,responseid){
       timeRunnerObjects(data);
     }else if(responseid==="emailLoopsResponse"){
       emailLoopsResponse(data);
+    }else if(responseid==="responsUpdateServerEmailLoop"){
+      responsUpdateServerEmailLoop(data);
     }
 }
 
