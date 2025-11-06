@@ -21,14 +21,15 @@
 
       const name = data.company?.name || 'din bedrift';
       const org  = data.company?.orgnr ? ` (org.nr ${data.company.orgnr})` : '';
-      const pagecontent = document.getElementById('pageContent');
+      const pagecontent = document.getElementById('pagecontent');
       const pageloader = document.getElementById('pageLoader');
+      const button = document.getElementById('acceptButton');
 
       if (infoEl) {
         infoEl.style.display = 'block';
         pagecontent.style.display = 'block';
-        btn.style.display = 'inline-block';
-        
+        button.style.display = 'inline-block';
+
         pageloader.style.display = 'none';
         infoEl.innerHTML = `
           <h2 style="font-size:30px;margin-bottom:8px;">Velkommen, ${name}!</h2>
