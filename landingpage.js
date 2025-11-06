@@ -56,8 +56,10 @@
       if (!r.ok || !data.ok) throw new Error(data.error || 'Ukjent feil');
 
       btn.textContent = 'Akseptert ✔';
-      if (infoEl) {
-        infoEl.innerHTML = `
+
+      const infoTextOverButton = document.getElementById('infoTextOverButton');
+      if (infoTextOverButton) {
+        infoTextOverButton.innerHTML = `
           <h2>Takk for bekreftelsen!</h2>
           <p>Vi har registrert at dere ønsker å prøve Innkjøps-gruppen. En representant vil kontakte dere snart.</p>
         `;
