@@ -904,10 +904,3 @@ function getEmailLoops(groupid = "rec6jilq4Xy1Huc9d"){
 }
 
 
-function emailLoopsResponse(data){
-
-  let stepps = rawdatacleaner(data);
-  gEmailLoopSettings = stepps;
-  emailLoopRender(stepps);
-
-}

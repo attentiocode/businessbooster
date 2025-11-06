@@ -301,7 +301,16 @@ function emailLoopRender(stepps) {
   window._emailLoopBuilding = false;
 }
 
+function emailLoopsResponse(data){
 
+  let stepps = rawdatacleaner(data);
+  gEmailLoopSettings = stepps;
+  emailLoopRender(stepps);
+
+  console.log(gEmailLoopSettings);
+  
+
+}
 
 
 function emailLoopUpdate(field, value, stepp) {
@@ -315,6 +324,9 @@ function emailLoopUpdate(field, value, stepp) {
   if (stepToUpdate) {
     stepToUpdate[field] = value;
   } 
+
+
+  console.log(gEmailLoopSettings);
   //lag body for oppdatering
   let body = {[field]: value};
 
