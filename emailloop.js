@@ -8,6 +8,9 @@ function emailLoopRender(stepps) {
     return;
   }
 
+  // --- intern map for editorene ---
+  const _elrQuills = new Map();
+
   // ---------- små hjelpere ----------
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -28,10 +31,51 @@ function emailLoopRender(stepps) {
       .elr-input{width:100%;padding:10px 12px;border:1px solid #2A3B55;background:#0B1324;color:#E6EEFC;border-radius:10px;outline:none}
       .elr-input:focus{border-color:#3B82F6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
       .elr-editor{margin-top:14px}
-      .elr-card .ql-toolbar.ql-snow{background:#0B1324;border:1px solid #2A3B55;border-radius:10px 10px 0 0}
-      .elr-card .ql-container.ql-snow{border:1px solid #2A3B55;border-top:0;background:#0A1120;color:#E6EEFC;border-radius:0 0 10px 10px}
+
+      /* --- Quill: kombinert look --- */
+      /* Mørk toolbar */
+      .elr-card .ql-toolbar.ql-snow{
+        background:#0F172A;
+        border:1px solid #334155;
+        border-radius:10px 10px 0 0;
+      }
+      /* Ikoner/tekster i toolbar som hvite */
+      .elr-card .ql-toolbar button svg,
+      .elr-card .ql-toolbar .ql-picker-label,
+      .elr-card .ql-toolbar .ql-picker-item{
+        color:#E6EEFC !important;
+        stroke:#E6EEFC !important;
+        fill:#E6EEFC !important;
+      }
+      /* Aktiv knapp = blå */
+      .elr-card .ql-toolbar button.ql-active svg,
+      .elr-card .ql-toolbar .ql-picker-label.ql-active{
+        color:#3B82F6 !important;
+        stroke:#3B82F6 !important;
+        fill:#3B82F6 !important;
+      }
+      /* Dropdown-meny mørk */
+      .elr-card .ql-picker-options{
+        background:#0F172A !important;
+        border-color:#334155 !important;
+      }
+
+      /* Lys editor for lesbarhet */
+      .elr-card .ql-container.ql-snow{
+        border:1px solid #334155;
+        border-top:0;
+        background:#FFFFFF;
+        color:#0F172A;
+        border-radius:0 0 10px 10px;
+      }
       .elr-card .ql-editor{min-height:220px}
-      @media (max-width:860px){.elr-grid{grid-template-columns:60px 1fr}.elr-grid>div:nth-child(3),.elr-grid>div:nth-child(4){grid-column:1/-1}}
+      .elr-card .ql-editor a{color:#2563EB;}
+      .elr-card .ql-editor ::selection{background:rgba(59,130,246,.18);}
+
+      @media (max-width:860px){
+        .elr-grid{grid-template-columns:60px 1fr}
+        .elr-grid>div:nth-child(3),.elr-grid>div:nth-child(4){grid-column:1/-1}
+      }
     `;
     const style = document.createElement('style');
     style.id = 'elr-style';
@@ -117,9 +161,7 @@ function emailLoopRender(stepps) {
       if (typeof window.emailLoopUpdate === "function") {
         window.emailLoopUpdate(field, value, stepnr);
       } else {
-        // Fallback: oppdater i stepps-arrayen hvis ønskelig
-        step[field] = value;
-        // console.log('emailLoopUpdate missing, updated local step:', field, value, stepnr);
+        step[field] = value; // fallback
       }
     };
 
@@ -157,6 +199,7 @@ function emailLoopRender(stepps) {
     _elrQuills.set(stepnr, q);
   });
 }
+
 
 
 function emailLoopUpdate(field, value, stepnr) {
