@@ -174,13 +174,13 @@ function getEmailBody(company, stepp) {
                 <a href="${ctaHrefTrial}" class="cta" target="_blank" rel="noopener">
                   ${escapeHtml(ctatext)}
                 </a>
-                
+
               </td>
             </tr>
 
             <tr>
               <td class="signature">
-                <p>&nbsp;<strong>innkj&oslash;psGRUPPEN<br /></strong>
+                <p>&nbsp;<strong>innkj&oslash;ps-GRUPPEN<br /></strong>
                   <span>Mobil:&nbsp;+47 91 14 52 94</span><br />
                   <span>Epost: </span><u><a href="mailto:post@innkjops-gruppen.no">post@innkjops-gruppen.no</a><br /><br /></u>
                   <u><a href="http://www.innkjops-gruppen.no/">www.innkjops-gruppen.no</a><br />
