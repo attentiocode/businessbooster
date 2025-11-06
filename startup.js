@@ -491,7 +491,7 @@ function updateCounter(elementId, newValue, duration = 500, endingValue = "") {
 }
 
 function getCustomer(){     
-  //hente kunder
+  //hente kunder i portalen
   GETairtable("app1WzN1IxEnVu3m0","tbldZL68MyLNBRjQC","rec1QGUGBMVaqxhp1","customerResponse","skipCache");
 }
   
@@ -666,13 +666,33 @@ function leadsResponse(data){
 
   if (!data || !data.fields || !data.fields.leadsjson || !Array.isArray(data.fields.leadsjson)) {
     data.fields.leadsjson = [];
+   
   } 
+
+  if (!data || !data.fields || !data.fields.groupjson || !Array.isArray(data.fields.groupjson)) {
+    data.fields.groupjson = [];
+  }
+
+
+  
+
+  
 
   // Konverter JSON-strenger til objekter
   const jsonStrings = data.fields.leadsjson;
 
   let boosterLeads = convertLeadsJsonStringsToObjects(jsonStrings);
   gProsessertBedrifter = boosterLeads;
+  loadGroupSelectors(data);
+  renderGroups();
+
+
+  //henter ut gruppene
+  const jsongroupStrings = data.fields.groupjson;
+  let boosterGroups = convertLeadsJsonStringsToObjects(jsongroupStrings);
+  gGroups = boosterGroups;
+
+
  
   //oppdater teller
   updateProsessCountElement(gProsessertBedrifter.length);

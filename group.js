@@ -36,7 +36,7 @@ function loadGroupSelectors(data){
       selector.innerHTML = '<option value="ALL">Alle grupper</option>';
       data.forEach(g => {
         const option = document.createElement('option');
-        option.value = g.id;
+        option.value = g.id || g.airtable || g.name;
         option.textContent = g.name;
         selector.appendChild(option);
       });
@@ -94,4 +94,4 @@ function deleteGroup(i) {
 
 document.getElementById('searchGroup').addEventListener('input', e => renderGroups(e.target.value));
 
-renderGroups();
+//renderGroups();
