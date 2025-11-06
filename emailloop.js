@@ -30,18 +30,31 @@ function emailLoopRender(stepps) {
       .elr-input:focus{border-color:#3B82F6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
       .elr-editor{margin-top:14px}
 
-      /* Quill – standard lys stil */
-      .elr-card .ql-toolbar.ql-snow{
-        background:#F9FAFB;
-        border:1px solid #CBD5E1;
-        border-radius:10px 10px 0 0;
+     .elr-card .ql-toolbar.ql-snow {
+        background: #F9FAFB;
+        border: 1px solid #CBD5E1;
+        border-radius: 10px 10px 0 0;
       }
-      .elr-card .ql-container.ql-snow{
-        background:#FFFFFF;
-        border:1px solid #CBD5E1;
-        border-top:0;
-        color:#0F172A;
-        border-radius:0 0 10px 10px;
+      .elr-card .ql-container.ql-snow {
+        background: #FFFFFF;
+        border: 1px solid #CBD5E1;
+        border-top: 0;
+        color: #000000; /* svart tekst */
+        border-radius: 0 0 10px 10px;
+      }
+      /* Sørg for at tekst, overskrifter og lister alltid er svarte */
+      .elr-card .ql-editor,
+      .elr-card .ql-editor p,
+      .elr-card .ql-editor li,
+      .elr-card .ql-editor span,
+      .elr-card .ql-editor strong,
+      .elr-card .ql-editor em {
+        color: #000000 !important;
+      }
+      /* Lenker kan fortsatt være blå */
+      .elr-card .ql-editor a {
+        color: #2563EB !important;
+        text-decoration: underline;
       }
       .elr-card .ql-editor{min-height:220px;}
       .elr-card .ql-picker-label, .elr-card .ql-toolbar button svg{color:#0F172A;fill:#0F172A;}
@@ -71,14 +84,17 @@ function emailLoopRender(stepps) {
 
   // ---------- overskrift ----------
   const groupName = stepps[0]?.groupname ? String(stepps[0].groupname) : "";
+  //dette skal være hvit tekst
   if (groupName) {
     const h = document.createElement('h2');
     h.className = 'elr-title';
     h.textContent = `E-postløp – ${groupName}`;
+    h.style.color = "white";
     container.appendChild(h);
     const sub = document.createElement('div');
     sub.className = 'elr-sub';
-    sub.textContent = 'Alt du skriver lagres ved endring via emailLoopUpdate(field, value, stepnr).';
+    sub.textContent = 'Alt du skriver lagres automatisk ved endring.';
+    sub.style.color = "white";
     container.appendChild(sub);
   }
 
@@ -111,13 +127,13 @@ function emailLoopRender(stepps) {
 
     const colDelay = document.createElement('div');
     colDelay.innerHTML = `
-      <label class="elr-label">Dager</label>
+      <label class="elr-label">Dager etter start</label>
       <input class="elr-input" type="number" min="0" data-role="delaydays" value="${delay}">
     `;
 
     const colCta = document.createElement('div');
     colCta.innerHTML = `
-      <label class="elr-label">CTA-tekst</label>
+      <label class="elr-label">Tekst på knapp</label>
       <input class="elr-input" data-role="cta" value="${esc(cta)}" placeholder="Knapp/lenke-tekst…">
     `;
 
@@ -165,6 +181,13 @@ function emailLoopRender(stepps) {
         ]
       }
     });
+
+    // Sørg for svart tekst som default-format i editor
+    const Parchment = Quill.import('parchment');
+    const ColorClass = new Parchment.Attributor.Style('color', 'color', { scope: Parchment.Scope.INLINE });
+    Quill.register(ColorClass, true);
+    q.format('color', '#000000');
+
     q.root.innerHTML = bodyHtml;
     q.on('text-change', debounce(() => {
       safeUpdate('body', q.root.innerHTML);
@@ -191,7 +214,7 @@ function emailLoopUpdate(field, value, stepp) {
   let body = {[field]: value};
 
   //oppdater på server
-  PATCHairtable("appEUYGzpBtxB0fFe","tblUML599clNbxHRq",airtableid,body,"responsUpdateServerEmailLoop");
+  PATCHairtable("appEUYGzpBtxB0fFe","tblUML599clNbxHRq",airtableid,JSON.stringify(body),"responsUpdateServerEmailLoop");
 }
 
 function responsUpdateServerEmailLoop(data){
