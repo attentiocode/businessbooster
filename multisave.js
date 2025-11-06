@@ -143,7 +143,7 @@ function creatSaveCompatibleList(orgnrList) {
 
     // ⬇️ Fikset: ikke bruk optional chaining ved assignment
     record.client = ["rec3a2DzF0xfNWt0i"];
-    record.countprosess = mailSettings.length || 0;
+    record.countprosess = gEmailLoopSettings.length || 0;
 
     if (!("orgnr" in record)) record.orgnr = normalizedQueryOrgnr;
 

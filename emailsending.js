@@ -1,34 +1,5 @@
 
 
-var mailSettings = [
-    {
-        stepp: 0,
-        subject: subject1,
-        body: emailbody1
-    },
-    {
-        stepp: 2,
-        subject: subject2,
-        body: emailbody2
-    },
-    {
-        stepp: 3,
-        subject: subject3,
-        body: emailbody3
-    },
-    {
-        stepp: 4,
-        subject: subject4,
-        body: emailbody4
-    },
-    {
-        stepp: 5,
-        subject: subject5,
-        body: emailbody5
-    }
-];
-
-
 function sendEmailToCompany(company, totalRows, uploadedRows) {
    
    if (!company || !company.orgnr) {
