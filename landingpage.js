@@ -12,6 +12,9 @@
     return;
   }
 
+  const pagecontent = document.getElementById('pagecontent');
+  pagecontent.style.display = 'none';
+
   async function loadCompany() {
     try {
       const api = `https://airtable-time-runner.vercel.app/api/company-info?rid=${encodeURIComponent(rid)}`;
@@ -21,7 +24,7 @@
 
       const name = data.company?.name || 'din bedrift';
       const org  = data.company?.orgnr ? ` (org.nr ${data.company.orgnr})` : '';
-      const pagecontent = document.getElementById('pagecontent');
+      
       const pageloader = document.getElementById('pageLoader');
       const button = document.getElementById('acceptButton');
 
