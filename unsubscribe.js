@@ -116,6 +116,14 @@
       alert('Beklager – klarte ikke å registrere avmelding. Prøv igjen.');
     }
   });
+
+  const testconfirm = document.getElementById('testconfirm');
+  testconfirm?.addEventListener('click', async () => {
+    //redirekt til ny url
+    let trackingId = rid;
+    window.location.href = "https://ikg-businessbooster.webflow.io/response?rid=" + trackingId;
+  });
+  
 })();
 
 
