@@ -8,6 +8,9 @@ function emailLoopRender(stepps) {
     return;
   }
 
+  // Aktiver "building mode"
+  window._emailLoopBuilding = true;
+
   const _elrQuills = new Map();
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({
@@ -147,6 +150,9 @@ function emailLoopRender(stepps) {
     container.appendChild(card);
 
     const safeUpdate = (field, value) => {
+      // Ikke kjør under bygging
+      if (window._emailLoopBuilding) return;
+    
       if (typeof window.emailLoopUpdate === "function") {
         window.emailLoopUpdate(field, value, step);
       } else {
@@ -194,6 +200,8 @@ function emailLoopRender(stepps) {
     }, 250));
     _elrQuills.set(stepnr, q);
   });
+  // Ferdig med bygging
+  window._emailLoopBuilding = false;
 }
 
 
