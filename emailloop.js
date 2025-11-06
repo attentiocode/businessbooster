@@ -8,70 +8,47 @@ function emailLoopRender(stepps) {
     return;
   }
 
-  // --- intern map for editorene ---
   const _elrQuills = new Map();
 
-  // ---------- små hjelpere ----------
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[c]));
   const debounce = (fn, ms=250) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
 
-  // ---------- isolerte styles (prefiks elr- så de ikke kolliderer) ----------
+  // ---------- Oppdatert styling ----------
   (function injectStylesOnce(){
     if (document.getElementById("elr-style")) return;
     const css = `
       .elr-wrap{max-width:1100px;margin:24px auto;padding:0 8px;}
-      .elr-title{font:600 22px/1.2 system-ui, sans-serif;color:#E5EAF5;margin:0 0 10px;}
-      .elr-sub{color:#9FB2CB;font:12px/1.2 system-ui, sans-serif;margin:0 0 16px;}
-      .elr-card{background:#0F172A;border:1px solid #233047;border-radius:14px;padding:16px;margin:14px 0;}
+      .elr-title{font:600 22px/1.2 system-ui, sans-serif;color:#0F172A;margin:0 0 10px;}
+      .elr-sub{color:#475569;font:12px/1.4 system-ui, sans-serif;margin:0 0 16px;}
+      .elr-card{background:#F8FAFC;border:1px solid #CBD5E1;border-radius:14px;padding:16px;margin:14px 0;}
       .elr-grid{display:grid;grid-template-columns:66px 1fr 120px 1fr;gap:12px;align-items:end}
-      .elr-chip{display:flex;align-items:center;justify-content:center;width:40px;height:28px;border-radius:999px;background:#1E293B;color:#E2E8F0;font-weight:700}
-      .elr-label{font-size:12px;color:#8AA1BF;margin-bottom:6px;display:block}
-      .elr-input{width:100%;padding:10px 12px;border:1px solid #2A3B55;background:#0B1324;color:#E6EEFC;border-radius:10px;outline:none}
+      .elr-chip{display:flex;align-items:center;justify-content:center;width:40px;height:28px;border-radius:999px;background:#E2E8F0;color:#0F172A;font-weight:700}
+      .elr-label{font-size:12px;color:#475569;margin-bottom:6px;display:block}
+      .elr-input{width:100%;padding:10px 12px;border:1px solid #CBD5E1;background:#FFFFFF;color:#0F172A;border-radius:10px;outline:none}
       .elr-input:focus{border-color:#3B82F6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
       .elr-editor{margin-top:14px}
 
-      /* --- Quill: kombinert look --- */
-      /* Mørk toolbar */
+      /* Quill – standard lys stil */
       .elr-card .ql-toolbar.ql-snow{
-        background:#0F172A;
-        border:1px solid #334155;
+        background:#F9FAFB;
+        border:1px solid #CBD5E1;
         border-radius:10px 10px 0 0;
       }
-      /* Ikoner/tekster i toolbar som hvite */
-      .elr-card .ql-toolbar button svg,
-      .elr-card .ql-toolbar .ql-picker-label,
-      .elr-card .ql-toolbar .ql-picker-item{
-        color:#E6EEFC !important;
-        stroke:#E6EEFC !important;
-        fill:#E6EEFC !important;
-      }
-      /* Aktiv knapp = blå */
-      .elr-card .ql-toolbar button.ql-active svg,
-      .elr-card .ql-toolbar .ql-picker-label.ql-active{
-        color:#3B82F6 !important;
-        stroke:#3B82F6 !important;
-        fill:#3B82F6 !important;
-      }
-      /* Dropdown-meny mørk */
-      .elr-card .ql-picker-options{
-        background:#0F172A !important;
-        border-color:#334155 !important;
-      }
-
-      /* Lys editor for lesbarhet */
       .elr-card .ql-container.ql-snow{
-        border:1px solid #334155;
-        border-top:0;
         background:#FFFFFF;
+        border:1px solid #CBD5E1;
+        border-top:0;
         color:#0F172A;
         border-radius:0 0 10px 10px;
       }
-      .elr-card .ql-editor{min-height:220px}
-      .elr-card .ql-editor a{color:#2563EB;}
-      .elr-card .ql-editor ::selection{background:rgba(59,130,246,.18);}
-
+      .elr-card .ql-editor{min-height:220px;}
+      .elr-card .ql-picker-label, .elr-card .ql-toolbar button svg{color:#0F172A;fill:#0F172A;}
+      .elr-card .ql-toolbar button:hover svg{color:#2563EB;fill:#2563EB;}
+      .elr-card .ql-toolbar button.ql-active svg{color:#2563EB;fill:#2563EB;}
+      .elr-card .ql-editor a{color:#2563EB;text-decoration:underline;}
+      .elr-card .ql-editor strong{font-weight:600;}
       @media (max-width:860px){
         .elr-grid{grid-template-columns:60px 1fr}
         .elr-grid>div:nth-child(3),.elr-grid>div:nth-child(4){grid-column:1/-1}
@@ -83,7 +60,7 @@ function emailLoopRender(stepps) {
     document.head.appendChild(style);
   })();
 
-  // ---------- klargjør container ----------
+  // ---------- container ----------
   const container = document.getElementById("emailLoopElementList");
   if (!container) {
     console.warn('emailLoopRender: Fant ikke #emailLoopElementList');
@@ -92,7 +69,7 @@ function emailLoopRender(stepps) {
   container.classList.add('elr-wrap');
   container.innerHTML = "";
 
-  // ---------- overskrift fra groupname ----------
+  // ---------- overskrift ----------
   const groupName = stepps[0]?.groupname ? String(stepps[0].groupname) : "";
   if (groupName) {
     const h = document.createElement('h2');
@@ -105,10 +82,10 @@ function emailLoopRender(stepps) {
     container.appendChild(sub);
   }
 
-  // ---------- sorter etter stepnr ----------
+  // ---------- sorter ----------
   stepps.sort((a, b) => (a.stepnr||0) - (b.stepnr||0));
 
-  // ---------- bygg hvert steg ----------
+  // ---------- bygg ----------
   stepps.forEach(step => {
     const stepnr    = Number(step.stepnr) || 0;
     const delay     = Number(step.delaydays ?? step.delayDays ?? 0) || 0;
@@ -120,7 +97,6 @@ function emailLoopRender(stepps) {
     card.className = 'elr-card';
     card.dataset.step = String(stepnr);
 
-    // Rad: #, subject, delay, cta
     const head = document.createElement('div');
     head.className = 'elr-grid';
 
@@ -147,21 +123,18 @@ function emailLoopRender(stepps) {
 
     head.append(colStep, colSubject, colDelay, colCta);
 
-    // Editor
     const editorWrap = document.createElement('div');
     editorWrap.className = 'elr-editor';
     const editorDiv = document.createElement('div');
     editorWrap.appendChild(editorDiv);
-
     card.append(head, editorWrap);
     container.appendChild(card);
 
-    // Change-handlers → emailLoopUpdate(field, value, stepnr)
     const safeUpdate = (field, value) => {
       if (typeof window.emailLoopUpdate === "function") {
-        window.emailLoopUpdate(field, value, stepnr);
+        window.emailLoopUpdate(field, value, step);
       } else {
-        step[field] = value; // fallback
+        step[field] = value;
       }
     };
 
@@ -172,14 +145,14 @@ function emailLoopRender(stepps) {
     colDelay.querySelector('[data-role="delaydays"]').addEventListener('input', e => {
       const v = Math.max(0, Number(e.target.value)||0);
       e.target.value = v;
-      safeUpdate('delaydays', v);
+      safeUpdate('delay', v);
     });
 
     colCta.querySelector('[data-role="cta"]').addEventListener('input', e => {
       safeUpdate('cta', e.target.value);
     });
 
-    // Quill init
+    // ---------- Quill init ----------
     const q = new Quill(editorDiv, {
       theme: 'snow',
       placeholder: 'Skriv e-postinnhold her …',
@@ -202,8 +175,9 @@ function emailLoopRender(stepps) {
 
 
 
-function emailLoopUpdate(field, value, stepnr) {
+
+function emailLoopUpdate(field, value, stepp) {
   // TODO: lagre / PATCH mot Airtable her
   // console.log('oppdater', { field, value, stepnr });
-  console.log(`emailLoopUpdate called: step ${stepnr}, ${field} =`, value);
+  console.log('emailLoopUpdate called:', { field, value, stepp });
 }
