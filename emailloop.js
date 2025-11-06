@@ -107,7 +107,7 @@ function emailLoopRender(stepps) {
   // ---------- bygg ----------
   stepps.forEach(step => {
     const stepnr    = Number(step.stepnr) || 0;
-    const delay     = Number(step.delaydays ?? step.delayDays ?? 0) || 0;
+    const delay     = Number(step.delay ?? step.delayDays ?? 0) || 0;
     const subject   = String(step.subject ?? "");
     const cta       = String(step.cta ?? "");
     const bodyHtml  = String(step.body ?? "");
