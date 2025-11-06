@@ -689,6 +689,7 @@ function leadsResponse(data){
   //henter ut gruppene
   const jsongroupStrings = data.fields.groupjson;
   let boosterGroups = convertLeadsJsonStringsToObjects(jsongroupStrings);
+  boosterGroups = makeIdCorrections(boosterGroups);
   gGroupbedrifter = boosterGroups;
   loadGroupSelectors(gGroupbedrifter);
   renderGroups();
@@ -732,6 +733,16 @@ function timeRunnerObjects(data){
   renderProsess(gProsessertBedrifter);
   
 
+}
+function makeIdCorrections(data){
+
+  data.forEach(item => {
+      if (!item.id && item.airtable) {
+          item.id = item.airtable;
+      }
+  });
+
+return data
 }
 
 function mergeTimerunnerObject(gTimerunnerObjects) {
