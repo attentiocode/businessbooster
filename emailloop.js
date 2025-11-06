@@ -22,54 +22,151 @@ function emailLoopRender(stepps) {
   (function injectStylesOnce(){
     if (document.getElementById("elr-style")) return;
     const css = `
-      .elr-wrap{max-width:1100px;margin:24px auto;padding:0 8px;}
-      .elr-title{font:600 22px/1.2 system-ui, sans-serif;color:#0F172A;margin:0 0 10px;}
-      .elr-sub{color:#475569;font:12px/1.4 system-ui, sans-serif;margin:0 0 16px;}
-      .elr-card{background:#F8FAFC;border:1px solid #CBD5E1;border-radius:14px;padding:16px;margin:14px 0;}
-      .elr-grid{display:grid;grid-template-columns:66px 1fr 120px 1fr;gap:12px;align-items:end}
-      .elr-chip{display:flex;align-items:center;justify-content:center;width:40px;height:28px;border-radius:999px;background:#E2E8F0;color:#0F172A;font-weight:700}
-      .elr-label{font-size:12px;color:#475569;margin-bottom:6px;display:block}
-      .elr-input{width:100%;padding:10px 12px;border:1px solid #CBD5E1;background:#FFFFFF;color:#0F172A;border-radius:10px;outline:none}
-      .elr-input:focus{border-color:#3B82F6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-      .elr-editor{margin-top:14px}
-
-     .elr-card .ql-toolbar.ql-snow {
-        background: #F9FAFB;
-        border: 1px solid #CBD5E1;
-        border-radius: 10px 10px 0 0;
+    .elr-wrap {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 8px;
+    }
+  
+    .elr-title {
+      font: 600 22px/1.2 system-ui, sans-serif;
+      color: #0F172A;
+      margin: 0 0 10px;
+    }
+  
+    .elr-sub {
+      color: #475569;
+      font: 12px/1.4 system-ui, sans-serif;
+      margin: 0 0 16px;
+    }
+  
+    .elr-card {
+      background: #F8FAFC;
+      border: 1px solid #CBD5E1;
+      border-radius: 14px;
+      padding: 16px;
+      margin: 14px 0;
+    }
+  
+    .elr-grid {
+      display: grid;
+      grid-template-columns: 66px 1fr 120px 1fr;
+      gap: 12px;
+      align-items: end;
+    }
+  
+    .elr-chip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 28px;
+      border-radius: 999px;
+      background: #E2E8F0;
+      color: #0F172A;
+      font-weight: 700;
+      align-self: start; /* 🔥 Toppstilt chip */
+      margin-top: 2px;   /* litt luft ned mot inputfeltene */
+    }
+  
+    .elr-label {
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 6px;
+      display: block;
+    }
+  
+    .elr-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #CBD5E1;
+      background: #FFFFFF;
+      color: #0F172A;
+      border-radius: 10px;
+      outline: none;
+    }
+  
+    .elr-input:focus {
+      border-color: #3B82F6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+  
+    .elr-editor {
+      margin-top: 14px;
+    }
+  
+    /* --- Quill styling --- */
+    .elr-card .ql-toolbar.ql-snow {
+      background: #F9FAFB;
+      border: 1px solid #CBD5E1;
+      border-radius: 10px 10px 0 0;
+    }
+  
+    .elr-card .ql-container.ql-snow {
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-top: 0;
+      color: #000000; /* svart tekst */
+      border-radius: 0 0 10px 10px;
+    }
+  
+    /* Sørg for at tekst, overskrifter og lister alltid er svarte */
+    .elr-card .ql-editor,
+    .elr-card .ql-editor p,
+    .elr-card .ql-editor li,
+    .elr-card .ql-editor span,
+    .elr-card .ql-editor strong,
+    .elr-card .ql-editor em {
+      color: #000000 !important;
+    }
+  
+    /* Lenker kan fortsatt være blå */
+    .elr-card .ql-editor a {
+      color: #2563EB !important;
+      text-decoration: underline;
+    }
+  
+    .elr-card .ql-editor {
+      min-height: 220px;
+    }
+  
+    /* Verktøyikonene mørke (sort) + blå ved hover */
+    .elr-card .ql-picker-label,
+    .elr-card .ql-toolbar button svg {
+      color: #0F172A;
+      fill: #0F172A;
+    }
+  
+    .elr-card .ql-toolbar button:hover svg {
+      color: #2563EB;
+      fill: #2563EB;
+    }
+  
+    .elr-card .ql-toolbar button.ql-active svg {
+      color: #2563EB;
+      fill: #2563EB;
+    }
+  
+    .elr-card .ql-editor a {
+      color: #2563EB;
+      text-decoration: underline;
+    }
+  
+    .elr-card .ql-editor strong {
+      font-weight: 600;
+    }
+  
+    @media (max-width: 860px) {
+      .elr-grid {
+        grid-template-columns: 60px 1fr;
       }
-      .elr-card .ql-container.ql-snow {
-        background: #FFFFFF;
-        border: 1px solid #CBD5E1;
-        border-top: 0;
-        color: #000000; /* svart tekst */
-        border-radius: 0 0 10px 10px;
+      .elr-grid > div:nth-child(3),
+      .elr-grid > div:nth-child(4) {
+        grid-column: 1 / -1;
       }
-      /* Sørg for at tekst, overskrifter og lister alltid er svarte */
-      .elr-card .ql-editor,
-      .elr-card .ql-editor p,
-      .elr-card .ql-editor li,
-      .elr-card .ql-editor span,
-      .elr-card .ql-editor strong,
-      .elr-card .ql-editor em {
-        color: #000000 !important;
-      }
-      /* Lenker kan fortsatt være blå */
-      .elr-card .ql-editor a {
-        color: #2563EB !important;
-        text-decoration: underline;
-      }
-      .elr-card .ql-editor{min-height:220px;}
-      .elr-card .ql-picker-label, .elr-card .ql-toolbar button svg{color:#0F172A;fill:#0F172A;}
-      .elr-card .ql-toolbar button:hover svg{color:#2563EB;fill:#2563EB;}
-      .elr-card .ql-toolbar button.ql-active svg{color:#2563EB;fill:#2563EB;}
-      .elr-card .ql-editor a{color:#2563EB;text-decoration:underline;}
-      .elr-card .ql-editor strong{font-weight:600;}
-      @media (max-width:860px){
-        .elr-grid{grid-template-columns:60px 1fr}
-        .elr-grid>div:nth-child(3),.elr-grid>div:nth-child(4){grid-column:1/-1}
-      }
-    `;
+    }
+  `;
+  
     const style = document.createElement('style');
     style.id = 'elr-style';
     style.textContent = css;
