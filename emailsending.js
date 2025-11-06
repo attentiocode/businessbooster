@@ -65,10 +65,12 @@ function getEmailBody(company, stepp) {
   const navn    = company?.navn || '';
   const kontakt = company?.kontaktperson?.navn || company?.lederNavn || '';
   const greetingName = kontakt || navn || 'der';
+  const subject = stepp?.subject || 'Smarte innkjøp for bedre lønnsomhet';
 
   //Stepp detaljer
   const ctatext = stepp?.cta || 'Prøv oss helt uforpliktet i 30 dager';
   const bodyInnerHtml = stepp?.body || '';
+
 
   // --- sporing (Zapier fyller inn {{trackingId}}) ---------------------------
   const PUBLIC_BASE_URL = 'https://airtable-time-runner.vercel.app'; // API-base
@@ -160,7 +162,7 @@ function getEmailBody(company, stepp) {
           <table role="presentation" class="card" cellpadding="0" cellspacing="0">
             <tr>
               <td class="header">
-                <p class="title">Smarte innkjøp for bedre lønnsomhet</p>
+                <p class="title">${subject}</p>
                 <p class="subtle">Til ${navn ? escapeHtml(navn) : 'deres virksomhet'}${orgnr ? ' (org.nr ' + orgnr + ')' : ''}</p>
               </td>
             </tr>
@@ -172,10 +174,7 @@ function getEmailBody(company, stepp) {
                 <a href="${ctaHrefTrial}" class="cta" target="_blank" rel="noopener">
                   ${escapeHtml(ctatext)}
                 </a>
-
-                <a href="${escapeHtml(rawCtaContact)}" class="cta-secondary" target="_blank" rel="noopener">
-                  Har du spørsmål? Ta gjerne kontakt her
-                </a>
+                
               </td>
             </tr>
 
