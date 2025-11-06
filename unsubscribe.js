@@ -15,9 +15,11 @@
   // --- HENT ELEMENTER -------------------------------------------------------
   const btn = document.getElementById('unsubButton');
   const sel = document.getElementById('reasonSelector');
+
   if (!btn || !sel) return; // ingenting å gjøre
 
   const otherInput = document.getElementById('reasonOther'); // valgfritt: fritekstfelt
+  otherInput.style.display = 'none'; // skjul inntil videre
   const feedbackEl = document.getElementById('unsubFeedback'); // valgfritt: <div id="unsubFeedback"></div>
 
   // --- POPULER SELECTOR -----------------------------------------------------
@@ -123,7 +125,7 @@
     let trackingId = rid;
     window.location.href = "https://ikg-businessbooster.webflow.io/response?rid=" + trackingId;
   });
-  
+
 })();
 
 

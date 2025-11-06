@@ -370,6 +370,8 @@ function renderSelect(data) {
       try { localStorage.setItem('gSelectbedrifter', JSON.stringify(gSelectbedrifter)); } catch(e){}
 
       renderSelect(gSelectbedrifter);
+      //oppdater lokalteller
+      updateSelectCountElement(gSelectbedrifter.length);
     };
   }
 
