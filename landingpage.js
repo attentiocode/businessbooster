@@ -21,9 +21,13 @@
 
       const name = data.company?.name || 'din bedrift';
       const org  = data.company?.orgnr ? ` (org.nr ${data.company.orgnr})` : '';
+      const pagecontent = document.getElementById('pageContent');
+      const pageloader = document.getElementById('pageLoader');
 
       if (infoEl) {
         infoEl.style.display = 'block';
+        pagecontent.style.display = 'block';
+        pageloader.style.display = 'none';
         infoEl.innerHTML = `
           <h2 style="font-size:30px;margin-bottom:8px;">Velkommen, ${name}!</h2>
           <p style="color:#94a3b8;">${org ? org : ''}</p>
@@ -59,6 +63,7 @@
 
       const infoTextOverButton = document.getElementById('infoTextOverButton');
       if (infoTextOverButton) {
+        infoTextOverButton.style.display = 'block';
         infoTextOverButton.innerHTML = `
           <h2>Takk for bekreftelsen!</h2>
           <p>Vi har registrert at dere ønsker å prøve Innkjøps-gruppen. En representant vil kontakte dere snart.</p>
