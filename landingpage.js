@@ -25,9 +25,8 @@
       if (infoEl) {
         infoEl.style.display = 'block';
         infoEl.innerHTML = `
-          <h2 style="font-size:20px;margin-bottom:8px;">Velkommen, ${name}!</h2>
+          <h2 style="font-size:30px;margin-bottom:8px;">Velkommen, ${name}!</h2>
           <p style="color:#94a3b8;">${org ? org : ''}</p>
-          <p style="color:#cbd5e1;">Vi gleder oss til å vise dere hvordan dere kan spare med Innkjøps-gruppen.</p>
         `;
       }
     } catch (e) {
