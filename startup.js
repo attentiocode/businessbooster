@@ -683,14 +683,15 @@ function leadsResponse(data){
 
   let boosterLeads = convertLeadsJsonStringsToObjects(jsonStrings);
   gProsessertBedrifter = boosterLeads;
-  loadGroupSelectors(data);
-  renderGroups();
+
 
 
   //henter ut gruppene
   const jsongroupStrings = data.fields.groupjson;
   let boosterGroups = convertLeadsJsonStringsToObjects(jsongroupStrings);
-  gGroups = boosterGroups;
+  gGroupbedrifter = boosterGroups;
+  loadGroupSelectors(gGroupbedrifter);
+  renderGroups();
 
 
  
