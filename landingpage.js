@@ -27,6 +27,8 @@
       if (infoEl) {
         infoEl.style.display = 'block';
         pagecontent.style.display = 'block';
+        btn.style.display = 'inline-block';
+        
         pageloader.style.display = 'none';
         infoEl.innerHTML = `
           <h2 style="font-size:30px;margin-bottom:8px;">Velkommen, ${name}!</h2>
@@ -66,7 +68,7 @@
         infoTextOverButton.style.display = 'block';
         infoTextOverButton.innerHTML = `
           <h2>Takk for bekreftelsen!</h2>
-          <p>Vi har registrert at dere ønsker å prøve Innkjøps-gruppen. En representant vil kontakte dere snart.</p>
+          <p>Vi har registrert at dere ønsker å prøve Innkjøps-gruppen sin løsning. En representant vil kontakte dere snart.</p>
         `;
       }
     } catch (e) {
