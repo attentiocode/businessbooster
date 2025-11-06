@@ -191,7 +191,7 @@ function emailLoopUpdate(field, value, stepp) {
   let body = {[field]: value};
 
   //oppdater på server
-  PATCHairtable("baseId","tableId",airtableid,body,"responsUpdateServerEmailLoop");
+  PATCHairtable("appEUYGzpBtxB0fFe","tblUML599clNbxHRq",airtableid,body,"responsUpdateServerEmailLoop");
 }
 
 function responsUpdateServerEmailLoop(data){
