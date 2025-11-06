@@ -81,7 +81,7 @@ function emailLoopRender(stepps) {
     head.className = 'elr-grid';
 
     const colStep = document.createElement('div');
-    colStep.innerHTML = `<div class="elr-label">#</div><div class="elr-chip">${esc(stepnr)}</div>`;
+    colStep.innerHTML = `<div class="elr-chip">${esc(stepnr)}</div>`;
 
     const colSubject = document.createElement('div');
     colSubject.innerHTML = `
@@ -156,4 +156,11 @@ function emailLoopRender(stepps) {
     }, 250));
     _elrQuills.set(stepnr, q);
   });
+}
+
+
+function emailLoopUpdate(field, value, stepnr) {
+  // TODO: lagre / PATCH mot Airtable her
+  // console.log('oppdater', { field, value, stepnr });
+  console.log(`emailLoopUpdate called: step ${stepnr}, ${field} =`, value);
 }
