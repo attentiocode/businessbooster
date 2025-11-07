@@ -478,7 +478,7 @@ function responsNewGroup(data){
       return; // Avbryt hvis data ikke er gyldig
   }
 
-  const airtableId = data.fields.airtableid;
+  const airtableId = data.fields.airtable;
   const groupName = data.fields.name;
 
   //oppdatere gGroupbedrifter med airtableid
