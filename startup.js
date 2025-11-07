@@ -85,7 +85,7 @@ document.getElementById("xls-download-select").addEventListener("click", functio
 });
 
 function generateAndDownloadXls(filename,data){
-  
+  exportXLS(data, filename)
 }
 
 
