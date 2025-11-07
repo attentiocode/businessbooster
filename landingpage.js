@@ -30,7 +30,7 @@
 
       if (infoEl) {
         infoEl.style.display = 'block';
-        pagecontent.style.display = 'block';
+        pagecontent.style.display = 'grid';
         button.style.display = 'inline-block';
 
         pageloader.style.display = 'none';
