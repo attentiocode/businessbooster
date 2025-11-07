@@ -202,7 +202,11 @@ function renderSelect(data) {
 
     if (rowIsReady) tr.classList.add('ready');
 
-    const g = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
+    const g = (gGroupbedrifter || []).find(gr => {
+      const targetId = String(b.group ?? '');
+      return String(gr.id) === targetId || String(gr.airtableId ?? '') === targetId;
+    });
+    
     const contactHtml = renderContactIcons(b);
     const checkboxAttrs = rowIsReady ? 'checked disabled' : '';
 
