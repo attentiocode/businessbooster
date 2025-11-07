@@ -74,8 +74,19 @@ document.getElementById("groupEmailButton").addEventListener("click", function()
     document.getElementById("emailTabButton").click();
 });
 
+document.getElementById("xls-download-select").addEventListener("click", function() {
+  let filename = "Utvalg_bedrifter_"+new Date().toISOString().slice(0,10)+".xlsx";
+    generateAndDownloadXls(filename,xlsactivelist);
+});
 
+document.getElementById("xls-download-select").addEventListener("click", function() {
+  let filename = "Utvalg_bedrifter_"+new Date().toISOString().slice(0,10)+".xlsx";
+  generateAndDownloadXls(filename,xlsactivelist);
+});
 
+function generateAndDownloadXls(filename,data){
+  
+}
 
 
 const fmt = d => d.toISOString().slice(0, 10);
