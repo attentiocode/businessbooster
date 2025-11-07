@@ -89,7 +89,8 @@ function getEmailBody(company, stepp, theme = 'dark') {
       ctaBd: '#1D4ED8',
       ctaText: '#FFFFFF',
       link: '#60A5FA',
-      cardAlt: '#0B1220'
+      cardAlt: '#0B1220',
+      logo: 'https://ucarecdn.com/288f27b9-52b5-4dcd-8322-b58829dcb71f/Logoikghvit.png' // hvit logo
     },
     light: {
       pageBg: '#F3F4F6',
@@ -105,7 +106,8 @@ function getEmailBody(company, stepp, theme = 'dark') {
       ctaBd: '#1D4ED8',
       ctaText: '#FFFFFF',
       link: '#1D4ED8',
-      cardAlt: '#F9FAFB'
+      cardAlt: '#F9FAFB',
+      logo: 'https://ucarecdn.com/c957df15-f29a-486b-bd73-97b2e49362be/Logoikgsort.png' // sort logo
     }
   };
   const T = palettes[theme] || palettes.dark;
@@ -192,16 +194,10 @@ alt="Tamara Gangsøy" width="128" style="border-radius:10px;display:block;" />
 </tr>
 </table>
 
-<!-- undersignatur -->
+<!-- logo nederst, uten tekst -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
-<tr><td align="center" style="text-align:center;">
-  <div style="display:inline-block;background:#000;border-radius:8px;padding:6px 10px;">
-    <img src="https://cdn.prod.website-files.com/68c2d5eff25a8fc4e12b01a4/68dd031014349660631f0991_Logo-re-sort-bg-alpha.png"
-         alt="Innkjøps-Gruppen AS" width="120" style="display:block;margin:0 auto;">
-  </div>
-  <div style="margin-top:6px;font-size:11px;color:${T.subtle};font-family:system-ui,Arial,sans-serif;text-align:center;">
-    Innkjøps-Gruppen AS
-  </div>
+<tr><td align="center">
+  <img src="${T.logo}" alt="Innkjøps-Gruppen logo" width="140" style="display:block;margin:0 auto;">
 </td></tr>
 </table>
 
@@ -221,6 +217,7 @@ alt="Tamara Gangsøy" width="128" style="border-radius:10px;display:block;" />
 </body>
 </html>`;
 }
+
 
 
 
