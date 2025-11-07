@@ -79,8 +79,8 @@ document.getElementById("xls-download-select").addEventListener("click", functio
     generateAndDownloadXls(filename,xlsactivelist);
 });
 
-document.getElementById("xls-download-select").addEventListener("click", function() {
-  let filename = "Utvalg_bedrifter_"+new Date().toISOString().slice(0,10)+".xlsx";
+document.getElementById("xls-download-prosess").addEventListener("click", function() {
+  let filename = "Prosess_bedrifter_"+new Date().toISOString().slice(0,10)+".xlsx";
   generateAndDownloadXls(filename,xlsactivelist);
 });
 
