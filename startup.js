@@ -315,6 +315,8 @@ function ruteresponse(data,responseid){
       responsNewGroup(data);
     }else if(responseid==="responsUpdateGroup"){
       responsUpdateGroup(data);
+    }else if(responseid==="responsDeleteGroup"){
+      responsDeleteGroup(data);
     }
 }
 
@@ -478,6 +480,19 @@ function responsUpdateGroup(data){
 
   console.log("Gruppe oppdatert på serveren");
 }
+
+function deleteGroupFromServer(group){
+
+  let airtableId = group.airtable;
+
+  DELETEairtable("appEUYGzpBtxB0fFe","tblJmOcDQQneKOFKg",airtableId,"responsDeleteGroup",item=null)
+}
+
+function responsDeleteGroup(data){
+
+  console.log("Gruppe slettet fra serveren");
+}
+
 async function dataFromBrregToSelect() {
  
   const container = document.getElementById("rowlist");
