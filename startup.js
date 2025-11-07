@@ -246,7 +246,7 @@ document.getElementById("brregmastercheckbox").addEventListener("change", functi
   //hvis det er mer en 1 checkbox som er valgt så gjør maassbehandling synlig
   const bulkBar   = document.getElementById('select-bulk-actions-brreg');
   const checkboxesChecked = container.querySelectorAll(".selectcheckbox:checked");
-  if (!this.checked){
+  if (this.checked){
     bulkBar.style.display = "flex";
     const bulkCount = document.getElementById('select-bulk-count-brreg');
     //finne ut hvor mange chackboxer som er checked i listen med id rowlistSelect
@@ -272,7 +272,7 @@ document.getElementById("selectmastercheckbox").addEventListener("change", funct
     //hvis det er mer en 1 checkbox som er valgt så gjør maassbehandling synlig
     const bulkBar   = document.getElementById('select-bulk-actions');
     const checkboxesChecked = container.querySelectorAll(".selectcheckbox:checked");
-    if (!this.checked){
+    if (this.checked){
       bulkBar.style.display = "flex";
       const bulkCount = document.getElementById('select-bulk-count');
       //finne ut hvor mange chackboxer som er checked i listen med id rowlistSelect
