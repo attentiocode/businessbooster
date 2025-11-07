@@ -68,8 +68,10 @@ function saveGroup() {
   }
   if (editIndex === null) {
     gGroupbedrifter.push({ id: Date.now(), name, user, desc });
+    sendNewGroupToServer({ id: Date.now(), name, user, desc });
   } else {
     gGroupbedrifter[editIndex] = { ...gGroupbedrifter[editIndex], name, user, desc };
+    updateNewGroupToServer(gGroupbedrifter[editIndex]);
   }
   renderGroups();
   closeDialog();

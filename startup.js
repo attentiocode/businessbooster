@@ -311,6 +311,10 @@ function ruteresponse(data,responseid){
       emailLoopsResponse(data);
     }else if(responseid==="responsUpdateServerEmailLoop"){
       responsUpdateServerEmailLoop(data);
+    }else if(responseid==="responsNewGroup"){
+      responsNewGroup(data);
+    }else if(responseid==="responsUpdateGroup"){
+      responsUpdateGroup(data);
     }
 }
 
@@ -457,6 +461,23 @@ function responsNewGroup(data){
 
 }
 
+
+function updateNewGroupToServer(group){
+
+let body = JSON.stringify({
+  name: group.name,
+  user: group.user,
+  desc: group.desc
+  });
+PATCHairtable("appEUYGzpBtxB0fFe","tblJmOcDQQneKOFKg",group.airtable,body,"responsUpdateGroup",item=null)
+
+}
+
+
+function responsUpdateGroup(data){
+
+  console.log("Gruppe oppdatert på serveren");
+}
 async function dataFromBrregToSelect() {
  
   const container = document.getElementById("rowlist");
@@ -801,7 +822,7 @@ function makeIdCorrections(data){
 
   data.forEach(item => {
       if (!item.id && item.airtable) {
-          item.id = item.airtable;
+          item.id = item.identity || item.airtable;
       }
   });
 
