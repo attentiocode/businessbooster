@@ -992,7 +992,12 @@ function updateAllLocalConterts(){
 function updateReadyCountElement(count){
   //readyCountElement
   const readyCountElement = document.getElementById("readyCountElement");
-  readyCountElement.textContent = count.toLocaleString("no-NO");
+   //oppdatere antall vis det er mer en 1000 så vises det i k
+   let displayCount = count;
+   if(count >= 1000){
+     displayCount = (count / 1000).toFixed(1) + "k";
+   }
+  readyCountElement.textContent = displayCount;
 
   //hvis det er mer en 0 så vises forelderelementet
   if(count>0){
@@ -1007,7 +1012,14 @@ function updateReadyCountElement(count){
 function updateSelectCountElement(count){
   //readyCountElement
   const readyCountElement = document.getElementById("selectCountElement");
-  readyCountElement.textContent = count.toLocaleString("no-NO");
+
+  //oppdatere antall vis det er mer en 1000 så vises det i k
+  let displayCount = count;
+  if(count >= 1000){
+    displayCount = (count / 1000).toFixed(1) + "k";
+  }
+
+  readyCountElement.textContent = displayCount;
 
   //hvis det er mer en 0 så vises forelderelementet
   if(count>0){
@@ -1021,7 +1033,15 @@ function updateSelectCountElement(count){
 function updateProsessCountElement(count){
   //readyCountElement
   const readyCountElement = document.getElementById("prosessCountElement");
-  readyCountElement.textContent = count.toLocaleString("no-NO");
+
+  //oppdatere antall vis det er mer en 1000 så vises det i k
+  let displayCount = count;
+  if(count >= 1000){
+    displayCount = (count / 1000).toFixed(1) + "k";
+  }
+
+
+  readyCountElement.textContent = displayCount;
 
   //hvis det er mer en 0 så vises forelderelementet
   if(count>0){
