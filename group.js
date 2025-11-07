@@ -66,9 +66,17 @@ function saveGroup() {
     alert('Fyll inn gruppenavn og brukernavn');
     return;
   }
+
+  // Hjelp: generer id til ny gruppe
+  function newGroupId() {
+    return 'grp_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  }
+
+
   if (editIndex === null) {
-    gGroupbedrifter.push({ id: Date.now(), name, user, desc });
-    sendNewGroupToServer({ id: Date.now(), name, user, desc });
+    let groupid = newGroupId();
+    gGroupbedrifter.push({ id: groupid, name, user, desc });
+    sendNewGroupToServer({ id: groupid, name, user, desc });
   } else {
     gGroupbedrifter[editIndex] = { ...gGroupbedrifter[editIndex], name, user, desc };
     updateNewGroupToServer(gGroupbedrifter[editIndex]);
