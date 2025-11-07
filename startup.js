@@ -236,13 +236,28 @@ function loadPeriodsIntoSelector(selectId) {
 document.getElementById("brregmastercheckbox").addEventListener("change", function() {
     const container = document.getElementById("rowlist");
     const checkboxes = container.querySelectorAll(".selectcheckbox");
+    let count = 0;
     checkboxes.forEach(cb => {
       // kun de som ikke er disabled
       if (!cb.disabled){
       cb.checked = this.checked;
+      count++;
       }
     });
-    
+    //hvis det er mer en 1 checkbox som er valgt så gjør maassbehandling synlig
+    if(count > 0){
+      if (bulkBar)   bulkBar.style.display = count > 0 ? 'flex' : 'none';
+      if (bulkCount) bulkCount.textContent = `${count} valgt`;
+      const counterSel = document.getElementById('counterlistbrregselect');
+      if (counterSel) {
+        counterSel.textContent = `${n} valgt`;
+        counterSel.style.display = n > 0 ? 'block' : 'none';
+      }
+    }else{
+      const bulkBar   = document.getElementById('brreg-bulk-actions');
+      bulkBar.style.display = "none";
+    }
+
 });
 
 document.getElementById("selectmastercheckbox").addEventListener("change", function() {
