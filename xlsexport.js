@@ -35,7 +35,11 @@ function generateAndDownloadXls(filename, data) {
       const kontaktperson = cap(pick(r, ['kontaktperson', 'kontakt.navn']));
   
       // Nytt: legg til group og status
-      const group = cap(pick(r, ['group', 'gruppe', 'groupairtable']));
+      const g = (gGroupbedrifter || []).find(gr => {
+        const targetId = String(r.group ?? '');
+        return String(gr.id) === targetId || String(gr.airtableId ?? '') === targetId;
+      });
+      const group = g ? cap(g.name) : '';
       const status = cap(pick(r, ['status', 'state', 'tilstand']));
   
       return {
