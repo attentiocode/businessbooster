@@ -145,6 +145,9 @@ function renderProsess(data){
     // Oppdater teller
     const counterEl = document.getElementById('counterlistprosess');
     if (counterEl) counterEl.innerText = `${filteredData.length} stk. bedrifter`;
+
+    //kopier liste klar for nedlasting
+    xlsactivelist = filteredData;
   
     // --- Render rader ---
     (filteredData || []).forEach((b) => {

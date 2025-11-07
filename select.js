@@ -176,6 +176,9 @@ function renderSelect(data) {
   // Lookup for handlers
   const byOrgnr = new Map(filteredData.map(it => [getOrgnr(it), it]));
 
+  //kopier liste klar for nedlasting
+  xlsactivelist = filteredData;
+
   // --- Render rader ---
   (filteredData || []).forEach((b, i) => {
     const tr = document.createElement('tr');

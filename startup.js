@@ -8,6 +8,7 @@ let gCustomers = [];
 let userid = null;
 let userName = null;
 let gEmailLoopSettings = [];
+let xlsactivelist = [];
 
 
   // --- Fargepalett tilpasset mørkt dashbord ---
