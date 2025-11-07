@@ -435,7 +435,8 @@ function sendNewGroupToServer(group){
   name: group.name,
   user: group.user,
   desc: group.desc,
-  identity: group.id
+  identity: stringify({groupid: group.id}),
+  client: ["rec3a2DzF0xfNWt0i"]
   });
 
   POSTairtable("appEUYGzpBtxB0fFe","tblJmOcDQQneKOFKg",body,"responsNewGroup",item=null)
