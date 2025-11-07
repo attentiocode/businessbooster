@@ -208,14 +208,19 @@ function getEmailBody(company, stepp, theme = 'dark') {
             </tr>
 
             <tr>
-              <td class="signature">
-                <p>&nbsp;<strong>innkj&oslash;ps-GRUPPEN<br /></strong>
-                  <span>Mobil:&nbsp;+47 91 14 52 94</span><br />
-                  <span>Epost: </span><u><a href="mailto:post@innkjops-gruppen.no">post@innkjops-gruppen.no</a><br /><br /></u>
-                  <u><a href="http://www.innkjops-gruppen.no/">www.innkjops-gruppen.no</a><br />
-                    <img width="400" height="109" alt="" src="https://uploads-ssl.webflow.com/6346cf959f8b0bccad5075af/65a8e9fe0b759f07aa7d7b13_image002.png" />
-                  </u><strong></strong>
-                </p>
+              <td class="signature" style="padding:20px 24px; border-top:1px solid ${T.cardBd}; background:${T.cardAlt};">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td style="vertical-align:top; width:100px; padding-right:16px;">
+                      <img src="https://ucarecdn.com/dbf2e19b-5ab1-4d05-871a-efafc16b7229/Kundelisteimport30102025.xlsx" alt="Tamara Gangsøy" width="80" style="border-radius:6px; display:block;" />
+                    </td>
+                    <td style="vertical-align:top; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:${T.text}; font-size:14px; line-height:1.4;">
+                      <p style="margin:0 0 4px; font-weight:600; color:${T.textStrong};">Tamara Gangsøy</p>
+                      <p style="margin:0 0 8px;">Kundeservice<br />+47 45 49 19 01<br /><a href="mailto:tamara@innkjops-gruppen.no" style="color:${T.link}; text-decoration:none;">tamara@innkjops-gruppen.no</a></p>
+                      <p style="margin:0;">&nbsp;</p>  
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
           </table>
