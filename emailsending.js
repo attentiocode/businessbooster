@@ -102,7 +102,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
       ctaBd:    '#1D4ED8',
       ctaText:  '#FFFFFF',
       link:     '#60A5FA',
-      cardAlt:  '#0B1220' // signature strip
+      cardAlt:  '#0B1220'
     },
     light: {
       pageBg:   '#F3F4F6',
@@ -123,8 +123,9 @@ function getEmailBody(company, stepp, theme = 'dark') {
   };
   const T = palettes[theme] || palettes.dark;
 
-  const preheader = ''; // valgfritt
+  const preheader = '';
 
+  // ---- HTML ----
   return `
 <!doctype html>
 <html lang="no">
@@ -151,87 +152,105 @@ function getEmailBody(company, stepp, theme = 'dark') {
     .content { padding:24px; line-height:1.55; font-size:14px; color:${T.text}; }
     .list { margin:12px 0 18px; padding-left:18px; }
     .list li { margin:6px 0; }
+
+    /* --- CTA med 100% hvit tekst --- */
     .cta {
-      display:inline-block; margin-top:18px; padding:12px 22px; font-weight:700;
-      background:${T.ctaBg}; color:${T.ctaText}; border-radius:8px; border:1px solid ${T.ctaBd};
+      display:inline-block;
+      margin-top:18px;
+      padding:12px 22px;
+      font-weight:700;
+      background:${T.ctaBg};
+      color:${T.ctaText} !important;
+      border-radius:8px;
+      border:1px solid ${T.ctaBd};
+      text-align:center;
+      text-decoration:none !important;
+      -webkit-text-fill-color:${T.ctaText};
+      text-rendering:optimizeLegibility;
+      -webkit-font-smoothing:antialiased;
+      mso-style-priority:100 !important;
     }
+
     .cta-secondary {
-      display:inline-block; margin-top:12px; padding:10px 20px; font-weight:600;
-      background:transparent; color:${T.link}; border-radius:8px; border:1px solid ${T.ctaBd};
+      display:inline-block;
+      margin-top:12px;
+      padding:10px 20px;
+      font-weight:600;
+      background:transparent;
+      color:${T.link};
+      border-radius:8px;
+      border:1px solid ${T.ctaBd};
     }
+
     .meta { margin-top:20px; font-size:13px; color:${T.meta}; }
     .highlight {
       font-size:16px; color:#FBBF24; font-weight:600;
       margin-top:20px; text-align:center;
     }
+
     .signature { padding:20px 24px; border-top:1px solid ${T.cardBd}; background:${T.cardAlt}; }
     .footer { width:100%; max-width:640px; margin:12px auto 0; color:${T.footer}; font-size:12px; text-align:center; }
     .unsub { color:${T.footer} !important; text-decoration:underline; }
     .mute { color:${T.footerMute}; font-size:11px; }
-    /* responsive */
+
     @media (max-width:480px) {
       .content { padding:20px; }
       .header { padding:16px 20px; }
       .signature { padding:16px 20px; }
     }
-    /* sikre link-farge i innholdet */
+
     .content a { color:${T.link}; }
   </style>
 </head>
 <body style="background:${T.pageBg}; margin:0;">
-  <!-- preheader -->
-  <div style="display:none; max-height:0; overflow:hidden; opacity:0; visibility:hidden;">
-    ${preheader}
-  </div>
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0; visibility:hidden;">${preheader}</div>
 
   <div class="container">
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-      <tr>
-        <td align="center">
-          <table role="presentation" class="card" cellpadding="0" cellspacing="0">
-            <tr>
-              <td class="header">
-                <p class="title">${escapeHtml(subject)}</p>
-                <p class="subtle">Til ${navn ? escapeHtml(navn) : 'deres virksomhet'}${orgnr ? ' (org.nr ' + orgnr + ')' : ''}</p>
-              </td>
-            </tr>
+      <tr><td align="center">
+        <table role="presentation" class="card" cellpadding="0" cellspacing="0">
+          <tr>
+            <td class="header">
+              <p class="title">${escapeHtml(subject)}</p>
+              <p class="subtle">Til ${navn ? escapeHtml(navn) : 'deres virksomhet'}${orgnr ? ' (org.nr ' + orgnr + ')' : ''}</p>
+            </td>
+          </tr>
 
-            <tr>
-              <td class="content">
-                ${bodyInnerHtml}
+          <tr>
+            <td class="content">
+              ${bodyInnerHtml}
+              <a href="${ctaHrefTrial}" class="cta" target="_blank" rel="noopener">
+                ${escapeHtml(ctatext)}
+              </a>
+            </td>
+          </tr>
 
-                <a href="${ctaHrefTrial}" class="cta" target="_blank" rel="noopener">
-                  ${escapeHtml(ctatext)}
-                </a>
+          <tr>
+            <td class="signature">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="vertical-align:top; width:100px; padding-right:16px;">
+                    <img src="https://ucarecdn.com/dbf2e19b-5ab1-4d05-871a-efafc16b7229/Kundelisteimport30102025.xlsx"
+                         alt="Tamara Gangsøy" width="80" style="border-radius:6px; display:block;" />
+                  </td>
+                  <td style="vertical-align:top; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:${T.text}; font-size:14px; line-height:1.4;">
+                    <p style="margin:0 0 4px; font-weight:600; color:${T.textStrong};">Tamara Gangsøy</p>
+                    <p style="margin:0 0 8px;">Kundeservice<br />+47 45 49 19 01<br />
+                      <a href="mailto:tamara@innkjops-gruppen.no" style="color:${T.link}; text-decoration:none;">tamara@innkjops-gruppen.no</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
 
-              </td>
-            </tr>
+        <div class="footer">
+          <span class="mute">Ønsker du ikke flere e-poster?</span>
+          &nbsp;<a class="unsub" href="${unsubHref}" target="_blank" rel="noopener">Avmelding</a>
+        </div>
 
-            <tr>
-              <td class="signature" style="padding:20px 24px; border-top:1px solid ${T.cardBd}; background:${T.cardAlt};">
-                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                  <tr>
-                    <td style="vertical-align:top; width:100px; padding-right:16px;">
-                      <img src="https://ucarecdn.com/dbf2e19b-5ab1-4d05-871a-efafc16b7229/Kundelisteimport30102025.xlsx" alt="Tamara Gangsøy" width="80" style="border-radius:6px; display:block;" />
-                    </td>
-                    <td style="vertical-align:top; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:${T.text}; font-size:14px; line-height:1.4;">
-                      <p style="margin:0 0 4px; font-weight:600; color:${T.textStrong};">Tamara Gangsøy</p>
-                      <p style="margin:0 0 8px;">Kundeservice<br />+47 45 49 19 01<br /><a href="mailto:tamara@innkjops-gruppen.no" style="color:${T.link}; text-decoration:none;">tamara@innkjops-gruppen.no</a></p>
-                      <p style="margin:0;">&nbsp;</p>  
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-
-          <div class="footer">
-            <span class="mute">Ønsker du ikke flere e-poster?</span>
-            &nbsp;<a class="unsub" href="${unsubHref}" target="_blank" rel="noopener">Avmelding</a>
-          </div>
-
-        </td>
-      </tr>
+      </td></tr>
     </table>
   </div>
 
@@ -240,6 +259,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
 </html>
 `;
 }
+
 
 
 
