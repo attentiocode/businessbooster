@@ -336,9 +336,20 @@ function pickGroupViaDialog() {
     const okBtn = document.getElementById('grp_okBtn');
     const cancelBtn = document.getElementById('grp_cancelBtn');
 
+    // Hjelper: prefill ng_user med userName hvis tomt felt og userName finnes
+    function prefillNewGroupUser() {
+      const inputUser = document.getElementById('ng_user');
+      if (!inputUser) return;
+      const canUse = (typeof userName === 'string' && userName.trim().length > 0);
+      if (canUse && !inputUser.value) {
+        inputUser.value = userName.trim();
+      }
+    }
+
     // 1) Fyll select med grupper + Ny gruppe
     function fillOptions() {
       select.innerHTML = '';
+
       // Eksisterende grupper
       gGroupbedrifter.forEach(g => {
         const opt = document.createElement('option');
@@ -346,6 +357,7 @@ function pickGroupViaDialog() {
         opt.textContent = g.name;
         select.appendChild(opt);
       });
+
       // Ny gruppe
       const optNew = document.createElement('option');
       optNew.value = '__new__';
@@ -354,16 +366,32 @@ function pickGroupViaDialog() {
 
       // Ingen grupper => preselect Ny gruppe
       if (gGroupbedrifter.length === 0) select.value = '__new__';
-      form.style.display = (select.value === '__new__') ? 'block' : 'none';
-      okBtn.textContent = (select.value === '__new__') ? 'Opprett og velg' : 'Velg';
+
+      const isNew = (select.value === '__new__');
+      form.style.display = isNew ? 'block' : 'none';
+      okBtn.textContent = isNew ? 'Opprett og velg' : 'Velg';
+
+      // ✅ Prefill ng_user hvis vi står i "Ny gruppe"
+      if (isNew) {
+        prefillNewGroupUser();
+        // Fokusér gjerne gruppenavn for rask input
+        const nameEl = document.getElementById('ng_name');
+        if (nameEl) nameEl.focus();
+      }
     }
 
     fillOptions();
 
     // 2) Interaksjon
     select.onchange = () => {
-      form.style.display = (select.value === '__new__') ? 'block' : 'none';
-      okBtn.textContent = (select.value === '__new__') ? 'Opprett og velg' : 'Velg';
+      const isNew = (select.value === '__new__');
+      form.style.display = isNew ? 'block' : 'none';
+      okBtn.textContent = isNew ? 'Opprett og velg' : 'Velg';
+      if (isNew) {
+        prefillNewGroupUser(); // ✅ Prefill ved bytte til Ny gruppe
+        const nameEl = document.getElementById('ng_name');
+        if (nameEl) nameEl.focus();
+      }
     };
 
     cancelBtn.onclick = () => { dlg.close(); resolve(null); };
@@ -372,13 +400,13 @@ function pickGroupViaDialog() {
       if (select.value === '__new__') {
         // Valider og opprett gruppe
         const name = (document.getElementById('ng_name').value || '').trim();
-        const user = (userName || document.getElementById('ng_user').value || '').trim();
+        const user = (document.getElementById('ng_user').value || '').trim();
         const desc = (document.getElementById('ng_desc').value || '').trim();
         if (!name || !user) { alert('Fyll inn Gruppnavn og Brukernavn.'); return; }
         const id = newGroupId();
         gGroupbedrifter.push({ id, name, user, desc });
-        renderGroups(); // hvis du har en slik funksjon
-        persistAll();
+        renderGroups?.(); // hvis du har en slik funksjon
+        persistAll?.();
         dlg.close();
         resolve(id);
       } else {
@@ -393,6 +421,7 @@ function pickGroupViaDialog() {
     try { dlg.showModal(); } catch(e) { dlg.show(); }
   });
 }
+
 
 async function dataFromBrregToSelect() {
  
