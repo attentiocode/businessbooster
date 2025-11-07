@@ -231,7 +231,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
                   <tr>
                     <td style="vertical-align:top; width:180px; padding-right:20px;">
                       <img 
-                        src="https://ucarecdn.com/dbf2e19b-5ab1-4d05-871a-efafc16b7229/Kundelisteimport30102025.xlsx" 
+                        src="https://ucarecdn.com/fa31999d-6d1c-4902-b1d0-8453a8009b5c/Tamara.jpg" 
                         alt="Tamara Gangsøy" 
                         width="160" 
                         style="border-radius:10px; display:block;"
