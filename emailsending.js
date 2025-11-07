@@ -90,7 +90,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
       ctaText: '#FFFFFF',
       link: '#60A5FA',
       cardAlt: '#0B1220',
-      logo: 'https://ucarecdn.com/288f27b9-52b5-4dcd-8322-b58829dcb71f/Logoikghvit.png' // hvit logo
+      logo: 'https://ucarecdn.com/288f27b9-52b5-4dcd-8322-b58829dcb71f/Logoikghvit.png' // hvit logo for mørk bakgrunn
     },
     light: {
       pageBg: '#F3F4F6',
@@ -107,7 +107,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
       ctaText: '#FFFFFF',
       link: '#1D4ED8',
       cardAlt: '#F9FAFB',
-      logo: 'https://ucarecdn.com/c957df15-f29a-486b-bd73-97b2e49362be/Logoikgsort.png' // sort logo
+      logo: 'https://ucarecdn.com/c957df15-f29a-486b-bd73-97b2e49362be/Logoikgsort.png' // sort logo for lys bakgrunn
     }
   };
   const T = palettes[theme] || palettes.dark;
@@ -194,7 +194,7 @@ alt="Tamara Gangsøy" width="128" style="border-radius:10px;display:block;" />
 </tr>
 </table>
 
-<!-- logo nederst, uten tekst -->
+<!-- logo nederst, bytter etter tema -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
 <tr><td align="center">
   <img src="${T.logo}" alt="Innkjøps-Gruppen logo" width="140" style="display:block;margin:0 auto;">
@@ -217,6 +217,7 @@ alt="Tamara Gangsøy" width="128" style="border-radius:10px;display:block;" />
 </body>
 </html>`;
 }
+
 
 
 
