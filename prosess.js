@@ -152,7 +152,11 @@ function renderProsess(data){
       tr.classList.add('default-row', 'prosess-row');
   
       const org = getOrgnr(b);
-      const g = (window.gGroupbedrifter || []).find(gr => String(gr.id) === String(b.group ?? ''));
+      const g = (gGroupbedrifter || []).find(gr => {
+        const targetId = String(b.group ?? '');
+        return String(gr.id) === targetId || String(gr.airtableId ?? '') === targetId;
+      });
+      
       const contactHtml = typeof renderContactIcons === 'function' ? renderContactIcons(b) : '';
   
       const emailcount    = Number(b.emailCount ?? 0);
