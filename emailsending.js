@@ -47,8 +47,9 @@ async function sendDataToZapierWebhook(data,url) {
     }
 }
 
-function getEmailBody(company, stepp) {
-  // --- helpers --------------------------------------------------------------
+
+function getEmailBody(company, stepp, theme = 'dark') {
+  // ---- helpers ----
   const escapeHtml = (s) =>
     String(s ?? '')
       .replace(/&/g, '&amp;')
@@ -60,44 +61,70 @@ function getEmailBody(company, stepp) {
   const onlyDigits = (v) => String(v ?? '').replace(/\D/g, '');
   const pad9 = (v) => onlyDigits(v).padStart(9, '0');
 
-  // --- company fields -------------------------------------------------------
+  // ---- company / step ----
   const orgnr   = pad9(company?.organisasjonsnummer ?? company?.orgnr ?? '');
   const navn    = company?.navn || '';
   const kontakt = company?.kontaktperson?.navn || company?.lederNavn || '';
-  const greetingName = kontakt || navn || 'der';
   const subject = stepp?.subject || 'Smarte innkjøp for bedre lønnsomhet';
-
-  //Stepp detaljer
   const ctatext = stepp?.cta || 'Prøv oss helt uforpliktet i 30 dager';
   const bodyInnerHtml = stepp?.body || '';
 
-
-  // --- sporing (Zapier fyller inn {{trackingId}}) ---------------------------
-  const PUBLIC_BASE_URL = 'https://airtable-time-runner.vercel.app'; // API-base
+  // ---- tracking / links ----
+  const PUBLIC_BASE_URL = 'https://airtable-time-runner.vercel.app';
   const rawCtaTrial     = 'https://ikg-businessbooster.webflow.io/response';
-  const rawCtaContact   = 'mailto:post@innkjops-gruppen.no';
   const rawUnsubscribe  = 'https://ikg-businessbooster.webflow.io/unsubscribe';
 
-  // CTA via clk (tracker click) -> dest m/ rid i query
   const ctaHrefTrial =
     `${PUBLIC_BASE_URL}/api/clk?rid={{trackingId}}&to=${
       encodeURIComponent(`${rawCtaTrial}${rawCtaTrial.includes('?') ? '&' : '?'}rid={{trackingId}}`)
     }`;
 
-  // Avmelding via clk (tracker click) -> din unsub-side m/ rid i query
   const unsubHref =
     `${PUBLIC_BASE_URL}/api/clk?rid={{trackingId}}&to=${
       encodeURIComponent(`${rawUnsubscribe}${rawUnsubscribe.includes('?') ? '&' : '?'}rid={{trackingId}}`)
     }`;
 
-  // Åpningspiksel
   const openPixelSrc = `${PUBLIC_BASE_URL}/api/open.gif?rid={{trackingId}}`;
 
-  // --- content --------------------------------------------------------------
-  const preheader =
-    '';
+  // ---- theme palette ----
+  const palettes = {
+    dark: {
+      pageBg:   '#0B1220',
+      cardBg:   '#0F172A',
+      cardBd:   '#1F2937',
+      text:     '#E5E7EB',
+      textStrong:'#F3F4F6',
+      subtle:   '#93A1B3',
+      meta:     '#9CA3AF',
+      footer:   '#8FA2B8',
+      footerMute:'#6B7E95',
+      ctaBg:    '#2563EB',
+      ctaBd:    '#1D4ED8',
+      ctaText:  '#FFFFFF',
+      link:     '#60A5FA',
+      cardAlt:  '#0B1220' // signature strip
+    },
+    light: {
+      pageBg:   '#F3F4F6',
+      cardBg:   '#FFFFFF',
+      cardBd:   '#E5E7EB',
+      text:     '#111827',
+      textStrong:'#0F172A',
+      subtle:   '#6B7280',
+      meta:     '#6B7280',
+      footer:   '#6B7280',
+      footerMute:'#9CA3AF',
+      ctaBg:    '#2563EB',
+      ctaBd:    '#1D4ED8',
+      ctaText:  '#FFFFFF',
+      link:     '#1D4ED8',
+      cardAlt:  '#F9FAFB'
+    }
+  };
+  const T = palettes[theme] || palettes.dark;
 
-  // --- HTML -----------------------------------------------------------------
+  const preheader = ''; // valgfritt
+
   return `
 <!doctype html>
 <html lang="no">
@@ -111,45 +138,47 @@ function getEmailBody(company, stepp) {
     body,table,td,p { margin:0; padding:0; }
     img { border:0; outline:none; text-decoration:none; display:block; }
     a { text-decoration:none; }
-    .container { width:100%; background:#0B1220; padding:24px 0; }
+    .container { width:100%; background:${T.pageBg}; padding:24px 0; }
     .card {
       width:100%; max-width:640px; margin:0 auto;
-      background:#0F172A; color:#E5E7EB;
-      border:1px solid #1F2937; border-radius:12px; overflow:hidden;
+      background:${T.cardBg}; color:${T.text};
+      border:1px solid ${T.cardBd}; border-radius:12px; overflow:hidden;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
-    .header { padding:20px 24px; border-bottom:1px solid #1F2937; }
-    .title  { font-size:20px; font-weight:700; color:#F3F4F6; margin:0; }
-    .subtle { font-size:12px; color:#93A1B3; }
-    .content { padding:24px; line-height:1.55; font-size:14px; color:#E5E7EB; }
+    .header { padding:20px 24px; border-bottom:1px solid ${T.cardBd}; }
+    .title  { font-size:20px; font-weight:700; color:${T.textStrong}; margin:0; }
+    .subtle { font-size:12px; color:${T.subtle}; }
+    .content { padding:24px; line-height:1.55; font-size:14px; color:${T.text}; }
     .list { margin:12px 0 18px; padding-left:18px; }
     .list li { margin:6px 0; }
     .cta {
       display:inline-block; margin-top:18px; padding:12px 22px; font-weight:700;
-      background:#2563EB; color:#ffffff; border-radius:8px; border:1px solid #1D4ED8;
+      background:${T.ctaBg}; color:${T.ctaText}; border-radius:8px; border:1px solid ${T.ctaBd};
     }
     .cta-secondary {
       display:inline-block; margin-top:12px; padding:10px 20px; font-weight:600;
-      background:transparent; color:#60A5FA; border-radius:8px; border:1px solid #1E3A8A;
+      background:transparent; color:${T.link}; border-radius:8px; border:1px solid ${T.ctaBd};
     }
-    .meta { margin-top:20px; font-size:13px; color:#9CA3AF; }
+    .meta { margin-top:20px; font-size:13px; color:${T.meta}; }
     .highlight {
       font-size:16px; color:#FBBF24; font-weight:600;
       margin-top:20px; text-align:center;
     }
-    .signature { padding:20px 24px; border-top:1px solid #1F2937; background:#0B1220; }
-    /* Diskret footer for avmelding */
-    .footer { width:100%; max-width:640px; margin:12px auto 0; color:#8FA2B8; font-size:12px; text-align:center; }
-    .unsub { color:#8FA2B8 !important; text-decoration:underline; }
-    .mute { color:#6B7E95; font-size:11px; }
+    .signature { padding:20px 24px; border-top:1px solid ${T.cardBd}; background:${T.cardAlt}; }
+    .footer { width:100%; max-width:640px; margin:12px auto 0; color:${T.footer}; font-size:12px; text-align:center; }
+    .unsub { color:${T.footer} !important; text-decoration:underline; }
+    .mute { color:${T.footerMute}; font-size:11px; }
+    /* responsive */
     @media (max-width:480px) {
       .content { padding:20px; }
       .header { padding:16px 20px; }
       .signature { padding:16px 20px; }
     }
+    /* sikre link-farge i innholdet */
+    .content a { color:${T.link}; }
   </style>
 </head>
-<body style="background:#0B1220; margin:0;">
+<body style="background:${T.pageBg}; margin:0;">
   <!-- preheader -->
   <div style="display:none; max-height:0; overflow:hidden; opacity:0; visibility:hidden;">
     ${preheader}
@@ -162,7 +191,7 @@ function getEmailBody(company, stepp) {
           <table role="presentation" class="card" cellpadding="0" cellspacing="0">
             <tr>
               <td class="header">
-                <p class="title">${subject}</p>
+                <p class="title">${escapeHtml(subject)}</p>
                 <p class="subtle">Til ${navn ? escapeHtml(navn) : 'deres virksomhet'}${orgnr ? ' (org.nr ' + orgnr + ')' : ''}</p>
               </td>
             </tr>
@@ -191,7 +220,6 @@ function getEmailBody(company, stepp) {
             </tr>
           </table>
 
-          <!-- Diskret avmelding i bunn -->
           <div class="footer">
             <span class="mute">Ønsker du ikke flere e-poster?</span>
             &nbsp;<a class="unsub" href="${unsubHref}" target="_blank" rel="noopener">Avmelding</a>
@@ -202,12 +230,12 @@ function getEmailBody(company, stepp) {
     </table>
   </div>
 
-  <!-- Åpningspiksel (unngå display:none for bedre treff) -->
   <img src="${openPixelSrc}" width="1" height="1" style="opacity:0;width:1px;height:1px;border:0;" alt="" />
 </body>
 </html>
 `;
 }
+
 
 
 function escapeHtml(s) {
