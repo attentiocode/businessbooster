@@ -225,24 +225,29 @@ function getEmailBody(company, stepp, theme = 'dark') {
             </td>
           </tr>
 
-          <tr>
-            <td class="signature">
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="vertical-align:top; width:100px; padding-right:16px;">
-                    <img src="https://ucarecdn.com/fa31999d-6d1c-4902-b1d0-8453a8009b5c/Tamara.jpg"
-                         alt="Tamara Gangsøy" width="80" style="border-radius:6px; display:block;" />
-                  </td>
-                  <td style="vertical-align:top; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:${T.text}; font-size:14px; line-height:1.4;">
-                    <p style="margin:0 0 4px; font-weight:600; color:${T.textStrong};">Tamara Gangsøy</p>
-                    <p style="margin:0 0 8px;">Kundeservice<br />+47 45 49 19 01<br />
-                      <a href="mailto:tamara@innkjops-gruppen.no" style="color:${T.link}; text-decoration:none;">tamara@innkjops-gruppen.no</a>
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+        <tr>
+              <td class="signature" style="padding:20px 24px; border-top:1px solid ${T.cardBd}; background:${T.cardAlt};">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td style="vertical-align:top; width:180px; padding-right:20px;">
+                      <img 
+                        src="https://ucarecdn.com/dbf2e19b-5ab1-4d05-871a-efafc16b7229/Kundelisteimport30102025.xlsx" 
+                        alt="Tamara Gangsøy" 
+                        width="160" 
+                        style="border-radius:10px; display:block;"
+                      />
+                    </td>
+                    <td style="vertical-align:middle; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:${T.text}; font-size:14px; line-height:1.5;">
+                      <p style="margin:0 0 6px; font-weight:600; color:${T.textStrong}; font-size:16px;">Tamara Gangsøy</p>
+                      <p style="margin:0 0 10px;">Kundeservice<br />
+                        <strong>+47&nbsp;45&nbsp;49&nbsp;19&nbsp;01</strong><br />
+                        <a href="mailto:tamara@innkjops-gruppen.no" style="color:${T.link}; text-decoration:none;">tamara@innkjops-gruppen.no</a>
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
         </table>
 
         <div class="footer">
