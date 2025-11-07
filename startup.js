@@ -435,7 +435,7 @@ function sendNewGroupToServer(group){
   name: group.name,
   user: group.user,
   desc: group.desc,
-  identity: stringify({groupid: group.id}),
+  identity: group.id,
   client: ["rec3a2DzF0xfNWt0i"]
   });
 
