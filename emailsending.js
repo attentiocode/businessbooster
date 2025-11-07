@@ -80,7 +80,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
     }`;
   const openPixelSrc = `${PUBLIC_BASE_URL}/api/open.gif?rid={{trackingId}}`;
 
-  // FARGEPALETTER (mørk -> hvit logo, lys -> sort logo)
+  // ---------- Temaer ----------
   const palettes = {
     dark: {
       pageBg:   '#0B1220',
@@ -97,7 +97,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
       ctaText:  '#FFFFFF',
       link:     '#60A5FA',
       cardAlt:  '#0B1220',
-      logo:     'https://ucarecdn.com/288f27b9-52b5-4dcd-8322-b58829dcb71f/Logoikghvit.png' // HVIT
+      logo:     'https://ucarecdn.com/c957df15-f29a-486b-bd73-97b2e49362be/Logoikgsort.png' 
     },
     light: {
       pageBg:   '#F3F4F6',
@@ -114,41 +114,48 @@ function getEmailBody(company, stepp, theme = 'dark') {
       ctaText:  '#FFFFFF',
       link:     '#1D4ED8',
       cardAlt:  '#F9FAFB',
-      logo:     'https://ucarecdn.com/c957df15-f29a-486b-bd73-97b2e49362be/Logoikgsort.png'   // SORT
+      logo:     'https://ucarecdn.com/288f27b9-52b5-4dcd-8322-b58829dcb71f/Logoikghvit.png'
     }
   };
   const T = palettes[theme] || palettes.dark;
 
   const preheader = '';
 
-  // Bygger «bulletproof» CTA (VML for MSO + vanlig <a> for andre)
+  // ---------- Bygg bulletproof CTA ----------
   const ctaButtonHtml = `
-    <!--[if mso]>
-    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml"
-      href="${ctaHrefTrial}"
-      style="height:46px;v-text-anchor:middle;width:320px;"
-      arcsize="12%" strokecolor="${T.ctaBd}" fillcolor="${T.ctaBg}">
-      <w:anchorlock/>
-      <center style="color:#FFFFFF;font-family:Segoe UI, Arial, sans-serif;font-size:15px;font-weight:bold;">
-        ${escapeHtml(ctatext)}
-      </center>
-    </v:roundrect>
-    <![endif]-->
+    <table role="presentation" cellpadding="0" cellspacing="0">
+      <tr><td height="16" style="line-height:16px;font-size:0;">&nbsp;</td></tr> <!-- mellomrom som støttes i Outlook -->
+      <tr><td align="center">
+        <!--[if mso]>
+        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml"
+          href="${ctaHrefTrial}"
+          style="height:46px;v-text-anchor:middle;width:320px;"
+          arcsize="12%" strokecolor="${T.ctaBd}" fillcolor="${T.ctaBg}">
+          <w:anchorlock/>
+          <center style="color:#FFFFFF;font-family:Segoe UI, Arial, sans-serif;font-size:15px;font-weight:bold;">
+            ${escapeHtml(ctatext)}
+          </center>
+        </v:roundrect>
+        <![endif]-->
 
-    <!--[if !mso]><!-- -->
-    <a href="${ctaHrefTrial}"
-       target="_blank" rel="noopener"
-       style="
-         display:inline-block; margin-top:18px; padding:12px 22px;
-         background:${T.ctaBg}; border:1px solid ${T.ctaBd};
-         border-radius:8px; color:${T.ctaText}; text-decoration:none;
-         font-weight:700; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-         -webkit-text-fill-color:${T.ctaText}; line-height:1;">
-       ${escapeHtml(ctatext)}
-    </a>
-    <!--<![endif]-->
+        <!--[if !mso]><!-- -->
+        <a href="${ctaHrefTrial}"
+           target="_blank" rel="noopener"
+           style="
+             display:inline-block; padding:12px 22px;
+             background:${T.ctaBg}; border:1px solid ${T.ctaBd};
+             border-radius:8px; color:${T.ctaText};
+             text-decoration:none; font-weight:700;
+             font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+             -webkit-text-fill-color:${T.ctaText}; line-height:1;">
+           ${escapeHtml(ctatext)}
+        </a>
+        <!--<![endif]-->
+      </td></tr>
+    </table>
   `;
 
+  // ---------- Hele HTML-output ----------
   return `
 <!doctype html>
 <html lang="no">
@@ -174,11 +181,9 @@ function getEmailBody(company, stepp, theme = 'dark') {
   .subtle {font-size:12px;color:${T.subtle};}
   .content {padding:24px;line-height:1.55;font-size:14px;color:${T.text};}
   .signature {padding:20px 24px;border-top:1px solid ${T.cardBd};background:${T.cardAlt};}
-
   .footer {width:100%;max-width:640px;margin:12px auto 0;color:${T.footer};font-size:12px;text-align:center;}
   .unsub {color:${T.footer} !important;text-decoration:underline;}
   .mute {color:${T.footerMute};font-size:11px;}
-
   @media (max-width:480px){
     .content{padding:20px;}
     .header{padding:16px 20px;}
@@ -203,13 +208,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
           <tr>
             <td class="content">
               ${bodyInnerHtml}
-
-              <!-- CTA (bulletproof) -->
-              <table role="presentation" cellpadding="0" cellspacing="0">
-                <tr><td>
-                  ${ctaButtonHtml}
-                </td></tr>
-              </table>
+              ${ctaButtonHtml}
             </td>
           </tr>
 
@@ -232,7 +231,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
                 </tr>
               </table>
 
-              <!-- Logo nederst, velges etter tema -->
+              <!-- Logo nederst -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
                 <tr><td align="center">
                   <img src="${T.logo}" alt="Innkjøps-Gruppen" width="140" style="display:block;margin:0 auto;">
@@ -255,6 +254,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
 </body>
 </html>`;
 }
+
 
 
 
