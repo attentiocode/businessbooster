@@ -230,7 +230,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td style="vertical-align:top; width:100px; padding-right:16px;">
-                    <img src="https://ucarecdn.com/dbf2e19b-5ab1-4d05-871a-efafc16b7229/Kundelisteimport30102025.xlsx"
+                    <img src="https://ucarecdn.com/fa31999d-6d1c-4902-b1d0-8453a8009b5c/Tamara.jpg"
                          alt="Tamara Gangsøy" width="80" style="border-radius:6px; display:block;" />
                   </td>
                   <td style="vertical-align:top; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:${T.text}; font-size:14px; line-height:1.4;">
