@@ -435,7 +435,7 @@ function sendNewGroupToServer(group){
   name: group.name,
   user: group.user,
   desc: group.desc,
-  identity: id
+  identity: group.id
   });
 
   POSTairtable("appEUYGzpBtxB0fFe","tblJmOcDQQneKOFKg",body,"responsNewGroup",item=null)
