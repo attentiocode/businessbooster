@@ -85,7 +85,31 @@ document.getElementById("xls-download-select").addEventListener("click", functio
 });
 
 function generateAndDownloadXls(filename,data){
-  exportXLS(data, filename)
+
+
+
+  let testdata = [
+    {"Organisasjonsnummer": "123456789",
+    "Navn": "Test AS",
+    "Adresse": "Testveien 1",
+    "Postnummer": "0123",
+    "Poststed": "Oslo"
+    },
+    {"Organisasjonsnummer": "987654321",
+    "Navn": "Eksempel AS",
+    "Adresse": "Eksempelgata 2",
+    "Postnummer": "0456",
+    "Poststed": "Bergen"
+    }];
+
+
+
+
+
+
+
+
+  exportXLS(testdata, filename);
 }
 
 
