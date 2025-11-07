@@ -405,7 +405,8 @@ function pickGroupViaDialog() {
         if (!name || !user) { alert('Fyll inn Gruppnavn og Brukernavn.'); return; }
         const id = newGroupId();
         gGroupbedrifter.push({ id, name, user, desc });
-        renderGroups?.(); // hvis du har en slik funksjon
+        sendNewGroupToServer({ id, name, user, desc });
+        renderGroups?.(); 
         persistAll?.();
         dlg.close();
         resolve(id);
@@ -422,6 +423,39 @@ function pickGroupViaDialog() {
   });
 }
 
+function sendNewGroupToServer(group){
+
+  let body = JSON.stringify({
+  name: group.name,
+  user: group.user,
+  desc: group.desc,
+  identity: id
+  });
+
+  POSTairtable("appEUYGzpBtxB0fFe","tblJmOcDQQneKOFKg",body,"responsNewGroup",item=null)
+
+}
+
+function responsNewGroup(data){
+
+  if (!data || !data.fields) {
+      console.error("Ugyldig dataformat: Forventet et objekt med 'fields'.");
+      return; // Avbryt hvis data ikke er gyldig
+  }
+
+  const airtableId = data.fields.airtableid;
+  const groupName = data.fields.name;
+
+  //oppdatere gGroupbedrifter med airtableid
+  const groupIndex = gGroupbedrifter.findIndex(g => g.name === groupName);
+  if (groupIndex !== -1) {
+    gGroupbedrifter[groupIndex].airtable = airtableId;
+    //lagre i lokalstorege
+    persistAll();
+  }
+  
+
+}
 
 async function dataFromBrregToSelect() {
  
