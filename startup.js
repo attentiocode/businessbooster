@@ -80,7 +80,9 @@ document.getElementById("xls-download-select").addEventListener("click", functio
 });
 
 document.getElementById("xls-download-prosess").addEventListener("click", function() {
-  let filename = "Prosess_bedrifter_"+new Date().toISOString().slice(0,10)+".xlsx";
+
+  let filterStatusProsess = document.getElementById("filterStatusProsess").value;
+  let filename = "Prosess_bedrifter_"+filterStatusProsess+"_"+new Date().toISOString().slice(0,10)+".xlsx";
   generateAndDownloadXls(filename,xlsactivelist);
 });
 
