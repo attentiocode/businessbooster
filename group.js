@@ -89,9 +89,10 @@ function editGroup(i) {
 
 function deleteGroup(i) {
   if (confirm('Vil du slette denne gruppen?')) {
+    deleteGroupFromServer(gGroupbedrifter[i]);
     gGroupbedrifter.splice(i,1);
     renderGroups();
-    deleteGroupFromServer(gGroupbedrifter[i]);
+    
   }
 }
 
