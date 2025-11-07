@@ -90,7 +90,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
       ctaText: '#FFFFFF',
       link: '#60A5FA',
       cardAlt: '#0B1220',
-      logo: 'https://ucarecdn.com/288f27b9-52b5-4dcd-8322-b58829dcb71f/Logoikghvit.png' // hvit logo for mørk bakgrunn
+      logo: 'https://ucarecdn.com/c957df15-f29a-486b-bd73-97b2e49362be/Logoikgsort.png' // hvit logo for mørk bakgrunn
     },
     light: {
       pageBg: '#F3F4F6',
@@ -107,7 +107,7 @@ function getEmailBody(company, stepp, theme = 'dark') {
       ctaText: '#FFFFFF',
       link: '#1D4ED8',
       cardAlt: '#F9FAFB',
-      logo: 'https://ucarecdn.com/c957df15-f29a-486b-bd73-97b2e49362be/Logoikgsort.png' // sort logo for lys bakgrunn
+      logo: 'https://ucarecdn.com/288f27b9-52b5-4dcd-8322-b58829dcb71f/Logoikghvit.png' // sort logo for lys bakgrunn
     }
   };
   const T = palettes[theme] || palettes.dark;
