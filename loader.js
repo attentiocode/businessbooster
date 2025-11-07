@@ -24,7 +24,8 @@ const cdnScripts = [
     "https://attentiocode.github.io/businessbooster/emailsending.js",
     "https://attentiocode.github.io/businessbooster/prosess.js",
     "https://attentiocode.github.io/businessbooster/timerunneroverview.js",
-    "https://attentiocode.github.io/businessbooster/xlsexport.js"
+    "https://attentiocode.github.io/businessbooster/xlsexport.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.2.0/exceljs.min.js",
 
     
 
