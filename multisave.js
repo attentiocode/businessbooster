@@ -259,7 +259,7 @@ function maketimerunnerObjects(companyes) {
           let cta = stepp.cta || '';
           let daystepp = stepp.delay || 0;
 
-          let emailBody = getEmailBody(company,stepp, 'dark');
+          let emailBody = getEmailBody(company,stepp, 'light');
           const nextSteppDate = new Date();
           
           if (daystepp == 0) {
