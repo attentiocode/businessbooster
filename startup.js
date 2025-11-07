@@ -234,29 +234,28 @@ function loadPeriodsIntoSelector(selectId) {
 }
   
 document.getElementById("brregmastercheckbox").addEventListener("change", function() {
-    const container = document.getElementById("rowlist");
-    const checkboxes = container.querySelectorAll(".selectcheckbox");
-    let count = 0;
-    checkboxes.forEach(cb => {
-      // kun de som ikke er disabled
-      if (!cb.disabled){
-      cb.checked = this.checked;
-      count++;
-      }
-    });
-    //hvis det er mer en 1 checkbox som er valgt så gjør maassbehandling synlig
-    if(count > 0){
-      if (bulkBar)   bulkBar.style.display = count > 0 ? 'flex' : 'none';
-      if (bulkCount) bulkCount.textContent = `${count} valgt`;
-      const counterSel = document.getElementById('counterlistbrregselect');
-      if (counterSel) {
-        counterSel.textContent = `${n} valgt`;
-        counterSel.style.display = n > 0 ? 'block' : 'none';
-      }
-    }else{
-      const bulkBar   = document.getElementById('brreg-bulk-actions');
-      bulkBar.style.display = "none";
+  const container = document.getElementById("rowlist");
+  const checkboxes = container.querySelectorAll(".selectcheckbox")
+  checkboxes.forEach(cb => {
+    // kun de som ikke er disabled
+    if (!cb.disabled){
+    cb.checked = this.checked;
     }
+  });
+
+  //hvis det er mer en 1 checkbox som er valgt så gjør maassbehandling synlig
+  const bulkBar   = document.getElementById('select-bulk-actions-brreg');
+  const checkboxesChecked = container.querySelectorAll(".selectcheckbox:checked");
+  if (checkboxesChecked.length > 0){
+    bulkBar.style.display = "flex";
+    const bulkCount = document.getElementById('select-bulk-count-brreg');
+    //finne ut hvor mange chackboxer som er checked i listen med id rowlistSelect
+    const checkedCount = checkboxes.length;
+    bulkCount.textContent = `${checkedCount} valgt`;
+
+  }else{
+    bulkBar.style.display = "none";
+  }
 
 });
 
