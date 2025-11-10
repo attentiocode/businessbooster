@@ -135,6 +135,7 @@ function renderProsess(data){
           case 'stoppet':   return isStoppet(b);
           case 'avmeldt':   return isAvmeldt(b);
           case 'akseptert': return isAkseptert(b);
+          case 'clicked':    return isClicked(b);
           case 'utgått':    return isUtgaatt(b);
           case 'åpnet':     return isAapnet(b);
           case 'sendt':     return isSendt(b);   // vil du ha "strengt sendt", legg til opened=0 og accepted=0
