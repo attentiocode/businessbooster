@@ -134,7 +134,13 @@ function creatSaveCompatibleList(orgnrList) {
         raw = "Klar for utsendelse";
       }
 
-      const val = sanitizeForAirtable(raw);
+      let val = sanitizeForAirtable(raw);
+
+      // VIKTIG: Fjern alle " fra navn før lagring
+      if (field === "navn" && typeof val === "string") {
+        val = val.replace(/"/g, "").trim();
+        if (val === "") val = undefined;
+      }
 
       if (typeof val === "boolean" || (typeof val === "string" && val.length > 0)) {
         record[field] = val;
@@ -152,6 +158,7 @@ function creatSaveCompatibleList(orgnrList) {
 
   return data;
 }
+
 
 function startMultisaveProcess(orgnrList) {
     const baseid = "appEUYGzpBtxB0fFe";
