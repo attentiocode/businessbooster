@@ -213,8 +213,7 @@ function multiReturnfromAirtable(payload) {
 
   renderReady(gReadybedrifter);
   makeNextSteppInTimeRunner(cleanerData);
-  renderProsess(gProsessertBedrifter);
-
+  
   //åpen prosess fane
   document.getElementById("tabProsessButton").click();
 }
@@ -245,6 +244,8 @@ function multiReturnFromTimeRunnerAirtable(payload) {
     setTimeout(() => {
         getTimeRunnerObjects();
     }, 10000);
+
+    renderProsess(gProsessertBedrifter);
      
 }
 
