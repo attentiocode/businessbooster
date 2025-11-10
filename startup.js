@@ -705,22 +705,40 @@ function convertCustomerJsonStringsToObjects(jsonStrings) {
 
 function convertLeadsJsonStringsToObjects(jsonStrings) {
   return jsonStrings.map((jsonString, index) => {
+    try {
+      // Først: prøv å parse direkte
       try {
-          
-        // Parse JSON-strengen uten HTML-dataen
         const data = JSON.parse(jsonString);
-        // hvs det finnes et felt med dette navnet "email_series"
-        if (!data.email_series) {
-            data.email_series = [];
-        }
+        if (!data.email_series) data.email_series = [];
         return data;
+      } catch (e) {
+        // Hvis det feiler, prøv å reparere vanlige feil i JSON
+        let repaired = jsonString;
 
-      } catch (error) {
-        console.error(`Feil ved parsing av JSON-streng på indeks ${index}:`, jsonString, error);
-        return null; // Returner null hvis parsing feiler
+        // 1️⃣ Fjern uønskede HTML-tegn
+        repaired = repaired.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+
+        // 2️⃣ Escape uescaped anførselstegn inne i verdier (f.eks. "MB "GEMINO ART"")
+        repaired = repaired.replace(
+          /"([^"]*?)":\s*"([^"]*?)(?<!\\)"([^"]*?)"/g,
+          (_, key, val1, val2) => `"${key}": "${val1}\\"${val2}"`
+        );
+
+        // 3️⃣ Fjerne eventuelle ugyldige tegn på slutten
+        repaired = repaired.trim().replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+
+        const data = JSON.parse(repaired);
+        if (!data.email_series) data.email_series = [];
+        console.warn(`JSON ved indeks ${index} ble automatisk reparert`);
+        return data;
       }
+    } catch (error) {
+      console.error(`Feil ved parsing av JSON-streng på indeks ${index}:`, jsonString, error);
+      return null; // Returner null hvis parsing feiler fullstendig
+    }
   });
 }
+
 
 function converttimeRunnerObjectsToObjects(jsonStrings) {
   return jsonStrings.map((jsonString, index) => {
