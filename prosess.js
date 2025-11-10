@@ -51,6 +51,7 @@ function renderProsess(data){
   
     // --- Predikater (brukes til både filter og badge-prioritet) ---
     const isStoppet   = b => !!b.stopp;
+    const isClicked    = b => Number(b.clickedCount || 0) > 0;
     const isAvmeldt   = b => !!b.unsubscribed || !!b.noInterest;
     const isAkseptert = b => Number(b.emailAcceptedCount || 0) > 0;
     const isUtgaatt   = b => {
@@ -75,6 +76,7 @@ function renderProsess(data){
     // 1) akseptert  2) avmeldt  3) sendt  4) stoppet  5) utgått  6) åpnet  7) i_prosess
     function getBadgeKey(b){
       if (isAkseptert(b)) return 'akseptert';
+      if (isClicked(b))   return 'clicked';
       if (isAvmeldt(b))   return 'avmeldt';
       if (isSendt(b))     return 'sendt';
       if (isStoppet(b))   return 'stoppet';
