@@ -126,15 +126,12 @@ const timeRunner = (() => {
       const opened = isTrue(row.opened);
       const clicked = isTrue(row.clicked);
       const accepted = isTrue(row.accepted);
+      const unsub = isTrue(row.no_interest);
 
       const executedAt = toDate(row.executedAt);       // NEW: sendetid
       const openedAt   = toDate(row.openedAt);
       const clickedAt  = toDate(row.clickedAt);
       const acceptedAt = toDate(row.acceptedAt);
-
-      const unsub =
-        isTrue(row.no_interest) ||
-        (stop && String(row.stopReason||'').toLowerCase().match(/unsub|avmeld/));
 
       leads.add(row.externalId);
 
