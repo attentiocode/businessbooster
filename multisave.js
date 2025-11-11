@@ -246,6 +246,13 @@ function multiReturnFromTimeRunnerAirtable(payload) {
     }, 10000);
 
     renderProsess(gProsessertBedrifter);
+
+    const statusElement = document.getElementById("ready-bulk-status-view");
+    const parentEl = statusElement.parentElement;
+        //vent 3 sek så skjul foreldreelementet til status elementet
+        setTimeout(() => {
+          parentEl.style.display = "none";
+      }, 3000);
      
 }
 
@@ -420,8 +427,9 @@ async function POSTairtableMulti(baseId, tableId, body) {
 }
 
 function statusProcessing(title,totalRows, uploadedRows) {
-    const statusElement = document.getElementById("ready-bulk-status");
-    statusElement.style.display = "block";
+    const statusElement = document.getElementById("ready-bulk-status-view");
+    const parentEl = statusElement.parentElement;
+    parentEl.style.display = "flex";
 
     if (!statusElement) return;
 
