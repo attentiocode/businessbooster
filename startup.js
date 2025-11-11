@@ -703,41 +703,100 @@ function convertCustomerJsonStringsToObjects(jsonStrings) {
   });
 }
 
-function convertLeadsJsonStringsToObjects(jsonStrings) {
-  return jsonStrings.map((jsonString, index) => {
+function convertLeadsJsonStringsToObjects(jsonInputs) {
+  const decodeHtml = (s) => {
+    // Dekoder &quot; &amp; osv. uten å overstyre legitime tegn manuelt
+    if (typeof document !== "undefined") {
+      const txt = document.createElement("textarea");
+      txt.innerHTML = s;
+      return txt.value;
+    }
+    // Fallback i miljø uten DOM:
+    return s
+      .replace(/&quot;/g, '"')
+      .replace(/&#34;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>');
+  };
+
+  const ensureEmailSeries = (obj) => {
+    if (obj && !Array.isArray(obj.email_series)) obj.email_series = [];
+    return obj;
+  };
+
+  const tryParse = (s) => {
+    try { return JSON.parse(s); } catch { return null; }
+  };
+
+  return jsonInputs.map((item, index) => {
     try {
-      // Først: prøv å parse direkte
-      try {
-        const data = JSON.parse(jsonString);
-        if (!data.email_series) data.email_series = [];
-        return data;
-      } catch (e) {
-        // Hvis det feiler, prøv å reparere vanlige feil i JSON
-        let repaired = jsonString;
-
-        // 1️⃣ Fjern uønskede HTML-tegn
-        repaired = repaired.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-
-        // 2️⃣ Escape uescaped anførselstegn inne i verdier (f.eks. "MB "GEMINO ART"")
-        repaired = repaired.replace(
-          /"([^"]*?)":\s*"([^"]*?)(?<!\\)"([^"]*?)"/g,
-          (_, key, val1, val2) => `"${key}": "${val1}\\"${val2}"`
-        );
-
-        // 3️⃣ Fjerne eventuelle ugyldige tegn på slutten
-        repaired = repaired.trim().replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
-
-        const data = JSON.parse(repaired);
-        if (!data.email_series) data.email_series = [];
-        console.warn(`JSON ved indeks ${index} ble automatisk reparert`);
-        return data;
+      // 0) Hvis det allerede er et objekt, returnér det
+      if (item && typeof item === 'object') {
+        return ensureEmailSeries(item);
       }
-    } catch (error) {
-      console.error(`Feil ved parsing av JSON-streng på indeks ${index}:`, jsonString, error);
-      return null; // Returner null hvis parsing feiler fullstendig
+
+      if (typeof item !== 'string') return null;
+
+      let raw = item.trim();
+
+      // 1) Dekod HTML-entiteter tidlig
+      raw = decodeHtml(raw).trim();
+
+      // 2) Hvis hele JSON er pakket inn i ytre anførselstegn, fjern dem forsiktig
+      // Eksempel: "{\"a\":1}" eller "{"a":1}"
+      if (raw.length >= 2 && raw[0] === '"' && raw[raw.length - 1] === '"') {
+        // Bevar indre escape-sekvenser
+        const unwrapped = raw.slice(1, -1);
+        // Prøv å tolke det som JSON igjen (kan være dobbelt-encodet)
+        const doubleAttempt = tryParse(unwrapped);
+        if (doubleAttempt !== null) {
+          return ensureEmailSeries(doubleAttempt);
+        }
+        // Hvis det ikke var ekte JSON, fall tilbake til original (kan være sitater i tekst)
+        raw = unwrapped;
+      }
+
+      // 3) Fjern trailing commas: , }  og , ]
+      // (Dette er en trygg og vanlig "reparasjon")
+      let repaired = raw
+        .replace(/,\s*([\]}])/g, '$1')
+        .trim();
+
+      // 4) Første parse-forsøk
+      let parsed = tryParse(repaired);
+
+      // 5) Hvis parse gir en streng, er det sannsynlig dobbelt-encodet
+      if (typeof parsed === 'string') {
+        parsed = tryParse(parsed);
+      }
+
+      // 6) Hvis fortsatt null: prøv en mild heuristikk til —
+      // noen kilder sender enkelt-sitater for strenger/keys (uoffisiell JSON)
+      if (parsed === null) {
+        const singleToDouble = repaired
+          // keys med enkelt-sitater -> dobbeltsitater
+          .replace(/'([A-Za-z0-9_]+)'\s*:/g, '"$1":')
+          // string-verdier med enkelt-sitater -> dobbeltsitater (kun enkle, ikke-escaped)
+          .replace(/:\s*'([^'\\]*)'/g, ': "$1"');
+        parsed = tryParse(singleToDouble);
+      }
+
+      if (parsed === null) {
+        console.error(`Feil ved parsing av JSON-streng på indeks ${index}:`, item);
+        return null;
+      }
+
+      return ensureEmailSeries(parsed);
+    } catch (err) {
+      console.error(`Uventet feil på indeks ${index}:`, err);
+      return null;
     }
   });
 }
+
 
 
 function converttimeRunnerObjectsToObjects(jsonStrings) {
