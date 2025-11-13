@@ -231,7 +231,7 @@ const timeRunner = (() => {
         ${card('Åpnet', `<span id="tro-open">0</span> ${badgePct('tro-open-rate', m.openRate)}`, 'Åpningsrate')}
         ${card('Ikke åpnet', `<span id="tro-notopen">0</span>`, 'Sendt men ikke åpnet')}
         ${card('Klikket', `<span id="tro-click">0</span> ${badgePct('tro-ctr', m.ctr)}`, 'Klikkrate på link i mail')}
-        ${card('Akseptert', `<span id="tro-acc">0</span> ${badgePct('tro-acc-rate', m.acceptRateSent)}`, 'Aksept vs. sendt')}
+        ${card('Akseptert', `<span id="tro-acc">0</span> ${badgePct('tro-acc-rate', m.acceptRateSent)}`, 'Aksept vs. klikk')}
         ${card('Avmeldt', `<span id="tro-unsub">0</span> ${badgePct('tro-unsub-rate', m.unsubRate)}`, 'Utmeldingsrate')}
         ${card('I prosess', `<span id="tro-proc">0</span>`, 'Planlagt / ikke stoppet')}
         ${card('Neste måned', `<span id="tro-next">0</span>`, 'Planlagte utsendelser')}
