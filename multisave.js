@@ -193,7 +193,7 @@ function multiReturnfromAirtable(payload) {
   });
 
   // Lagre lokalt
-  localStorage.setItem("gProsessertBedrifter", JSON.stringify(gProsessertBedrifter));
+  //kan ikke pga antallet og datamangden
 
    
 
