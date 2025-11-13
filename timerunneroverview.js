@@ -194,7 +194,7 @@ const timeRunner = (() => {
       sentPct: pct(s.sent, s.total),
       openRate: pct(s.opened, s.sent || 1),
       ctr: pct(s.clicked, s.opened || s.sent || 1),
-      acceptRateSent: pct(s.accepted, s.sent || 1),
+      acceptRateSent: pct(s.accepted, s.clicked || 1),
       acceptFromOpenRate,                             // NEW
       clickToAcceptRate: pct(s.accepted, s.clicked || 1),
       unsubRate: pct(s.unsubscribed, s.sent || 1),
